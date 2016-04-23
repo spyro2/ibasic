@@ -127,6 +127,12 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 }
 
+/*
+ * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
+ * As an optimisation, store "tree row length" and keep entries in alpha order,
+ * allowing faster matching of tokens (binary search)
+ */
+
 int main (void) {
 	struct token *t;
 
