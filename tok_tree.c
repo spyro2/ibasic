@@ -35,19 +35,6 @@ struct token token_list[] = {
 	{ "^",},
 	{ ":",},
 	{ "PRINTER",},
-	{ ":",},
-	{ ":",},
-/*
-	{ "IF",},
-	{ "GOTO",},
-	{ "INPUT",},
-	{ "THEN",},
-	{ "LIST",},
-	{ "END",},
-	{ "DEF",},
-	{ "PROC",},
-	{ "FN",},
-*/
 	NULL,
 };
 
@@ -60,62 +47,84 @@ struct tok_tree_entry {
 
 struct tok_tree_entry *tok_tree = NULL;
 
-int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
-	//is_tok_valid();
+/*
+ * We assume the token being added is valid - this function is recursive and
+ * so we dont know if we are being called initially or are already at some
+ * stage in the process of adding a token
+ */
 
+int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
+	struct tok_tree_entry *parent_tte = *ptte;
+
+	/* Are we creating a new entry? */
 	if(!*ptte) {
 		struct tok_tree_entry *tte_new;
-		int r = 0;
+		int ret = 0;
 
 		tte_new = calloc(1, sizeof(*tte_new));
+
 		if(!tte_new)
 			return -ENOMEM;
 
-		tte_new->c = *c;
+		tte_new->c = *c++;
 
-//		printf("Alloc new tok: %c @ %08x\n", *c, tte_new);
-
-		c++;
-
+		/*
+		 * If this is the last character, add a pointer to the token
+		 * descriptor.
+		 * Otherwise, keep recursing...
+		 */
 		if(!*c)
 			tte_new->tok = t;
 		else
-			r = tok_add(&tte_new->children, t, c);
+			ret = tok_add(&tte_new->children, t, c);
 
-
-		if(r == -ENOMEM) {
+		/*
+		 * If adding a child entry failed, clean up.
+		 * Otherwise, link the entry to the tree.
+		 */
+		if(ret == -ENOMEM)
 			free(tte_new);
-		}
-		else {
-//			printf(" Assign %08x -> Addr %08x\n", tte_new, ptte);
+		else
 			*ptte = tte_new;
-		}
 
-		return r;
+		return ret;
 
 	}
 
-	struct tok_tree_entry *parent_tte = *ptte;
-
 	while(parent_tte) {
-//		printf("Scanning: '%c'\n", parent_tte->c);
-		if(parent_tte->c == *c) {
-//			printf("Descend\n");
+		if(parent_tte->c == *c) { /* Entry exists */
 			c++;
-			if(!*c) {
-//				printf("Dup!\n");
+			if(!*c) /* Entry is a duplicate */
 				return 1;
-			} else
+			else    /* Add new entry */
 				return tok_add(&parent_tte->children, t, c);
 		}
 
-		if(!parent_tte->next) {
-//			printf("Add peer\n");
+		if(!parent_tte->next) /* No existing entry, recursively add */
 			return tok_add(&parent_tte->next, t, c);
-		}
 
 		parent_tte = parent_tte->next;
 	}
+}
+
+void test_tok(struct tok_tree_entry *tte, char *s) {
+
+	while(tte) {
+		printf("%c", tte->c);
+		if(tte->c == *s) {
+			s++;
+			if(!*s) {
+				printf("Found!\n");
+				return;
+			} else {
+				tte = tte->children;
+				printf(" --> ");
+			}
+		}
+		else
+			tte = tte->next;
+	}
+
 }
 
 int main (void) {
@@ -123,10 +132,16 @@ int main (void) {
 
 	t = token_list;
 
-//	printf("Tree root: %08x\n", &tok_tree);
-
 	while(t->name) {
 		printf("Adding token: '%s' %s.\n", t->name, tok_add(&tok_tree, t, t->name)?"Failed":"OK");
+		t++;
+	}
+
+	t = token_list;
+
+	while(t->name) {
+		printf("Lookup: %s ... ", t->name);
+		test_tok(tok_tree, t->name);
 		t++;
 	}
 
