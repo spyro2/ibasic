@@ -2,6 +2,27 @@
 #include <stdlib.h>
 #include <errno.h>
 
+
+int tok_string(char **ps) {
+	char *s = *ps;
+	static int in_string;
+
+	if(!in_string) {
+		in_string = !in_string;
+
+		printf("Found string: ");
+		while(*s && *s != '"')
+			printf("%c", *s++);
+		printf("\n");
+
+		*ps = s;
+	}
+	else
+		printf("Found closing \"\n");
+
+	return 0;
+}
+
 struct token {
 	char *name;
 	int (*tok_func)(char **s);
@@ -19,7 +40,7 @@ struct token token_list[] = {
 	{ "PROC",},
 	{ "FN",},
 	{ "ENDPROC",},
-	{ "\"",},
+	{ "\"", tok_string},
 	{ ",",},
 	{ "<",},
 	{ ">",},
