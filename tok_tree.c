@@ -4,7 +4,7 @@
 
 struct token {
 	char *name;
-	int (*tok_func)(void);
+	int (*tok_func)(char **s);
 };
 
 struct token token_list[] = {
