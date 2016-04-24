@@ -193,9 +193,6 @@ char *extract_label(char *b, char **ps) {
 		printf("\n");
 	}
 
-	while(*s && IS_WS(*s))
-		s++;
-
 	*ps = s;
 
 	return l; // This is crap, but non-zero is enough for now.
