@@ -158,10 +158,18 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 #define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
 char *extract_label(char *b, char **ps) {
-	char *s = *ps;
+	char *s = b;
+	char *l = s;
 
 	while(*s && IS_LABEL(*s))
 		s++;
+
+	/* We cannot handle bad characters, skip them */
+	if ( l == s ) {
+		*ps = ++s;
+		return 0;
+	}
+
 
 	{
 		char *y = b;
@@ -179,7 +187,7 @@ char *extract_label(char *b, char **ps) {
 
 	*ps = s;
 
-	return 0;
+	return l; // This is crap, but non-zero is enough for now.
 }
 
 /*
@@ -241,10 +249,10 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 				printf("Token %s\n", t->name);
 			t = NULL;
 		}
-		else { /* Unidentifiable thing found */
-
+		else {  /* Non-token thing found */
 			/* For now, pretend all unidentifiable things are labels */
-			extract_label(b, &s);
+			if(!extract_label(b, &s))
+				printf("Skipping bad char\n");
 
 			if(!*s)
 				break;
