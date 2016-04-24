@@ -23,6 +23,18 @@ int tok_string(char **ps) {
 	return 0;
 }
 
+int tok_eol(char **ps) {
+	char *s = *ps;
+
+	printf("Found EOL\n");
+
+	/* We accept \r or \r\n as valid EOL so check for a \n */
+	if(*s && *s == '\n')
+		*ps = ++s;
+
+	return 0;
+}
+
 struct token {
 	char *name;
 	int (*tok_func)(char **s);
@@ -41,6 +53,7 @@ struct token token_list[] = {
 	{ "FN",},
 	{ "ENDPROC",},
 	{ "\"", tok_string},
+	{ "\r", tok_eol},
 	{ ",",},
 	{ "<",},
 	{ ">",},
@@ -151,7 +164,7 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 }
 
-#define IS_WS(c) ((c)==' ' || (c)=='\t' || (c)=='\r' || (c)=='\n')
+#define IS_WS(c) ((c)==' ' || (c)=='\t')
 
 /* For now, anything thats not a token is a label */
 
