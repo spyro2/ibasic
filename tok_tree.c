@@ -246,9 +246,8 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 				else
 					tte = tte->children;
 			}
-			else {
+			else
 				tte = tte->next;
-			}
 		}
 
 		if (t) { /* Token found */
