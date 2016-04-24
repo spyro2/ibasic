@@ -166,8 +166,6 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 #define IS_WS(c) ((c)==' ' || (c)=='\t')
 
-/* For now, anything thats not a token is a label */
-
 #define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
 char *extract_label(char *b, char **ps) {
