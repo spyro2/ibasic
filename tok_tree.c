@@ -130,6 +130,105 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 }
 
+#define IS_WS(c) ((c)==' ' || (c)=='\t' || (c)=='\r' || (c)=='\n')
+
+/* For now, anything thats not a token is a label */
+
+#define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+
+char *extract_label(char *b, char **ps) {
+	char *s = *ps;
+
+	while(*s && IS_LABEL(*s))
+		s++;
+
+	{
+		char *y = b;
+		if(*y >= '0' && *y <= '9')
+			printf("Number: ");  // Crude hack, no decimal point
+		else
+			printf("Label: ");
+		while(y < s)
+			printf("%c", *y++);
+		printf("\n");
+	}
+
+	while(*s && IS_WS(*s))
+		s++;
+
+	*ps = s;
+
+	return 0;
+}
+
+/*
+ * Currently, this tokeniser does store "back references" so that it can
+ * correctly parse a label which follows a partially matched token, eg.
+ * "ENDPROD" instead of ENDPROC (END is a token, followed by PROD).
+ * This could be avoided by allowing the tokeniser to copy each character
+ * it following a token into a buffer, until it realises what the next thing is.
+ * but this seems un-necessary (as long as it parses whole lines at a time).
+ */
+
+/*
+ * Perhaps we can skip whitespace by making it a token that is always discarded?
+ */
+
+void tokenise(struct tok_tree_entry *tok_tree, char *string) {
+	struct tok_tree_entry *tte;
+	struct token *t = NULL;
+	char *s = string, *b;
+
+	b = s;
+
+	while(*s) {
+		/* Skip whitespace */
+		while(IS_WS(*s)) {
+			s++;
+			b = s;
+		}
+		if(!*s)
+			break;
+
+		tte = tok_tree;
+
+//		printf("Search: %s\n", b);
+		while(tte) {
+//			printf("%c %c:\n", *s, tte->c);
+			if(tte->c == *s) {
+				s++;
+
+				if(tte->tok) {
+					t = tte->tok;
+					b = s;
+				}
+
+				if(!*s || IS_WS(*s))
+					break;
+				else
+					tte = tte->children;
+			}
+			else {
+				tte = tte->next;
+			}
+		}
+
+		if (t) { /* Token found */
+			printf("Token %s\n", t->name);
+			t = NULL;
+		}
+		else { /* Unidentifiable thing found */
+
+			/* For now, pretend all unidentifiable things are labels */
+			extract_label(b, &s);
+
+			if(!*s)
+				break;
+		}
+
+	}
+}
+
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,
