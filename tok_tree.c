@@ -262,6 +262,7 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 			if(!extract_label(b, &s))
 				printf("Skipping bad char\n");
 
+			b = s;
 			if(!*s)
 				break;
 		}
