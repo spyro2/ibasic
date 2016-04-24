@@ -214,7 +214,10 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 		}
 
 		if (t) { /* Token found */
-			printf("Token %s\n", t->name);
+			if(t->tok_func)
+				t->tok_func(&s);
+			else
+				printf("Token %s\n", t->name);
 			t = NULL;
 		}
 		else { /* Unidentifiable thing found */
