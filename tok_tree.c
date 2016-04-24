@@ -216,6 +216,7 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	struct token *t = NULL;
 	char *s = string, *b;
 
+	/* b points to the character after the last successfully tokenised thing */
 	b = s;
 
 	while(*s) {
@@ -235,7 +236,7 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 			if(tte->c == *s) {
 				s++;
 
-				if(tte->tok) {
+				if(tte->tok) { /* potentially found token */
 					t = tte->tok;
 					b = s;
 				}
