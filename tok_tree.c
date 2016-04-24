@@ -253,5 +253,21 @@ int main (void) {
 		t++;
 	}
 
+	tokenise(tok_tree, "");
+	tokenise(tok_tree, " ");
+	tokenise(tok_tree, "L");
+	tokenise(tok_tree, " L");
+	tokenise(tok_tree, "  L");
+	tokenise(tok_tree, "   L");
+	tokenise(tok_tree, "L ");
+	tokenise(tok_tree, "L  ");
+	tokenise(tok_tree, "LABLE");
+	tokenise(tok_tree, "FLOOBPRINT   PRINTIF  GOTO PROC ENDPFOG   END ENDPROC   ENDPROD");
+	tokenise(tok_tree, "10 PRINT \"Hello!\"");
+	tokenise(tok_tree, "20 INPUT A$");
+	tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%)");
+	tokenise(tok_tree, "40 PRINT A$:PRINT THING%:GOTO out");
+	tokenise(tok_tree, "50 ENDPROC");
+
 	return 0;
 }
