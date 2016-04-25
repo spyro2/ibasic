@@ -98,9 +98,13 @@ struct token token_list[] = {
 	{ "END",},
 	{ "DEF",},
 	{ "PROC",},
-	{ "PFOG",},
 	{ "FN",},
 	{ "ENDPROC",},
+	{ "FOR",},
+	{ "NEXT",},
+	{ "REPEAT",},
+	{ "UNTIL",},
+	{ "DIM",},
 	{ "\"", tok_string},
 	{ "\r", tok_eol},
 	{ ",",},
@@ -120,7 +124,7 @@ struct token token_list[] = {
 	{ "%",},
 	{ "^",},
 	{ ":",},
-	{ "PRINTER",},
+	{ "#",},
 	NULL,
 };
 
