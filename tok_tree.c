@@ -87,41 +87,84 @@ struct line_entry *default_tokfn(struct token *t, char **ps) {
 
 struct token token_list[] = {
 	{ "PRINT",},
-	{ "IF",},
-	{ "GOTO",},
 	{ "INPUT",},
+	{ "NOT",},
+	{ "IF",},
 	{ "THEN",},
-	{ "LIST",},
+	{ "ELSE",},
+	{ "OR",},
+	{ "AND",},
+	{ "ON",},
+	{ "ERROR",},
+	{ "GOTO",},
 	{ "END",},
 	{ "DEF",},
 	{ "PROC",},
 	{ "FN",},
 	{ "ENDPROC",},
+	{ "STATIC",},
 	{ "FOR",},
 	{ "NEXT",},
 	{ "REPEAT",},
 	{ "UNTIL",},
+	{ "WHILE",},
+	{ "ENDWHILE",},
+	{ "CONTINUE",},
+	{ "ABS",},
+	{ "MOD",},
+	{ "DIV",},
 	{ "DIM",},
+	{ "LIST",},
+	{ "FORK",},
 	{ "\"", tokfn_string, print_string},
 	{ "\r", tokfn_eol},
 	{ ",",},
+
+	/* comparison operators */
 	{ "<",},
 	{ ">",},
 	{ "<=",},
 	{ ">=",},
-	{ "=",},
-	{ "+",},
-	{ "-",},
+	{ "<>",},
+
+	/* comparison & assignment */
+	{ "=",}, /* exactly equal - perhaps need a '==' for equivalent? */
+
 	{ "(",},
 	{ ")",},
-	{ "?",},
-	{ "!",},
+
+	/* math operators */
+	/* a = after these makes them assign the lvalue into the first
+	 * operand
+	 */
+	{ "*",},
+	{ "/",},
+	{ "+",},
+	{ "-",}, /* negation / subtraction */
+	{ "<<",},
+	{ ">>",},
+	{ "?",}, /* prefix: indirect u8       suffix: u8  variable */
+	{ "%",}, /* prefix: indirect s16      suffix: s16 variable */
+	{ "!",}, /* prefix: indirect s32      suffix: s32 variable */
+	{ "$",}, /* prefix: indirect string   suffix: string variable */
+	{ "#",}, /* prefix: indirect double   suffix: double variable */
+	{ "^",}, /* prefix: indirection operator suffix: pointer variable */
 	{ "|",},
-	{ "$",},
-	{ "%",},
-	{ "^",},
 	{ ":",},
-	{ "#",},
+	{ "~",},
+	{ "&",},
+	{ "@",}, /* prefix: system variables */
+	{ "/*",}, /* need evaluator for comments */
+
+	/* special cases in the lexer - NOT IMPLEMENTED YET */
+	/* \ - line continuation *\
+
+	/* 0-9 - numbers */
+	/* 0n (where n is one or more digits) - octal */
+	/* 0xn (where n is one or more hex digits */
+	/* 0bn (where n is one or more binary digits */
+
+	/* Anything else non-matching - labels */
 	NULL,
 };
 
