@@ -12,6 +12,7 @@ struct line_entry {
 struct token {
 	char *name;
 	struct line_entry *(*tok_func)(struct token *t, char **s);
+	void (*print)(struct line_entry *le);
 };
 
 struct line_entry *le_alloc(int len) {
@@ -26,8 +27,7 @@ struct line_entry *le_alloc(int len) {
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
  */
-struct line_entry *tok_string(struct token *t, char **ps) {
-	static int in_string;
+struct line_entry *tokfn_string(struct token *t, char **ps) {
 	char *s = *ps;
 	char *dest;
 	int len;
@@ -67,7 +67,12 @@ struct line_entry *tok_string(struct token *t, char **ps) {
 	return le;
 }
 
-struct line_entry *tok_eol(struct token *t, char **ps) {
+void print_string(struct line_entry *le) {
+	if(le->data)
+		printf("\"%s\"", (char *)le->data);
+}
+
+struct line_entry *tokfn_eol(struct token *t, char **ps) {
 	char *s = *ps;
 	struct line_entry *le = le_alloc(0);
 	//FIXME: alloc failure
@@ -83,7 +88,7 @@ struct line_entry *tok_eol(struct token *t, char **ps) {
 	return le;
 }
 
-struct line_entry *default_tok(struct token *t, char **ps) {
+struct line_entry *default_tokfn(struct token *t, char **ps) {
 	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
 	le->tok = t;
 
@@ -109,8 +114,8 @@ struct token token_list[] = {
 	{ "REPEAT",},
 	{ "UNTIL",},
 	{ "DIM",},
-	{ "\"", tok_string},
-	{ "\r", tok_eol},
+	{ "\"", tokfn_string, print_string},
+	{ "\r", tokfn_eol},
 	{ ",",},
 	{ "<",},
 	{ ">",},
@@ -131,6 +136,13 @@ struct token token_list[] = {
 	{ "#",},
 	NULL,
 };
+
+void print_label(struct line_entry *le) {
+	if(le->data)
+		printf("%s", (char *)le->data);
+}
+
+struct token tok_label = { "<label>", NULL, print_label};
 
 struct tok_tree_entry {
 	char c;
@@ -228,20 +240,22 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
 	char *b = s;
-	struct line_entry *le = le_alloc(0);
+	struct line_entry *le;
+	int len;
+	char *dest;
 
 	while(*s && IS_LABEL(*s))
 		s++;
 
 	/* We cannot handle bad characters, skip them */
-	if ( b == s ) {
+	if ( s == *ps ) {
 		*ps = ++s;
 		return 0;
 	}
 
 
 	{
-		char *y = b;
+		char *y = *ps;
 		if(*y >= '0' && *y <= '9')
 			printf("Number: ");  // Crude hack, no decimal point
 		else
@@ -250,6 +264,16 @@ struct line_entry *extract_label(char **ps) {
 			printf("%c", *y++);
 		printf("\n");
 	}
+
+	len = s-*ps;
+
+	le = le_alloc(len+1); // FIXME: Check failure
+
+	dest = (char *)le->data;
+	memcpy(dest, *ps, len);
+	dest[len] = 0;
+
+	le->tok = &tok_label;
 
 	*ps = s;
 
@@ -327,7 +351,7 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 			if(t->tok_func)
 				le = t->tok_func(t, &s);
 			else
-				le = default_tok(t, &s);
+				le = default_tokfn(t, &s);
 		}
 		else     /* Non-token thing found */
 			le = extract_label(&s);
