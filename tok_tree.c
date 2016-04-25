@@ -374,6 +374,7 @@ void tok_print_line(struct line_entry *le) {
 
 int main (void) {
 	struct token *t;
+	struct line_entry *le;
 
 	t = token_list;
 
@@ -422,6 +423,10 @@ int main (void) {
 	tokenise(tok_tree, "40 PRINT A$:PRINT THING%:GOTO out\r");
 	tokenise(tok_tree, "50 ENDPROC\r");
 	tokenise(tok_tree, "60 ENDPROCGOO");
+	le = tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%, \"cobbling\")\r");
+
+	printf("------------------------\n");
+	tok_print_line(le);
 
 	return 0;
 }
