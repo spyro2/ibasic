@@ -217,8 +217,9 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 #define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
-struct line_entry *extract_label(char *b, char **ps) {
-	char *s = b;
+struct line_entry *extract_label(char **ps) {
+	char *s = *ps;
+	char *b = s;
 	struct line_entry *le = le_alloc(0);
 
 	while(*s && IS_LABEL(*s))
