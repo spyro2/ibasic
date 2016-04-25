@@ -23,6 +23,9 @@ struct line_entry *le_alloc(int len) {
 	return le;
 }
 
+/* TODO: Think about ways to return errors, eg. when adding escape parsing,
+ * how to handle bad escape sequences
+ */
 struct line_entry *tok_string(struct token *t, char **ps) {
 	static int in_string;
 	char *s = *ps;
@@ -67,6 +70,7 @@ struct line_entry *tok_string(struct token *t, char **ps) {
 struct line_entry *tok_eol(struct token *t, char **ps) {
 	char *s = *ps;
 	struct line_entry *le = le_alloc(0);
+	//FIXME: alloc failure
 
 	printf("Found EOL\n");
 
@@ -80,7 +84,7 @@ struct line_entry *tok_eol(struct token *t, char **ps) {
 }
 
 struct line_entry *default_tok(struct token *t, char **ps) {
-	struct line_entry *le = le_alloc(0);
+	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
 	le->tok = t;
 
 	printf("Token %s\n", t->name);
