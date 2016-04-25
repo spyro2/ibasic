@@ -31,38 +31,26 @@ struct line_entry *tokfn_string(struct token *t, char **ps) {
 	char *s = *ps;
 	char *dest;
 	int len;
-	struct line_entry *le;
+	struct line_entry *le = NULL;
 
-	if(!in_string) {
+	while(*s && *s != '"')
+		s++;
 
-		while(*s && *s != '"')
-			s++;
+	// if(!*s)  FIXME: check for end of line / non-string chars
 
-		// if(!*s)  FIXME: check for end of line / non-string chars
+	len = s-*ps;
 
-		len = s-*ps;
+	le = le_alloc(len+1); // FIXME: Check failure
 
-		le = le_alloc(len+1); // FIXME: Check failure
+	dest = (char *)le->data;
+	memcpy(dest, *ps, len);
+	dest[len] = 0;
 
-		dest = (char *)le->data;
-		memcpy(dest, *ps, len);
-		dest[len] = 0;
+	le->tok = t;
 
-		le->tok = t;
+	printf("Found string: %s\n", dest);
 
-		printf("Found string: %s\n", dest);
-
-		*ps = s;
-	}
-	else {
-		printf("Found closing \"\n");
-
-		le = le_alloc(0); // FIXME: Check failure
-
-		le->tok = t;
-	}
-
-	in_string = !in_string;
+	*ps = ++s;
 
 	return le;
 }
