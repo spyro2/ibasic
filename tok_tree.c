@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
+struct line_entry {
+	struct token *tok;
+	struct line_entry *next;
+	void *data;
+};
 
 int tok_string(char **ps) {
 	char *s = *ps;
