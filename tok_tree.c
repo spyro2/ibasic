@@ -353,6 +353,19 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	return l;
 }
 
+void tok_print_line(struct line_entry *le) {
+
+	while(le) {
+		if(le->tok->print)
+			le->tok->print(le);
+		else
+			printf("%s", le->tok->name);
+		le = le->next;
+	}
+	printf("\n");
+
+}
+
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,
