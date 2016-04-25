@@ -261,7 +261,7 @@ struct line_entry *extract_label(char **ps) {
  * Perhaps we can skip whitespace by making it a token that is always discarded?
  */
 
-void tokenise(struct tok_tree_entry *tok_tree, char *string) {
+struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	struct tok_tree_entry *tte;
 	struct token *t;
 	char *s = string, *b;
@@ -269,34 +269,31 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 
 	printf("Tokenise: %s\n", string);
 
-	/* b points to the character after the last successfully tokenised thing */
-	b = s;
-
 	while(*s) {
+
 		/* Skip whitespace */
-		while(IS_WS(*s)) {
+		while(IS_WS(*s))
 			s++;
-			b = s;
-		}
+
+		/* Give up at the end of the string */
 		if(!*s)
 			break;
 
 		tte = tok_tree;
 		t = NULL;
+		b = s; /* Set backtrack point */
 
-//		printf("BT point: %s\n", b);
-//		printf("Search  : %s\n", s);
 		while(tte) {
-//			printf("%c %c:\n", *s, tte->c);
 			if(tte->c == *s) {
 				s++;
 
-				if(tte->tok) { /* potentially found token */
+				/* Potentially found token */
+				if(tte->tok) {
 					t = tte->tok;
 					b = s; /* Set backtrack point */
 				}
 
-				/* Found a token */
+				/* Found a token with certainty */
 				if(!tte->children || !*s || IS_WS(*s))
 					break;
 
@@ -305,38 +302,35 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 			else 
 				tte = tte->next;
 		}
-		/* match     t   tte
-		 * match+    t
-		 * no match
+
+		/*
+		 * If we reach this point without t pointing to a token
+		 * we found a label, string, etc.
+		 *
+		 * If we have no valid tte (ie. no match with certainty), then
+		 * we will need to backtrack in order to remain in sync.
+		 *
 		 */ 
 
-		if (t && tte) { /* Token found */
+		if(!tte)
+			s = b; /* Backtrack */
+
+		if (t) { /* Found a token */
 			if(t->tok_func)
 				le = t->tok_func(t, &s);
 			else
 				le = default_tok(t, &s);
 		}
-		else if (t) { /* Token found */
-			if(t->tok_func)
-				le = t->tok_func(t, &b);
-			else
-				le = default_tok(t, &b);
-
-			s = b; /* Backtrack to last known good spot */
-		}
-		else {  /* Non-token thing found */
-			/* For now, pretend all unidentifiable things are labels */
-			le = extract_label(b, &s);
-				
-			b = s; /* Update backtrack point */
-		}
-
+		else     /* Non-token thing found */
+			le = extract_label(&s);
 
 		if(le) {
 			*pl = le;
 			pl = &le->next;
 		}
 	}
+
+	return l;
 }
 
 /*
