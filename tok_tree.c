@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 struct line_entry {
@@ -8,28 +9,64 @@ struct line_entry {
 	void *data;
 };
 
-int tok_string(char **ps) {
-	char *s = *ps;
+struct token {
+	char *name;
+	struct line_entry *(*tok_func)(struct token *t, char **s);
+};
+
+struct line_entry *le_alloc(int len) {
+	struct line_entry *le = malloc(sizeof(*le)+len);
+
+	if(len)
+		le->data = le+1;
+
+	return le;
+}
+
+struct line_entry *tok_string(struct token *t, char **ps) {
 	static int in_string;
+	char *s = *ps;
+	char *dest;
+	int len;
+	struct line_entry *le;
 
 	if(!in_string) {
-		in_string = !in_string;
 
-		printf("Found string: ");
 		while(*s && *s != '"')
-			printf("%c", *s++);
-		printf("\n");
+			s++;
+
+		// if(!*s)  FIXME: check for end of line / non-string chars
+
+		len = s-*ps;
+
+		le = le_alloc(len+1); // FIXME: Check failure
+
+		dest = (char *)le->data;
+		memcpy(dest, *ps, len);
+		dest[len] = 0;
+
+		le->tok = t;
+
+		printf("Found string: %s\n", dest);
 
 		*ps = s;
 	}
-	else
+	else {
 		printf("Found closing \"\n");
 
-	return 0;
+		le = le_alloc(0); // FIXME: Check failure
+
+		le->tok = t;
+	}
+
+	in_string = !in_string;
+
+	return le;
 }
 
-int tok_eol(char **ps) {
+struct line_entry *tok_eol(struct token *t, char **ps) {
 	char *s = *ps;
+	struct line_entry *le = le_alloc(0);
 
 	printf("Found EOL\n");
 
@@ -37,13 +74,19 @@ int tok_eol(char **ps) {
 	if(*s && *s == '\n')
 		*ps = ++s;
 
-	return 0;
+	le->tok = t;
+
+	return le;
 }
 
-struct token {
-	char *name;
-	int (*tok_func)(char **s);
-};
+struct line_entry *default_tok(struct token *t, char **ps) {
+	struct line_entry *le = le_alloc(0);
+	le->tok = t;
+
+	printf("Token %s\n", t->name);
+
+	return le;
+}
 
 struct token token_list[] = {
 	{ "PRINT",},
@@ -174,15 +217,15 @@ void test_tok(struct tok_tree_entry *tte, char *s) {
 
 #define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
-char *extract_label(char *b, char **ps) {
+struct line_entry *extract_label(char *b, char **ps) {
 	char *s = b;
-	char *l = s;
+	struct line_entry *le = le_alloc(0);
 
 	while(*s && IS_LABEL(*s))
 		s++;
 
 	/* We cannot handle bad characters, skip them */
-	if ( l == s ) {
+	if ( b == s ) {
 		*ps = ++s;
 		return 0;
 	}
@@ -201,7 +244,7 @@ char *extract_label(char *b, char **ps) {
 
 	*ps = s;
 
-	return l; // This is crap, but non-zero is enough for now.
+	return le; // This is crap, but non-zero is enough for now.
 }
 
 /*
@@ -219,8 +262,11 @@ char *extract_label(char *b, char **ps) {
 
 void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	struct tok_tree_entry *tte;
-	struct token *t = NULL;
+	struct token *t;
 	char *s = string, *b;
+	struct line_entry *l = NULL, *le, **pl = &l;
+
+	printf("Tokenise: %s\n", string);
 
 	/* b points to the character after the last successfully tokenised thing */
 	b = s;
@@ -235,8 +281,10 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 			break;
 
 		tte = tok_tree;
+		t = NULL;
 
-//		printf("Search: %s\n", b);
+//		printf("BT point: %s\n", b);
+//		printf("Search  : %s\n", s);
 		while(tte) {
 //			printf("%c %c:\n", *s, tte->c);
 			if(tte->c == *s) {
@@ -244,33 +292,49 @@ void tokenise(struct tok_tree_entry *tok_tree, char *string) {
 
 				if(tte->tok) { /* potentially found token */
 					t = tte->tok;
-					b = s;
+					b = s; /* Set backtrack point */
 				}
 
-				if(!*s || IS_WS(*s))
+				/* Found a token */
+				if(!tte->children || !*s || IS_WS(*s))
 					break;
-				else
-					tte = tte->children;
+
+				tte = tte->children;
 			}
-			else
+			else 
 				tte = tte->next;
 		}
+		/* match     t   tte
+		 * match+    t
+		 * no match
+		 */ 
 
-		if (t) { /* Token found */
+		if (t && tte) { /* Token found */
 			if(t->tok_func)
-				t->tok_func(&s);
+				le = t->tok_func(t, &s);
 			else
-				printf("Token %s\n", t->name);
-			t = NULL;
+				le = default_tok(t, &s);
+		}
+		else if (t) { /* Token found */
+			if(t->tok_func)
+				le = t->tok_func(t, &b);
+			else
+				le = default_tok(t, &b);
+
+			s = b; /* Backtrack to last known good spot */
 		}
 		else {  /* Non-token thing found */
 			/* For now, pretend all unidentifiable things are labels */
-			if(!extract_label(b, &s))
-				printf("Skipping bad char\n");
-
-			b = s;
+			le = extract_label(b, &s);
+				
+			b = s; /* Update backtrack point */
 		}
 
+
+		if(le) {
+			*pl = le;
+			pl = &le->next;
+		}
 	}
 }
 
