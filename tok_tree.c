@@ -382,13 +382,18 @@ int main (void) {
 	tokenise(tok_tree, "5 PR\nOC");
 	tokenise(tok_tree, "10 PR\n\nOC");
 	tokenise(tok_tree, "15 PR\n\n\nOC");
+	tokenise(tok_tree, "15 ENDENDPROCPROD\r\n");
+	tokenise(tok_tree, "15 ENDPROCESSPROD\r\n");
+	tokenise(tok_tree, "15 ENDPROCESSPROCPROD\r\n");
 	tokenise(tok_tree, "FLOOBPRINT   PRINTIF  GOTO PROC ENDPFOG   END ENDPROC   ENDPROD goo \"blob\" ENDPROD");
+	tokenise(tok_tree, "10 PRINT \"\"\r");
 	tokenise(tok_tree, "10 PRINT \"Hello!\"PROC\r");
 	tokenise(tok_tree, "10 PRINT \"Hello!\"PRALLS\r");
 	tokenise(tok_tree, "10 PRINT \"Hello!\"BALLS\r");
 	tokenise(tok_tree, "10 PRINT \" Hello!\"\r");
 	tokenise(tok_tree, "20 INPUT A$\r");
 	tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%)\r");
+	tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%, \"cobbling\")\r");
 	tokenise(tok_tree, "40 PRINT A$:PRINT THING%:GOTO out\r");
 	tokenise(tok_tree, "50 ENDPROC\r");
 	tokenise(tok_tree, "60 ENDPROCGOO");
