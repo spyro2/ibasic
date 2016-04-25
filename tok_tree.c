@@ -50,6 +50,7 @@ struct token token_list[] = {
 	{ "END",},
 	{ "DEF",},
 	{ "PROC",},
+	{ "PFOG",},
 	{ "FN",},
 	{ "ENDPROC",},
 	{ "\"", tok_string},
