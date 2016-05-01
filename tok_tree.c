@@ -361,6 +361,8 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 		else     /* Non-token thing found */
 			le = extract_label(&s);
 
+		/* Handle errors here. FIXME: dont silently skip badness */
+
 		if(le) {
 			*pl = le;
 			pl = &le->next;
