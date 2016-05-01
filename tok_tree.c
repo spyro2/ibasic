@@ -257,7 +257,6 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 
 struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
-	char *b = s;
 	struct line_entry *le;
 	int len;
 	char *dest;
