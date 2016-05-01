@@ -192,10 +192,15 @@ struct tok_tree_entry *tok_tree = NULL;
  */
 
 int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
-	struct tok_tree_entry *parent_tte = *ptte;
+	struct tok_tree_entry *tte;
+
+	if(!ptte)
+		return -EINVAL;
+
+	tte = *ptte;
 
 	/* Are we creating a new entry? */
-	if(!*ptte) {
+	if(!tte) {
 		struct tok_tree_entry *tte_new;
 		int ret = 0;
 
@@ -226,25 +231,25 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 			*ptte = tte_new;
 
 		return ret;
-
 	}
 
-	while(parent_tte) {
-		if(parent_tte->c == *c) { /* Entry exists */
+	while(tte) {
+		if(tte->c == *c) { /* Entry exists, descend. */
 			c++;
 			if(!*c) /* Entry is a duplicate */
 				return 1;
 			else    /* Add new entry */
-				return tok_add(&parent_tte->children, t, c);
+				return tok_add(&tte->children, t, c);
 		}
+		/* No existing entry, recursively add */
+		else if(!tte->next)
+				return tok_add(&tte->next, t, c);
 
-		if(!parent_tte->next) /* No existing entry, recursively add */
-			return tok_add(&parent_tte->next, t, c);
-
-		parent_tte = parent_tte->next;
+		tte = tte->next;
 	}
-}
 
+	return 1; /* Shut compiler up */
+}
 
 #define IS_WS(c) ((c)==' ' || (c)=='\t')
 
