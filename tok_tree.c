@@ -396,14 +396,10 @@ int main (void) {
 	t = token_list;
 
 	while(t->name) {
-		printf("Adding token: '%s' %s.\n", t->name, tok_add(&tok_tree, t, t->name)?"Failed":"OK");
-		t++;
-	}
-
-	t = token_list;
-
-	while(t->name) {
-		printf("Lookup: %s ... ", t->name);
+		if(tok_add(&tok_tree, t, t->name)) {
+			printf("Failed whilst adding token: \"%s\"", t->name);
+			exit(1);
+		}
 		t++;
 	}
 
