@@ -166,7 +166,7 @@ struct token token_list[] = {
 	/* 0bn (where n is one or more binary digits */
 
 	/* Anything else non-matching - labels */
-	NULL,
+	{NULL},
 };
 
 void print_label(struct line_entry *le) {
