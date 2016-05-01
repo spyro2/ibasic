@@ -266,18 +266,6 @@ struct line_entry *extract_label(char **ps) {
 		return 0;
 	}
 
-
-	{
-		char *y = *ps;
-		if(*y >= '0' && *y <= '9')
-			printf("Number: ");  // Crude hack, no decimal point
-		else
-			printf("Label: ");
-		while(y < s)
-			printf("%c", *y++);
-		printf("\n");
-	}
-
 	len = s-*ps;
 
 	le = le_alloc(len+1); // FIXME: Check failure
