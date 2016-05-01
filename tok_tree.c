@@ -120,21 +120,21 @@ struct token token_list[] = {
 	{ "\r", tokfn_eol},
 	{ ",",},
 
-	/* comparison operators */
+	/* Comparison operators */
 	{ "<",},
 	{ ">",},
 	{ "<=",},
 	{ ">=",},
 	{ "<>",},
 
-	/* comparison & assignment */
+	/* Comparison & assignment */
 	{ "=",}, /* exactly equal - perhaps need a '==' for equivalent? */
 
 	{ "(",},
 	{ ")",},
 
-	/* math operators */
-	/* a = after these makes them assign the lvalue into the first
+	/* Math operators */
+	/* An = char after these makes them assign the lvalue into the first
 	 * operand
 	 */
 	{ "*",},
@@ -143,6 +143,7 @@ struct token token_list[] = {
 	{ "-",}, /* negation / subtraction */
 	{ "<<",},
 	{ ">>",},
+
 	{ "?",}, /* prefix: indirect u8       suffix: u8  variable */
 	{ "%",}, /* prefix: indirect s16      suffix: s16 variable */
 	{ "!",}, /* prefix: indirect s32      suffix: s32 variable */
@@ -157,7 +158,7 @@ struct token token_list[] = {
 	{ "/*",}, /* need evaluator for comments */
 
 	/* special cases in the lexer - NOT IMPLEMENTED YET */
-	/* \ - line continuation *\
+	/* \ - line continuation */
 
 	/* 0-9 - numbers */
 	/* 0n (where n is one or more digits) - octal */
