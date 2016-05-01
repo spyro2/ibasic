@@ -405,6 +405,7 @@ int main (void) {
 		t++;
 	}
 
+#if 0
 	tokenise(tok_tree, "");
 	tokenise(tok_tree, "\r");
 	tokenise(tok_tree, "\n");
@@ -437,6 +438,8 @@ int main (void) {
 	tokenise(tok_tree, "40 PRINT A$:PRINT THING%:GOTO out\r");
 	tokenise(tok_tree, "50 ENDPROC\r");
 	tokenise(tok_tree, "60 ENDPROCGOO");
+#endif
+
 	le = tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%, \"cobbling\")\r");
 
 	printf("------------------------\n");
