@@ -245,25 +245,6 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 	}
 }
 
-void test_tok(struct tok_tree_entry *tte, char *s) {
-
-	while(tte) {
-		printf("%c", tte->c);
-		if(tte->c == *s) {
-			s++;
-			if(!*s) {
-				printf("Found!\n");
-				return;
-			} else {
-				tte = tte->children;
-				printf(" --> ");
-			}
-		}
-		else
-			tte = tte->next;
-	}
-
-}
 
 #define IS_WS(c) ((c)==' ' || (c)=='\t')
 
@@ -431,7 +412,6 @@ int main (void) {
 
 	while(t->name) {
 		printf("Lookup: %s ... ", t->name);
-		test_tok(tok_tree, t->name);
 		t++;
 	}
 
