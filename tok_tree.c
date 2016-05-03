@@ -48,8 +48,6 @@ struct line_entry *tokfn_string(struct token *t, char **ps) {
 
 	le->tok = t;
 
-	printf("Found string: %s\n", dest);
-
 	*ps = ++s;
 
 	return le;
@@ -65,8 +63,6 @@ struct line_entry *tokfn_eol(struct token *t, char **ps) {
 	struct line_entry *le = le_alloc(0);
 	//FIXME: alloc failure
 
-	printf("Found EOL\n");
-
 	/* We accept \r or \r\n as valid EOL so check for a \n */
 	if(*s && *s == '\n')
 		*ps = ++s;
@@ -79,8 +75,6 @@ struct line_entry *tokfn_eol(struct token *t, char **ps) {
 struct line_entry *default_tokfn(struct token *t, char **ps) {
 	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
 	le->tok = t;
-
-	printf("Token %s\n", t->name);
 
 	return le;
 }
