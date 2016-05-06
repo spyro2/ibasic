@@ -371,13 +371,18 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	return l;
 }
 
+void tok_print_one(struct line_entry *le) {
+
+	if(le->tok->print)
+		le->tok->print(le);
+	else
+		printf("%s ", le->tok->name);
+}
+
 void tok_print_line(struct line_entry *le) {
 
 	while(le) {
-		if(le->tok->print)
-			le->tok->print(le);
-		else
-			printf("%s", le->tok->name);
+		tok_print_one(le);
 		le = le->next;
 	}
 	printf("\n");
