@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 struct line_entry {
 	struct token *tok;
@@ -473,6 +478,7 @@ struct line_entry *get_next_le(struct tok_tree_entry *tok_tree, int fd, struct l
 int main (void) {
 	struct token *t;
 	struct line_entry *le;
+	int fd;
 
 	t = token_list;
 
@@ -527,6 +533,20 @@ int main (void) {
 
 	printf("------------------------\n");
 	tok_print_line(le);
+
+	fd = open("test.bas", O_RDONLY);
+	if(fd == -1) {
+		printf("Couldnt open file\n");
+		exit(1);
+	}
+
+	do {
+		le = get_next_le(tok_tree, fd, NULL);
+		if(le) {
+			tok_print_one(le);
+		}
+
+	} while(le);
 
 	return 0;
 }
