@@ -348,7 +348,7 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 		 *
 		 */ 
 
-		if(!tte)
+		if(!tte || !t)
 			s = b; /* Backtrack */
 
 		if (t) { /* Found a token */
