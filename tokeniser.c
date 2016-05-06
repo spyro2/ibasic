@@ -144,8 +144,8 @@ struct token token_list[] = {
 	{ ">>",},
 
 	{ "?",}, /* prefix: indirect u8       suffix: u8  variable */
-	{ "%",}, /* prefix: indirect s16      suffix: s16 variable */
-	{ "!",}, /* prefix: indirect s32      suffix: s32 variable */
+	{ "%",}, /* prefix: indirect u16      suffix: u16 variable */
+	{ "!",}, /* prefix: indirect u32      suffix: u32 variable */
 	{ "$",}, /* prefix: indirect string   suffix: string variable */
 	{ "#",}, /* prefix: indirect double   suffix: double variable */
 	{ "^",}, /* prefix: indirection operator suffix: pointer variable */
