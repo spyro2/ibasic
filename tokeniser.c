@@ -98,6 +98,8 @@ struct token token_list[] = {
 	{ "ENDPROC",},
 	{ "STATIC",},
 	{ "FOR",},
+	{ "TO",},
+	{ "STEP",},
 	{ "NEXT",},
 	{ "REPEAT",},
 	{ "UNTIL",},
