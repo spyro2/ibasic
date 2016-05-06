@@ -417,6 +417,10 @@ int main (void) {
 	tokenise(tok_tree, "\n\r");
 	tokenise(tok_tree, "\r\n ");
 	tokenise(tok_tree, " ");
+	tokenise(tok_tree, "L = 1");
+	tokenise(tok_tree, " L = 1");
+	tokenise(tok_tree, "LL = 1");
+	tokenise(tok_tree, "LLL = 1");
 	tokenise(tok_tree, "L");
 	tokenise(tok_tree, " L");
 	tokenise(tok_tree, "  L");
