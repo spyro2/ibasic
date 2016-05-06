@@ -63,18 +63,8 @@ void print_string(struct line_entry *le) {
 		printf("\"%s\"", (char *)le->data);
 }
 
-struct line_entry *tokfn_eol(struct token *t, char **ps) {
-	char *s = *ps;
-	struct line_entry *le = le_alloc(0);
-	//FIXME: alloc failure
-
-	/* We accept \r or \r\n as valid EOL so check for a \n */
-	if(*s && *s == '\n')
-		*ps = ++s;
-
-	le->tok = t;
-
-	return le;
+void print_eol(struct line_entry *le) {
+	printf("\n");
 }
 
 struct line_entry *default_tokfn(struct token *t, char **ps) {
@@ -123,7 +113,8 @@ struct token token_list[] = {
 	{ "MACRO",},
 	{ "ALLOC",},
 	{ "\"", tokfn_string, print_string},
-	{ "\r", tokfn_eol},
+	{ "\r\n", NULL, print_eol},
+	{ "\n", NULL, print_eol},
 	{ ",",},
 
 	/* Comparison operators */
