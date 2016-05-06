@@ -389,6 +389,81 @@ void tok_print_line(struct line_entry *le) {
 
 }
 
+char *get_one_line(int fd) {
+	static char *buf;
+	static char line[32*1024];
+	static int end;
+	char *n;
+
+	if(!buf) {
+		buf = malloc(32*1024); //FIXME: return code
+		end = read(fd, buf, 32*1024);
+	}
+
+	n = buf;
+	while (n < buf+end && *n != '\n' ) {
+		if(*n == 0) {
+			printf("End of program\n");
+			exit(0);
+		}
+		n++;
+	}
+
+	if ( n < buf+end ) {
+		int r;
+		memcpy(line, buf, (n-buf)+1);
+		line[n-buf+1] = 0;
+		memmove(buf, n+1, 32*1024-(n-buf)+1);
+		r = read(fd, n+1, (n-buf)+1);
+		if ( r != -1)
+			end += r;
+		if ( r == 0 )
+			buf[end] = 0;
+		return line;
+	}
+
+	return NULL;
+}
+
+
+struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int fd) {
+	char *buf;
+	struct line_entry *le;
+
+	buf = get_one_line(fd); // FIXME: for now, guarantee newline  terminated or die.
+
+	if(!buf) {
+		printf("Line way too long\n");
+		exit(1);
+	}
+
+	le = tokenise(tok_tree, buf);
+
+	/* FIXME: for goto - check if first token is a label? add to label database? or should parser do this? Probably the parser. */
+
+	return le;
+}
+
+struct line_entry *get_next_le(struct tok_tree_entry *tok_tree, int fd, struct line_entry *jump) {
+	static struct line_entry *next_le = NULL;
+	struct line_entry *le;
+
+	/* FIXME: for goto / procedure calls
+	if(jump)
+		le = jump_to(jump);
+	*/
+
+	if(next_le)
+		le = next_le;
+	else
+		le = attempt_to_get_le(tok_tree, fd);
+
+	if(le)
+		next_le = le->next;
+
+	return le;
+}
+
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,
