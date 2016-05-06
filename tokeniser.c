@@ -305,8 +305,6 @@ struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	char *s = string, *b;
 	struct line_entry *l = NULL, *le, **pl = &l;
 
-	printf("Tokenise: %s\n", string);
-
 	while(*s) {
 
 		/* Skip whitespace */
