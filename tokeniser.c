@@ -170,7 +170,7 @@ struct token token_list[] = {
 
 void print_label(struct line_entry *le) {
 	if(le->data)
-		printf("%s", (char *)le->data);
+		printf("{%s} ", (char *)le->data);
 }
 
 struct token tok_label = { "<label>", NULL, print_label};
