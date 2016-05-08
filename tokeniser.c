@@ -75,24 +75,47 @@ struct line_entry *default_tokfn(struct token *t, char **ps) {
 }
 
 struct token token_list[] = {
+	/* IO statements */
 	{ "PRINT",},
 	{ "INPUT",},
+
+	/* Logic operators */
 	{ "NOT",},
+	{ "OR",},
+	{ "AND",},
+	{ "XOR",},
+	{ "TRUE",},
+	{ "FALSE",},
+
+	/* Flow control and error handling */
 	{ "IF",},
 	{ "THEN",},
 	{ "ELSE",},
-	{ "OR",},
-	{ "AND",},
+	{ "GOTO",},
 	{ "ON",},
 	{ "ERROR",},
-	{ "GOTO",},
-	{ "END",},
-	{ "DEF",},
 	{ "PROC",},
 	{ "FN",},
 	{ "ENDPROC",},
-	{ "STATIC",},
+	{ "END",},
+	{ "FORK",},  /* Threading! */
+
+	/* Define functions / procedures / structures */
+	{ "DEF",},
+
+	/* Allow for more sophisticated types without sigil-hell */
+	{ "LET",},
+	{ "BE",},
+	{ "AS",},
+	{ "SIGNED",},
+	{ "UNSIGNED",},
+	{ "INT",},
+	{ "BIT",},
+
+	/* Loops */
 	{ "FOR",},
+	{ "EACH",},
+	{ "IN",},
 	{ "TO",},
 	{ "STEP",},
 	{ "NEXT",},
@@ -102,20 +125,35 @@ struct token token_list[] = {
 	{ "ENDWHILE",},
 	{ "BREAK",},
 	{ "CONTINUE",},
-	{ "ABS",},
-	{ "MOD",},
-	{ "DIV",},
-	{ "DIM",},
-	{ "LIST",},
-	{ "FORK",},
-	{ "TRUE",},
-	{ "FALSE",},
-	{ "MACRO",},
+
+	/* Scoping */
+	{ "STATIC",},
+	{ "GLOBAL",},
+
+/*	{ "MACRO",}, */
+
+	/* Memory allocation */
 	{ "ALLOC",},
-	{ "\"", tokfn_string, print_string},
+	{ "DIM",},
+	{ "LIST",}, /* Unlike older BASICs - for creating lists! */
+
+	/* Seperators and EOL */
 	{ "\r\n", NULL, print_eol},
 	{ "\n", NULL, print_eol},
 	{ ",",},
+
+	/* Types */
+	{ "\"", tokfn_string, print_string},
+
+	/* String operators */
+	{ ";",},
+	/*
+	MID
+	LEFT
+	RIGHT
+	STRCHR
+	STRSTR
+	*/
 
 	/* Comparison operators */
 	{ "<",},
@@ -127,20 +165,29 @@ struct token token_list[] = {
 	/* Comparison & assignment */
 	{ "=",}, /* exactly equal - perhaps need a '==' for equivalent? */
 
+	/* Brackets */
 	{ "(",},
 	{ ")",},
+	{ "{",},
+	{ "}",},
 
 	/* Math operators */
-	/* An = char after these makes them assign the lvalue into the first
-	 * operand
+	/* An = char after these makes them assign the result into the first
+	 * operand. Maybe use a special evaluator for these. Maybe not.
 	 */
+	{ "ABS",},
+	{ "MOD",},
+	{ "DIV",},
 	{ "*",},
 	{ "/",},
 	{ "+",},
 	{ "-",}, /* negation / subtraction */
 	{ "<<",},
-	{ ">>",},
+	{ ">>",}, /* Consider a >>> for non-twos complement shift */
 
+	/* BASIC's sigil types are horrible and limiting - perhaps we
+	 * should remove/simplify them?
+	 */
 	{ "?",}, /* prefix: indirect u8       suffix: u8  variable */
 	{ "%",}, /* prefix: indirect u16      suffix: u16 variable */
 	{ "!",}, /* prefix: indirect u32      suffix: u32 variable */
@@ -152,10 +199,10 @@ struct token token_list[] = {
 	{ "~",},
 	{ "&",},
 	{ "@",}, /* prefix: system variables */
-	{ "/*",}, /* need evaluator for comments */
 
 	/* special cases in the lexer - NOT IMPLEMENTED YET */
 	/* \ - line continuation */
+	/* { "/ *",}, - need evaluator for comments */
 
 	/* 0-9 - numbers */
 	/* 0n (where n is one or more digits) - octal */
