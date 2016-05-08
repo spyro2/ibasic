@@ -233,8 +233,13 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 	while(tte) {
 		if(tte->c == *c) { /* Entry exists, descend. */
 			c++;
-			if(!*c) /* Entry is a duplicate */
-				return 1;
+			if(!*c)
+				if(!tte->tok) {
+					tte->tok = t;
+					return 0;
+				}
+				else /* Entry is a duplicate */
+					return 1;
 			else    /* Add new entry */
 				return tok_add(&tte->children, t, c);
 		}
