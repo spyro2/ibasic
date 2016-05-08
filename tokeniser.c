@@ -102,6 +102,7 @@ struct token token_list[] = {
 	{ "FN",},
 	{ "ENDPROC",},
 	{ "RETURN",}, /* Call by reference */
+	{ "CONST",},
 	{ "END",},
 	{ "FORK",},  /* Threading! */
 
