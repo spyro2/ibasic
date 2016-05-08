@@ -255,7 +255,7 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 
 #define IS_WS(c) ((c)==' ' || (c)=='\t')
 
-#define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+#define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z') || ((c) == '_'))
 
 struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
