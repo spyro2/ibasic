@@ -158,11 +158,12 @@ struct token token_list[] = {
 	/* String operators */
 	{ ";",},
 	/*
+	LEN
 	MID
 	LEFT
 	RIGHT
-	STRCHR
-	STRSTR
+	INSTR
+	STRING
 	*/
 
 	/* Comparison operators */
