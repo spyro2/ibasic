@@ -142,6 +142,10 @@ struct token token_list[] = {
 	{ "ALLOC",},
 	{ "DIM",},
 	{ "LIST",}, /* Unlike older BASICs - for creating lists! */
+	{ "ADD",},
+	{ "BEFORE",},
+	{ "AFTER",},
+	/* SIZEOF */
 
 	/* Seperators and EOL */
 	{ "\r\n", NULL, print_eol},
