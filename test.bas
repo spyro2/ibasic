@@ -15,7 +15,7 @@ DIM A[3][3][3] AS SIGNED SHORT
 
 
 
-DEF VESSEL_INFO{name$, YEAR%, MASS}
+DEF VESSEL_INFO{name$, year%, mass}
 
 DEF VOYAGE{destination$, boat AS VESSEL_INFO, completed AS BIT}
 
@@ -63,4 +63,8 @@ FOR I%=1 TO 5
 NEXT I%
 PRINT "The minimum grade was ";Minimum%
       
+A$ = LEFT$("Fred has a farm", 8)
+LEFT$(A$, 4) = "Bob owns a Ferrari")
+
+
 END
