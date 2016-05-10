@@ -65,6 +65,7 @@ static struct token token_list[] = {
 	{tokn_if, "IF",},
 	{tokn_then, "THEN",},
 	{tokn_else, "ELSE",},
+	{tokn_endif, "ENDIF",},
 	{tokn_case, "CASE",},
 	{tokn_of, "OF",},
 	{tokn_when, "WHEN",},
