@@ -199,17 +199,17 @@ struct token token_list[] = {
 	/* BASIC's sigil types are horrible and limiting - perhaps we
 	 * should remove/simplify them?
 	 */
-	{ "?",}, /* prefix: indirect u8       suffix: u8  variable */
+/*	{ "?",}, prefix: indirect u8       suffix: u8  variable */
 	{ "%",}, /* prefix: indirect u16      suffix: u16 variable */
-	{ "!",}, /* prefix: indirect u32      suffix: u32 variable */
 	{ "$",}, /* prefix: indirect string   suffix: string variable */
-	{ "#",}, /* prefix: indirect double   suffix: double variable */
-	{ "^",}, /* prefix: indirection operator suffix: pointer variable */
-	{ "|",},
 	{ ":",},
-	{ "~",},
-	{ "&",},
 	{ "@",}, /* prefix: system variables */
+/*	{ "!",}, prefix: indirect u32      suffix: u32 variable */
+/*	{ "#",}, prefix: indirect double   suffix: double variable */
+/*	{ "^",}, prefix: indirection operator suffix: pointer variable */
+/*	{ "|",}, */
+/*	{ "~",}, */
+/*	{ "&",}, */
 
 	/* special cases in the lexer - NOT IMPLEMENTED YET */
 	/* \ - line continuation */
