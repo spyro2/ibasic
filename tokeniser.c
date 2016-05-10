@@ -3,9 +3,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "tokeniser.h"
 
 
@@ -526,10 +523,8 @@ struct line_entry *get_next_le(struct tok_tree_entry *tok_tree, int fd, struct l
  * allowing faster matching of tokens (binary search)
  */
 
-int main (void) {
+int tokeniser_init (void) {
 	struct token *t;
-	struct line_entry *le;
-	int fd;
 
 	t = token_list;
 
@@ -540,64 +535,6 @@ int main (void) {
 		}
 		t++;
 	}
-
-#if 0
-	tokenise(tok_tree, "");
-	tokenise(tok_tree, "\r");
-	tokenise(tok_tree, "\n");
-	tokenise(tok_tree, "\r\n");
-	tokenise(tok_tree, "\n\r");
-	tokenise(tok_tree, "\r\n ");
-	tokenise(tok_tree, " ");
-	tokenise(tok_tree, "L = 1");
-	tokenise(tok_tree, " L = 1");
-	tokenise(tok_tree, "LL = 1");
-	tokenise(tok_tree, "LLL = 1");
-	tokenise(tok_tree, "L");
-	tokenise(tok_tree, " L");
-	tokenise(tok_tree, "  L");
-	tokenise(tok_tree, "   L");
-	tokenise(tok_tree, "L ");
-	tokenise(tok_tree, "L  ");
-	tokenise(tok_tree, "LABLE");
-	tokenise(tok_tree, "5 PR\nOC");
-	tokenise(tok_tree, "10 PR\n\nOC");
-	tokenise(tok_tree, "15 PR\n\n\nOC");
-	tokenise(tok_tree, "15 ENDENDPROCPROD\r\n");
-	tokenise(tok_tree, "15 ENDPROCESSPROD\r\n");
-	tokenise(tok_tree, "15 ENDPROCESSPROCPROD\r\n");
-	tokenise(tok_tree, "FLOOBPRINT   PRINTIF  GOTO PROC ENDPFOG   END ENDPROC   ENDPROD goo \"blob\" ENDPROD");
-	tokenise(tok_tree, "10 PRINT \"\"\r");
-	tokenise(tok_tree, "10 PRINT \"Hello!\"PROC\r");
-	tokenise(tok_tree, "10 PRINT \"Hello!\"PRALLS\r");
-	tokenise(tok_tree, "10 PRINT \"Hello!\"BALLS\r");
-	tokenise(tok_tree, "10 PRINT \" Hello!\"\r");
-	tokenise(tok_tree, "20 INPUT A$\r");
-	tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%)\r");
-	tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%, \"cobbling\")\r");
-	tokenise(tok_tree, "40 PRINT A$:PRINT THING%:GOTO out\r");
-	tokenise(tok_tree, "50 ENDPROC\r");
-	tokenise(tok_tree, "60 ENDPROCGOO");
-
-	le = tokenise(tok_tree, "30 DEFPROCthingy(A$, THING%, \"cobbling\")\r");
-
-	printf("------------------------\n");
-	tok_print_line(le);
-
-#endif
-	fd = open("test.bas", O_RDONLY);
-	if(fd == -1) {
-		printf("Couldnt open file\n");
-		exit(1);
-	}
-
-	do {
-		le = get_next_le(tok_tree, fd, NULL);
-		if(le) {
-			tok_print_one(le);
-		}
-
-	} while(le);
 
 	return 0;
 }
