@@ -3,10 +3,8 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+
 #include "tokeniser.h"
-
-
-
 
 static struct line_entry *le_alloc(int len) {
 	struct line_entry *le = malloc(sizeof(*le)+len);
