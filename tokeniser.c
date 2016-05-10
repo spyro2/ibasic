@@ -8,7 +8,7 @@
 
 
 
-struct line_entry *le_alloc(int len) {
+static struct line_entry *le_alloc(int len) {
 	struct line_entry *le = malloc(sizeof(*le)+len);
 
 	if(len)
@@ -20,7 +20,7 @@ struct line_entry *le_alloc(int len) {
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
  */
-struct line_entry *tokfn_string(struct token *t, char **ps) {
+static struct line_entry *tokfn_string(struct token *t, char **ps) {
 	char *s = *ps;
 	char *dest;
 	int len;
@@ -46,23 +46,23 @@ struct line_entry *tokfn_string(struct token *t, char **ps) {
 	return le;
 }
 
-void print_string(struct line_entry *le) {
+static void print_string(struct line_entry *le) {
 	if(le->data)
 		printf("\"%s\"", (char *)le->data);
 }
 
-void print_eol(struct line_entry *le) {
+static void print_eol(struct line_entry *le) {
 	printf("\n");
 }
 
-struct line_entry *default_tokfn(struct token *t, char **ps) {
+static struct line_entry *default_tokfn(struct token *t, char **ps) {
 	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
 	le->tok = t;
 
 	return le;
 }
 
-struct token token_list[] = {
+static struct token token_list[] = {
 	/* Flow control and error handling */
 	{tokn_if, "IF",},
 	{tokn_then, "THEN",},
@@ -218,12 +218,12 @@ struct token token_list[] = {
 	{0, NULL},
 };
 
-void print_label(struct line_entry *le) {
+static void print_label(struct line_entry *le) {
 	if(le->data)
 		printf("{%s} ", (char *)le->data);
 }
 
-struct token tok_label = {tokn_label, "<label>", NULL, print_label};
+static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
 
 struct tok_tree_entry {
 	char c;
@@ -232,7 +232,7 @@ struct tok_tree_entry {
 	struct token *tok;
 };
 
-struct tok_tree_entry *tok_tree = NULL;
+static struct tok_tree_entry *tok_tree = NULL;
 
 /*
  * We assume the token being added is valid - this function is recursive and
@@ -240,7 +240,7 @@ struct tok_tree_entry *tok_tree = NULL;
  * stage in the process of adding a token
  */
 
-int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
+static int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 	struct tok_tree_entry *tte;
 
 	if(!ptte)
@@ -309,7 +309,7 @@ int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 
 #define IS_LABEL(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z') || ((c) == '_'))
 
-struct line_entry *extract_label(char **ps) {
+static struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
 	struct line_entry *le;
 	int len;
@@ -352,7 +352,7 @@ struct line_entry *extract_label(char **ps) {
  * Perhaps we can skip whitespace by making it a token that is always discarded?
  */
 
-struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
+static struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
 	struct tok_tree_entry *tte;
 	struct token *t;
 	char *s = string, *b;
@@ -442,7 +442,7 @@ void tok_print_line(struct line_entry *le) {
 
 }
 
-char *get_one_line(int fd) {
+static char *get_one_line(int fd) {
 	static char *buf;
 	static char line[32*1024];
 	static int end;
@@ -479,7 +479,7 @@ char *get_one_line(int fd) {
 }
 
 
-struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int fd) {
+static struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int fd) {
 	char *buf;
 	struct line_entry *le;
 
@@ -497,7 +497,7 @@ struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int fd) {
 	return le;
 }
 
-struct line_entry *get_next_le(struct tok_tree_entry *tok_tree, int fd, struct line_entry *jump) {
+struct line_entry *get_next_le(int fd, struct line_entry *jump) {
 	static struct line_entry *next_le = NULL;
 	struct line_entry *le;
 
