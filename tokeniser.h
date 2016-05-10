@@ -4,4 +4,16 @@ enum tokid {
 	tokn_label,
 };
 
+struct line_entry {
+        struct token *tok;
+        struct line_entry *next;
+        void *data;
+};
+
+struct token {
+        enum tokid id;
+        char *name;
+        struct line_entry *(*tok_func)(struct token *t, char **s);
+        void (*print)(struct line_entry *le);
+};
 
