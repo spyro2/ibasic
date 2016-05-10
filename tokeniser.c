@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "tokeniser.h"
 
 
 struct line_entry {
@@ -15,6 +16,7 @@ struct line_entry {
 };
 
 struct token {
+	enum tokid id;
 	char *name;
 	struct line_entry *(*tok_func)(struct token *t, char **s);
 	void (*print)(struct line_entry *le);
@@ -75,88 +77,94 @@ struct line_entry *default_tokfn(struct token *t, char **ps) {
 }
 
 struct token token_list[] = {
-	/* IO statements */
-	{ "PRINT",},
-	{ "INPUT",},
-
-	/* Logic operators */
-	{ "NOT",},
-	{ "OR",},
-	{ "AND",},
-	{ "XOR",},
-	{ "TRUE",},
-	{ "FALSE",},
-
 	/* Flow control and error handling */
-	{ "IF",},
-	{ "THEN",},
-	{ "ELSE",},
-	{ "GOTO",},
-	{ "CASE",},
-	{ "OF",},
-	{ "WHEN",},
-	{ "ENDCASE",},
-	{ "ON",},
-	{ "ERROR",},
-	{ "PROC",},
-	{ "FN",},
-	{ "ENDPROC",},
-	{ "RETURN",}, /* Call by reference */
-	{ "CONST",},
-	{ "END",},
-	{ "FORK",},  /* Threading! */
-
-	/* Define functions / procedures / structures */
-	{ "DEF",},
-
-	/* Allow for more sophisticated types without sigil-hell */
-	{ "LET",},
-	{ "BE",},
-	{ "AS",},
-	{ "SIGNED",},
-	{ "UNSIGNED",},
-	{ "INT",},
-	{ "BIT",},
+	{tokn_if, "IF",},
+	{tokn_then, "THEN",},
+	{tokn_else, "ELSE",},
+	{tokn_case, "CASE",},
+	{tokn_of, "OF",},
+	{tokn_when, "WHEN",},
+	{tokn_endcase, "ENDCASE",},
+	{tokn_on, "ON",},
+	{tokn_error, "ERROR",},
+	{tokn_proc, "PROC",},
+	{tokn_fn, "FN",},
+	{tokn_endproc, "ENDPROC",},
+	{tokn_return, "RETURN",}, /* Call by reference */
+	{tokn_end, "END",},
+	{tokn_fork, "FORK",},  /* Threading! */
 
 	/* Loops */
-	{ "FOR",},
-	{ "EACH",},
-	{ "IN",},
-	{ "TO",},
-	{ "STEP",},
-	{ "NEXT",},
-	{ "REPEAT",},
-	{ "UNTIL",},
-	{ "WHILE",},
-	{ "ENDWHILE",},
-	{ "BREAK",},
-	{ "CONTINUE",},
+	{tokn_for, "FOR",},
+	{tokn_each, "EACH",}, /* For lists */
+	{tokn_in, "IN",},
+	{tokn_to, "TO",},
+	{tokn_step, "STEP",},
+	{tokn_next, "NEXT",},
+	{tokn_repeat, "REPEAT",},
+	{tokn_until, "UNTIL",},
+	{tokn_while, "WHILE",},
+	{tokn_endwhile, "ENDWHILE",},
+
+	/* Evil awkkward cases */
+	{tokn_break, "BREAK",},
+	{tokn_continue, "CONTINUE",},
+	{tokn_goto, "GOTO",},
 
 	/* Scoping */
-	{ "STATIC",},
-	{ "GLOBAL",},
+	{tokn_static, "STATIC",},
+	{tokn_global, "GLOBAL",},
+	{tokn_const, "CONST",},
+
+	/* Logic operators */
+	{tokn_not, "NOT",},
+	{tokn_or, "OR",},
+	{tokn_and, "AND",},
+	{tokn_xor, "XOR",},
+	{tokn_true, "TRUE",},  /* Handle these as special labels in future */
+	{tokn_false, "FALSE",},
+
+	/* Define functions / procedures / structures / types */
+	{tokn_def, "DEF",},
+
+	/* Allow for more sophisticated types without sigil-hell */
+	{tokn_let, "LET",},
+	{tokn_be, "BE",},
+	{tokn_as, "AS",},
+	{tokn_signed, "SIGNED",},
+	{tokn_unsigned, "UNSIGNED",},
+	{tokn_int, "INT",},
+	{tokn_bit, "BIT",},
 
 /*	{ "MACRO",}, */
 
 	/* Memory allocation */
-	{ "ALLOC",},
-	{ "DIM",},
-	{ "LIST",}, /* Unlike older BASICs - for creating lists! */
-	{ "ADD",},
-	{ "BEFORE",},
-	{ "AFTER",},
+	{tokn_alloc, "ALLOC",},
+	{tokn_dim, "DIM",},
+	{tokn_list, "LIST",}, /* Unlike older BASICs - for creating lists! */
+	{tokn_add, "ADD",},
+	{tokn_before, "BEFORE",},
+	{tokn_after, "AFTER",},
+	{tokn_remove, "REMOVE",},
 	/* SIZEOF */
 
+	/* Allow loading of additional libraries at runtime */
+	{tokn_library, "LIBRARY",},
+
 	/* Seperators and EOL */
-	{ "\r\n", NULL, print_eol},
-	{ "\n", NULL, print_eol},
-	{ ",",},
+	{tokn_newline, "\r\n", NULL, print_eol},
+	{tokn_newline, "\n", NULL, print_eol},
+	{tokn_comma, ",",},
 
 	/* Types */
-	{ "\"", tokfn_string, print_string},
+	{tokn_string, "\"", tokfn_string, print_string},
+
+	/* IO statements */
+	{tokn_print, "PRINT",},
+	{tokn_input, "INPUT",},
 
 	/* String operators */
-	{ ";",},
+	{tokn_semicolon, ";",},
 	/*
 	LEN
 	MID
@@ -167,49 +175,49 @@ struct token token_list[] = {
 	*/
 
 	/* Comparison operators */
-	{ "<",},
-	{ ">",},
-	{ "<=",},
-	{ ">=",},
-	{ "<>",},
+	{tokn_lt, "<",},
+	{tokn_gt, ">",},
+	{tokn_le, "<=",},
+	{tokn_ge, ">=",},
+	{tokn_ne, "<>",},
 
 	/* Comparison & assignment */
-	{ "=",}, /* exactly equal - perhaps need a '==' for equivalent? */
+	{tokn_eq, "=",}, /* exactly equal - perhaps need a '==' for equivalent? */
 
 	/* Brackets */
-	{ "(",},
-	{ ")",},
-	{ "{",},
-	{ "}",},
+	{tokn_oparen, "(",},
+	{tokn_cparen, ")",},
+	{tokn_obrace, "{",},
+	{tokn_cbrace, "}",},
 
 	/* Math operators */
 	/* An = char after these makes them assign the result into the first
 	 * operand. Maybe use a special evaluator for these. Maybe not.
 	 */
-	{ "ABS",},
-	{ "MOD",},
-	{ "DIV",},
-	{ "*",},
-	{ "/",},
-	{ "+",},
-	{ "-",}, /* negation / subtraction */
-	{ "<<",},
-	{ ">>",}, /* Consider a >>> for non-twos complement shift */
+	{tokn_abs, "ABS",},
+	{tokn_mod, "MOD",},
+	{tokn_div, "DIV",},
+	{tokn_asterisk, "*",},
+	{tokn_slash, "/",},
+	{tokn_plus, "+",},
+	{tokn_minus, "-",}, /* negation / subtraction */
+	{tokn_lshift, "<<",},
+	{tokn_rshift, ">>",}, /* Consider a >>> for non-twos complement shift */
 
 	/* BASIC's sigil types are horrible and limiting - perhaps we
 	 * should remove/simplify them?
 	 */
 /*	{ "?",}, prefix: indirect u8       suffix: u8  variable */
-	{ "%",}, /* prefix: indirect u16      suffix: u16 variable */
-	{ "$",}, /* prefix: indirect string   suffix: string variable */
-	{ ":",},
-	{ "@",}, /* prefix: system variables */
+	{tokn_percent, "%",}, /* prefix: indirect u16      suffix: u16 variable */
 /*	{ "!",}, prefix: indirect u32      suffix: u32 variable */
+	{tokn_dollar, "$",}, /* prefix: indirect string   suffix: string variable */
 /*	{ "#",}, prefix: indirect double   suffix: double variable */
 /*	{ "^",}, prefix: indirection operator suffix: pointer variable */
 /*	{ "|",}, */
+	{tokn_colon, ":",},
 /*	{ "~",}, */
 /*	{ "&",}, */
+	{tokn_at, "@",}, /* prefix: system variables */
 
 	/* special cases in the lexer - NOT IMPLEMENTED YET */
 	/* \ - line continuation */
@@ -221,7 +229,7 @@ struct token token_list[] = {
 	/* 0bn (where n is one or more binary digits */
 
 	/* Anything else non-matching - labels */
-	{NULL},
+	{0, NULL},
 };
 
 void print_label(struct line_entry *le) {
@@ -229,7 +237,7 @@ void print_label(struct line_entry *le) {
 		printf("{%s} ", (char *)le->data);
 }
 
-struct token tok_label = { "<label>", NULL, print_label};
+struct token tok_label = {tokn_label, "<label>", NULL, print_label};
 
 struct tok_tree_entry {
 	char c;
