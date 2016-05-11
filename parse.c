@@ -6,17 +6,133 @@
 
 #include "tokeniser.h"
 
+static int fd;
+struct line_entry *le;
 
-int parse (int fd) {
-	struct line_entry *le;
+void next_le(void) {
+	le = get_next_le(fd, NULL);
+	tok_print_one(le);
+}
+
+int tok_is(enum tokid id) {
+	return le->tok->id == id ? 1 : 0;
+}
+
+int accept(enum tokid id) {
+
+	if (le->tok->id == id) {
+		next_le();
+		return 1;
+	}
+
+	return 0;
+}
+
+int expect(enum tokid id) {
+	if (accept(id))
+		return 1;
+
+	printf("Unexpected token: %s\n", le->tok->name?le->tok->name:"Unknown");
+	printf("Expected: %d (%s)\n", id, tok_from_id(id)?tok_from_id(id)->name:"null"); // FIXME: null deref
+	exit(1);
+
+	return 0;
+}
+
+void expression(void) {
+	accept(tokn_label);
+}
+
+void condition(void) {
+	expression();
+
+	if(tok_is(tokn_lt) || tok_is(tokn_gt) ||
+	   tok_is(tokn_le) || tok_is(tokn_ge) ||
+	   tok_is(tokn_ne) || tok_is(tokn_eq)) {
+		next_le();
+		expression();
+	}
+}
+
+void line(void);
+
+void statement(void) {
+	if(accept(tokn_if)) {
+
+		condition();
+
+		accept(tokn_then);
+
+		if(accept(tokn_eol)) {
+			do {
+				line();
+				if(accept(tokn_else))
+					do {
+						line();
+					} while (!tok_is(tokn_endif));
+			} while(!tok_is(tokn_endif));
+			expect(tokn_endif);
+		}
+		else {
+			do {
+				statement();
+			} while (accept(tokn_colon));
+
+			if (accept(tokn_else)) {
+				do {
+					statement();
+				} while (accept(tokn_colon));
+			}
+		}
+	}
+/*
+	else if(tok_is(tokn_else)) {
+		printf("Unexpected ELSE\n");
+		exit(1);
+	}
+	else if(tok_is(tokn_then)) {
+		printf("Unexpected THEN\n");
+		exit(1);
+	}
+*/
+	else if(accept(tokn_print)) {
+		do {
+			if(!accept(tokn_string))
+				expression();
+		} while(accept(tokn_semicolon));
+	}
+}
+
+void line(void) {
 
 	do {
-		le = get_next_le(fd, NULL);
+		if(accept(tokn_label)) {
+			if(!accept(tokn_colon)) {
+				expect(tokn_eq);
+				expression();
+			}
+		}
+		else
+			statement();
+	} while (accept(tokn_colon));
+	expect(tokn_eol);
+}
+
+
+int parse (int fd) {
+
+	next_le();
+	do {
+		line();
+	} while(!tok_is(tokn_end));
+/*
+	do {
 		if(le) {
 			tok_print_one(le);
 	}
 
 	} while(le);
+*/
 
 	return 0;
 }
@@ -24,7 +140,6 @@ int parse (int fd) {
 
 
 int main(void) {
-	int fd;
 
 	tokeniser_init();
 
