@@ -516,6 +516,20 @@ struct line_entry *get_next_le(int fd, struct line_entry *jump) {
 	return le;
 }
 
+/* This is not quite a 1:1 mapping- may need FIXME in future */
+
+struct token *tok_from_id(enum tokid id) {
+	struct token *t = token_list;
+
+        while(t->name) {
+		if(t->id == id)
+			return t;
+		t++;
+	}
+
+	return NULL;
+}
+
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,

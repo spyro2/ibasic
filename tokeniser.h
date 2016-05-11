@@ -21,4 +21,5 @@ int tokeniser_init (void);
 struct line_entry *get_next_le(int fd, struct line_entry *jump);
 void tok_print_one(struct line_entry *le);
 void tok_print_line(struct line_entry *le);
+struct token *tok_from_id(enum tokid id);
 
