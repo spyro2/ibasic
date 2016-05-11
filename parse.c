@@ -102,6 +102,41 @@ void statement(void) {
 		exit(1);
 	}
 */
+	else if(accept(tokn_case)) {
+
+		expression();
+		expect(tokn_of);
+		expect(tokn_eol);
+
+		do {
+			if(accept(tokn_when)) {
+				do {
+					expression();
+				} while(accept(tokn_comma));
+			}
+			else {
+				/* FIXME: only one OTHERWISE allowed */
+				/* Also, WHEN after OTHERWISE is pointless */
+				expect(tokn_otherwise);
+			}
+
+			if(accept(tokn_eol)) {
+				do {
+					line();
+				} while(!(tok_is(tokn_when) ||
+				          tok_is(tokn_otherwise) ||
+				          tok_is(tokn_endcase)));
+			}
+			else {
+				expect(tokn_colon);
+				statement_list();
+				expect(tokn_eol);
+			}
+
+		} while(!tok_is(tokn_endcase));
+
+		expect(tokn_endcase);
+	}
 	else if(accept(tokn_print)) {
 		do {
 			if(!accept(tokn_string))
