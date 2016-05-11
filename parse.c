@@ -66,11 +66,15 @@ void statement(void) {
 		if(accept(tokn_eol)) {
 			do {
 				line();
-				if(accept(tokn_else))
+
+				if(accept(tokn_else)) {
 					do {
 						line();
 					} while (!tok_is(tokn_endif));
+				}
+
 			} while(!tok_is(tokn_endif));
+
 			expect(tokn_endif);
 		}
 		else {
