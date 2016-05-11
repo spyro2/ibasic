@@ -174,6 +174,20 @@ void statement(void) {
 
 		expect(tokn_endcase);
 	}
+	else if (accept(tokn_proc)) {
+		expect(tokn_label);
+		if(accept(tokn_oparen)) {
+			param_list();
+			expect(tokn_cparen);
+		}
+	}
+	else if (accept(tokn_fn)) {
+		expect(tokn_label);
+		if(accept(tokn_oparen)) {
+			param_list();
+			expect(tokn_cparen);
+		}
+	}
 	else if(accept(tokn_print)) {
 		do {
 			if(!accept(tokn_string))
