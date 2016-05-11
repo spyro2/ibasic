@@ -68,9 +68,7 @@ void statement(void) {
 
 		condition();
 
-		accept(tokn_then);
-
-		if(accept(tokn_eol)) {
+		if(accept(tokn_then) && accept(tokn_eol)) {
 			do {
 				line();
 
