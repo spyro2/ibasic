@@ -116,16 +116,17 @@ void assign(void) {
 
 void line(void) {
 
-	do {
-		if(accept(tokn_label)) {
-			if(!accept(tokn_colon)) {
-				expect(tokn_eq);
-				expression();
-			}
+	if(accept(tokn_label)) {
+		if(!accept(tokn_colon)) {
+			assign();
+			expression();
+			if(accept(tokn_colon))
+				statement_list();
 		}
-		else
-			statement();
-	} while (accept(tokn_colon));
+	}
+	else {
+		statement_list();
+	}
 	expect(tokn_eol);
 }
 
