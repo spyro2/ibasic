@@ -188,6 +188,9 @@ void statement(void) {
 			expect(tokn_cparen);
 		}
 	}
+	else if (accept(tokn_end)) {
+		exit(0);
+	}
 	else if(accept(tokn_print)) {
 		do {
 			if(!accept(tokn_string))
