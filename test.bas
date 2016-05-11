@@ -31,6 +31,26 @@ ELSE IF B=4 THEN
   ENDIF
 ENDIF
 
+PROCfoo
+PROCbar:PROCbaz(A, B)
+PROCbar:PROCbaz(A, B):PRINT a
+FNgetreg(reg)
+
+DEF PROCfoo
+ENDPROC
+
+DEFPROCbaz(c, d )
+PRINT a;" ";d
+ENDPROC
+
+DEFPROCbar
+PRINT "Hi!"
+ENDPROC
+
+DEF FN getreg(reg)
+PRINT "Get reg ";reg
+=reg
+
 CASE foo OF
 	WHEN 7,8,9: PRINT A:IF foo=8 PRINT "Yay" ELSE PRINT "boooo":PRINT B
 	WHEN 10
