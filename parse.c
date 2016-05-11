@@ -76,6 +76,32 @@ void input_param_list(void) {
 	} while(accept(tokn_comma));
 }
 
+void definition(void) {
+	if(accept(tokn_proc)) {
+		expect(tokn_label);
+		if(accept(tokn_oparen)) {
+			input_param_list();
+			expect(tokn_cparen);
+		}
+		/* FIXME: allow statements following DEF PROCfoo ? */
+		while(!tok_is(tokn_endproc))
+			line(); /* FIXME: nested def should not happen */
+		expect(tokn_endproc);
+	}
+	else if(accept(tokn_fn)) {
+		expect(tokn_label);
+		if(accept(tokn_oparen)) {
+			input_param_list();
+			expect(tokn_cparen);
+		}
+		/* FIXME: allow statements following DEF FNfoo ? */
+		while(!tok_is(tokn_eq))
+			line(); /* FIXME: nested def should not happen */
+		expect(tokn_eq);
+		expression();
+	}
+}
+
 void statement(void) {
 	if(accept(tokn_if)) {
 
@@ -169,6 +195,9 @@ void line(void) {
 			if(accept(tokn_colon))
 				statement_list();
 		}
+	}
+	else if (accept(tokn_def)) {
+		definition();
 	}
 	else {
 		statement_list();
