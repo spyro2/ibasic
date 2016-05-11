@@ -172,14 +172,6 @@ int parse (int fd) {
 	do {
 		line();
 	} while(!tok_is(tokn_end));
-/*
-	do {
-		if(le) {
-			tok_print_one(le);
-	}
-
-	} while(le);
-*/
 
 	return 0;
 }
