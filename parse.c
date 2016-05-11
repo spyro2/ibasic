@@ -110,6 +110,10 @@ void statement(void) {
 	}
 }
 
+void assign(void) {
+	expect(tokn_eq); /* FIXME: assignment operator*/
+}
+
 void line(void) {
 
 	do {
