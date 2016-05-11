@@ -69,6 +69,7 @@ static struct token token_list[] = {
 	{tokn_case, "CASE",},
 	{tokn_of, "OF",},
 	{tokn_when, "WHEN",},
+	{tokn_otherwise, "OTHERWISE",},
 	{tokn_endcase, "ENDCASE",},
 	{tokn_on, "ON",},
 	{tokn_error, "ERROR",},

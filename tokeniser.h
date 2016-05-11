@@ -16,7 +16,7 @@ enum tokid {
 	tokn_eq, tokn_abs, tokn_mod, tokn_div, tokn_asterisk,
 	tokn_slash, tokn_plus, tokn_minus, tokn_lshift, tokn_rshift,
 	tokn_colon, tokn_at, tokn_oparen, tokn_cparen, tokn_obrace,
-	tokn_cbrace, tokn_percent, tokn_dollar,	tokn_label,
+	tokn_cbrace, tokn_percent, tokn_dollar,	tokn_label, tokn_otherwise,
 };
 
 struct line_entry {
