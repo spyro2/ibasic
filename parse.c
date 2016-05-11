@@ -63,6 +63,19 @@ void statement_list(void) {
 	} while(accept(tokn_colon));
 }
 
+void param_list(void) {
+	do {
+		expression();
+	} while(accept(tokn_comma));
+}
+
+void input_param_list(void) {
+	do {
+		accept(tokn_return);
+		expect(tokn_label);
+	} while(accept(tokn_comma));
+}
+
 void statement(void) {
 	if(accept(tokn_if)) {
 
