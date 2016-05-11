@@ -85,15 +85,11 @@ void statement(void) {
 			expect(tokn_endif);
 		}
 		else {
-			do {
-				statement();
-			} while (accept(tokn_colon));
+			statement_list();
 
-			if (accept(tokn_else)) {
-				do {
-					statement();
-				} while (accept(tokn_colon));
-			}
+			if (accept(tokn_else))
+				statement_list();
+
 		}
 	}
 /*
