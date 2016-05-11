@@ -55,6 +55,13 @@ void condition(void) {
 }
 
 void line(void);
+void statement(void);
+
+void statement_list(void) {
+	do {
+		statement();
+	} while(accept(tokn_colon));
+}
 
 void statement(void) {
 	if(accept(tokn_if)) {
