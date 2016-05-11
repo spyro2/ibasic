@@ -137,8 +137,8 @@ static struct token token_list[] = {
 	{tokn_library, "LIBRARY",},
 
 	/* Seperators and EOL */
-	{tokn_newline, "\r\n", NULL, print_eol},
-	{tokn_newline, "\n", NULL, print_eol},
+	{tokn_eol, "\r\n", NULL, print_eol},
+	{tokn_eol, "\n", NULL, print_eol},
 	{tokn_comma, ",",},
 
 	/* Types */
