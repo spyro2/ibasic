@@ -60,6 +60,8 @@ CASE foo OF
 		IF A THEN PRINT "Dog":
 ENDCASE
 
+END
+
 IF 7 THEN
 	PRINT "Foo!"
 ELSE
