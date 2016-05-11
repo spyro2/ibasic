@@ -1,6 +1,44 @@
 PRINT "Hello World!"
+IF A = 7 THEN PRINT A ELSE PRINT "sharks!"
 A = 7
 B = 9
+
+IF num=37 THEN
+  PRINT "Number was 37"
+  num = 38
+ELSE
+  num=A
+  PRINT "num set to A";A;
+ENDIF
+
+IF num=37 THEN
+  PRINT "Number was 37"
+  num = 38
+ELSE IF B=4 THEN
+    num=A
+    PRINT "num set to A";A;
+  ENDIF
+ENDIF
+
+IF num=37 THEN
+  PRINT "Number was 37"
+  num = 38
+ELSE IF B=4 THEN
+    num=A
+    PRINT "num set to A";A;
+  ELSE
+    PRINT "or not..."
+  ENDIF
+ENDIF
+
+IF 7 THEN
+	PRINT "Foo!"
+ELSE
+ELSE
+	PRINT "BAR!"
+ENDIF
+
+label:
 SUM = A+B
 variable = 3+7*4+(7-5/2)
 PRINT A B SUM "SUM THING!"
