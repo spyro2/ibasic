@@ -50,7 +50,7 @@ static void print_string(struct line_entry *le) {
 }
 
 static void print_eol(struct line_entry *le) {
-	printf("\n");
+	printf(" <EOL>\n");
 }
 
 static struct line_entry *default_tokfn(struct token *t, char **ps) {
