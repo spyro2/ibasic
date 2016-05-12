@@ -71,22 +71,26 @@ static struct token token_list[] = {
 	{tokn_when, "WHEN",},
 	{tokn_otherwise, "OTHERWISE",},
 	{tokn_endcase, "ENDCASE",},
-	{tokn_on, "ON",},
-	{tokn_error, "ERROR",},
+/*	{tokn_on, "ON",},
+	{tokn_error, "ERROR",}, */
 	{tokn_proc, "PROC",},
 	{tokn_fn, "FN",},
 	{tokn_endproc, "ENDPROC",},
 	{tokn_return, "RETURN",}, /* Call by reference */
 	{tokn_end, "END",},
-	{tokn_fork, "FORK",},  /* Threading! */
+
+	/* Threading! */
+/*	{tokn_fork, "FORK",}, */
 
 	/* Loops */
+#if 0
 	{tokn_for, "FOR",},
 	{tokn_each, "EACH",}, /* For lists */
 	{tokn_in, "IN",},
 	{tokn_to, "TO",},
 	{tokn_step, "STEP",},
 	{tokn_next, "NEXT",},
+#endif
 	{tokn_repeat, "REPEAT",},
 	{tokn_until, "UNTIL",},
 	{tokn_while, "WHILE",},
