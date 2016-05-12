@@ -145,7 +145,7 @@ void statement(void) {
 		expect(tokn_of);
 		expect(tokn_eol);
 
-		do {
+		while(!tok_is(tokn_endcase)) {
 			if(accept(tokn_when)) {
 				do {
 					expression();
@@ -169,10 +169,9 @@ void statement(void) {
 				statement_list();
 				expect(tokn_eol);
 			}
-
-		} while(!tok_is(tokn_endcase));
-
+		}
 		expect(tokn_endcase);
+
 	}
 	else if (accept(tokn_proc)) {
 		expect(tokn_label);
