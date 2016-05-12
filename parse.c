@@ -190,6 +190,12 @@ void statement(void) {
 	else if (accept(tokn_end)) {
 		exit(0);
 	}
+	else if (accept(tokn_repeat)) {
+		while(!tok_is(tokn_until))
+			line(); /* FIXME: line() isnt ideal. */
+		expect(tokn_until);
+		condition();
+	}
 	else if(accept(tokn_print)) {
 		do {
 			if(!accept(tokn_string))
