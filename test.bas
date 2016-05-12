@@ -51,6 +51,18 @@ DEF FN getreg(reg)
 PRINT "Get reg ";reg
 =reg
 
+REPEAT
+A = B
+	WHILE D
+		PRINT E
+		IF A THEN PROCbar ELSE PROCbaz(0, 8)
+	ENDWHILE
+UNTIL C
+
+WHILE 1
+	PRINT "Endless"
+ENDWHILE
+
 CASE foo OF
 	WHEN 7,8,9: PRINT A:IF foo=8 PRINT "Yay" ELSE PRINT "boooo":PRINT B
 	WHEN 10
