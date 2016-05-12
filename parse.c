@@ -196,6 +196,12 @@ void statement(void) {
 		expect(tokn_until);
 		condition();
 	}
+	else if (accept(tokn_while)) {
+		condition();
+		while(!tok_is(tokn_endwhile))
+			line(); /* FIXME: line() isnt ideal. */
+		expect(tokn_endwhile);
+	}
 	else if(accept(tokn_print)) {
 		do {
 			if(!accept(tokn_string))
