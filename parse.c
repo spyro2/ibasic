@@ -250,6 +250,14 @@ void line(void) {
 		if(accept(tokn_colon))
 			statement_list();
 	}
+	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {
+		next_le();
+		expect(tokn_label);
+		if(accept(tokn_eq))
+			expression();
+		if(accept(tokn_colon))
+			statement_list();
+	}
 	else {
 		statement_list();
 	}
