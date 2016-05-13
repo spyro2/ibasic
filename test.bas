@@ -1,4 +1,6 @@
 /* First comment */
+LIBRARY "graphics.bas"
+
 PRINT "Hello World!"
 IF A = 7 THEN PRINT A ELSE PRINT "sharks!"
 
