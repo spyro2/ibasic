@@ -150,15 +150,6 @@ void statement(void) {
 
 		}
 	}
-	else if(tok_is(tokn_else)) {
-		printf("Unexpected ELSE\n");
-		exit(1);
-	}
-	else if(tok_is(tokn_then)) {
-		printf("Unexpected THEN\n");
-		exit(1);
-	}
-	/* Also might need to add ENDPROC, ENDWHILE, UNTIL, etc. */
 	else if(accept(tokn_case)) {
 
 		expression();
