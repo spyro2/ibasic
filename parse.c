@@ -146,8 +146,8 @@ void statement(void) {
 
 			if (accept(tokn_else))
 				statement_list();
-				/* FIXME: do we want to allow inline ENDIF? */
 
+			accept(tokn_endif);
 		}
 	}
 	else if(accept(tokn_case)) {
