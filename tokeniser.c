@@ -24,7 +24,8 @@ static struct line_entry *tokfn_string(struct token *t, char **ps) {
 	int len;
 	struct line_entry *le = NULL;
 
-	while(*s && *s != '"')
+	/* FIXME: we really need to handle end of line better here */
+	while(*s && *s != '"' && *s != '\n' && *s != '\r')
 		s++;
 
 	// if(!*s)  FIXME: check for end of line / non-string chars
