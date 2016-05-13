@@ -1,10 +1,14 @@
+/* First comment */
 PRINT "Hello World!"
 IF A = 7 THEN PRINT A ELSE PRINT "sharks!"
-A = 7
+
+A = 7 /* Set A to 7 */
+
 IF A = 7 THEN PRINT A:PRINT:PRINT B;C
 IF A = 7 THEN PRINT A ENDIF
 IF A = 7 THEN PRINT A ENDIF:PRINT A
 IF A = 7 THEN PRINT A ELSE PRINT "sharks!" ENDIF
+IF A = 7 THEN /*PRINT A*/ PRINT B ELSE PRINT "sharks!" ENDIF
 IF A = 7 THEN PRINT A ELSE PRINT "sharks!" ENDIF: PRINT:PRINT A:PRINT B;C
 B = 9
 
@@ -38,6 +42,8 @@ ENDIF
 
 PROCfoo
 PROCbar:PROCbaz(A, B)
+PROCbar:PROCbaz(A, B)/*PRINT a*/
+PROCbar:PROCbaz(A, /*B*/C)/*PRINT a*/:PRINT B
 PROCbar:PROCbaz(A, B):PRINT a
 FNgetreg(reg)
 
