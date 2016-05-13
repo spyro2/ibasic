@@ -245,6 +245,11 @@ void line(void) {
 				statement_list();
 		}
 	}
+	else if(accept(tokn_library)) {
+		expect(tokn_string);
+		if(accept(tokn_colon))
+			statement_list();
+	}
 	else {
 		statement_list();
 	}
