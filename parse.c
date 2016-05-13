@@ -54,6 +54,11 @@ void condition(void) {
 	}
 }
 
+void assign(void) {
+	expect(tokn_eq); /* FIXME: assignment operator*/
+}
+
+
 void line(void);
 void statement(void);
 
@@ -63,7 +68,7 @@ void statement_list(void) {
 	} while(accept(tokn_colon));
 }
 
-void param_list(void) {
+void expr_list(void) {
 	do {
 		expression();
 	} while(accept(tokn_comma));
@@ -79,27 +84,38 @@ void input_param_list(void) {
 void definition(void) {
 	if(accept(tokn_proc)) {
 		expect(tokn_label);
+
 		if(accept(tokn_oparen)) {
 			input_param_list();
 			expect(tokn_cparen);
 		}
-		/* FIXME: allow statements following DEF PROCfoo ? */
-		while(!tok_is(tokn_endproc))
-			line(); /* FIXME: nested def should not happen */
-		expect(tokn_endproc);
+
+		if(accept(tokn_colon))
+			statement_list(); /* What about IF and ENDPROC? */
+
+		while(accept(tokn_eol) || !accept(tokn_endproc))
+			line();
+
 	}
 	else if(accept(tokn_fn)) {
+
 		expect(tokn_label);
+
 		if(accept(tokn_oparen)) {
 			input_param_list();
 			expect(tokn_cparen);
 		}
-		/* FIXME: allow statements following DEF FNfoo ? */
-		while(!tok_is(tokn_eq))
-			line(); /* FIXME: nested def should not happen */
-		expect(tokn_eq);
+
+		if (accept(tokn_colon))
+			statement_list(); /* What about IF and = ? */
+
+		while (accept(tokn_eol) || !accept(tokn_eq))
+			line(); /* What about IF and = ? */
+
 		expression();
 	}
+
+	expect(tokn_eol);
 }
 
 void statement(void) {
@@ -108,16 +124,20 @@ void statement(void) {
 		condition();
 
 		if(accept(tokn_then) && accept(tokn_eol)) {
-			do {
+			while(!tok_is(tokn_endif)) {
+
 				line();
 
-				if(accept(tokn_else)) {
-					do {
+				if(!accept(tokn_eol) || accept(tokn_else)) {
+					/* FIXME: only allow IF or EOL here
+					 * the next accept() is a hack, and
+					 * Should be an expect()
+					 */
+					while (accept(tokn_eol) && !tok_is(tokn_endif))
 						line();
-					} while (!tok_is(tokn_endif));
 				}
 
-			} while(!tok_is(tokn_endif));
+			}
 
 			expect(tokn_endif);
 		}
@@ -126,10 +146,10 @@ void statement(void) {
 
 			if (accept(tokn_else))
 				statement_list();
+				/* FIXME: do we want to allow inline ENDIF? */
 
 		}
 	}
-/*
 	else if(tok_is(tokn_else)) {
 		printf("Unexpected ELSE\n");
 		exit(1);
@@ -138,7 +158,7 @@ void statement(void) {
 		printf("Unexpected THEN\n");
 		exit(1);
 	}
-*/
+	/* Also might need to add ENDPROC, ENDWHILE, UNTIL, etc. */
 	else if(accept(tokn_case)) {
 
 		expression();
@@ -147,9 +167,7 @@ void statement(void) {
 
 		while(!tok_is(tokn_endcase)) {
 			if(accept(tokn_when)) {
-				do {
-					expression();
-				} while(accept(tokn_comma));
+				expr_list();
 			}
 			else {
 				/* FIXME: only one OTHERWISE allowed */
@@ -158,11 +176,11 @@ void statement(void) {
 			}
 
 			if(accept(tokn_eol)) {
-				do {
+				while(accept(tokn_eol) || !(tok_is(tokn_when) ||
+				        tok_is(tokn_otherwise) ||
+				        tok_is(tokn_endcase))) {
 					line();
-				} while(!(tok_is(tokn_when) ||
-				          tok_is(tokn_otherwise) ||
-				          tok_is(tokn_endcase)));
+				}
 			}
 			else {
 				expect(tokn_colon);
@@ -176,31 +194,37 @@ void statement(void) {
 	else if (accept(tokn_proc)) {
 		expect(tokn_label);
 		if(accept(tokn_oparen)) {
-			param_list();
+			expr_list();
 			expect(tokn_cparen);
 		}
 	}
 	else if (accept(tokn_fn)) {
 		expect(tokn_label);
 		if(accept(tokn_oparen)) {
-			param_list();
+			expr_list();
 			expect(tokn_cparen);
 		}
 	}
-	else if (accept(tokn_end)) {
-		exit(0);
-	}
 	else if (accept(tokn_repeat)) {
-		while(!tok_is(tokn_until))
-			line(); /* FIXME: line() isnt ideal. */
-		expect(tokn_until);
+
+		if(accept(tokn_colon) || expect(tokn_eol)) {
+			while(accept(tokn_eol) || !accept(tokn_until))
+				line();
+		}
+
 		condition();
 	}
 	else if (accept(tokn_while)) {
+
 		condition();
-		while(!tok_is(tokn_endwhile))
-			line(); /* FIXME: line() isnt ideal. */
-		expect(tokn_endwhile);
+
+		if(accept(tokn_colon) || expect(tokn_eol)) {
+			while(accept(tokn_eol) || !accept(tokn_endwhile))
+				line();
+		}
+	}
+	else if (accept(tokn_goto)) {
+		expect(tokn_label);
 	}
 	else if(accept(tokn_print)) {
 		do {
@@ -208,14 +232,16 @@ void statement(void) {
 				expression();
 		} while(accept(tokn_semicolon));
 	}
-}
-
-void assign(void) {
-	expect(tokn_eq); /* FIXME: assignment operator*/
+	else if(accept(tokn_label)) {
+		assign();
+		expression();
+	}
+	else{
+		 accept(tokn_end);
+	}
 }
 
 void line(void) {
-
 	if(accept(tokn_label)) {
 		if(!accept(tokn_colon)) {
 			assign();
@@ -224,22 +250,28 @@ void line(void) {
 				statement_list();
 		}
 	}
-	else if (accept(tokn_def)) {
-		definition();
-	}
 	else {
 		statement_list();
 	}
-	expect(tokn_eol);
 }
 
+void toplevel_line(void) {
+
+	if (accept(tokn_def)) {
+		definition();
+	}
+	else {
+		line();
+		expect(tokn_eol);
+	}
+}
 
 int parse (int fd) {
 
 	next_le();
-	do {
-		line();
-	} while(!tok_is(tokn_end));
+	while(1) {
+		toplevel_line();
+	}
 
 	return 0;
 }
