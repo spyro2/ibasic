@@ -36,16 +36,18 @@ PROCbar:PROCbaz(A, B)
 PROCbar:PROCbaz(A, B):PRINT a
 FNgetreg(reg)
 
-DEF PROCfoo
+DEF PROCfoo:PRINT
 ENDPROC
 
-DEFPROCbaz(c, d )
+DEFPROCbaz(c, RETURN d )
 PRINT a;" ";d
 ENDPROC
 
 DEFPROCbar
 PRINT "Hi!"
 ENDPROC
+
+DEFPROC whizz(m):PRINT F: ENDPROC
 
 DEF FN getreg(reg)
 PRINT "Get reg ";reg
