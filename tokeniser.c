@@ -50,6 +50,36 @@ static void print_string(struct line_entry *le) {
 		printf("\"%s\"", (char *)le->data);
 }
 
+/* FIXME: Terrible hack to allow at least single line comments */
+static struct line_entry *tokfn_comment(struct token *t, char **ps) {
+	char *s = *ps;
+	char *dest;
+	int len;
+	struct line_entry *le = NULL;
+
+	/* FIXME: we really need to handle end of line better here */
+	while(*s && !(*s == '*' && *(s+1) == '/'))
+		s++;
+
+	// if(!*s)  FIXME: check for end of line / non-string chars
+
+	len = s-*ps;
+
+	s++;
+
+	le = le_alloc(len+1); // FIXME: Check failure
+
+	dest = (char *)le->data;
+	memcpy(dest, *ps, len);
+	dest[len] = 0;
+
+	le->tok = t;
+
+	*ps = ++s;
+
+	return le;
+}
+
 static void print_eol(struct line_entry *le) {
 	printf(" <EOL>\n");
 }
