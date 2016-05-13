@@ -128,12 +128,12 @@ void statement(void) {
 
 				line();
 
-				if(!accept(tokn_eol) || accept(tokn_else)) {
-					/* FIXME: only allow IF or EOL here
-					 * the next accept() is a hack, and
-					 * Should be an expect()
-					 */
-					while (accept(tokn_eol) && !tok_is(tokn_endif))
+				if(accept(tokn_eol) && accept(tokn_else)) {
+
+					if(tok_is(tokn_if))
+						statement();
+
+					while (expect(tokn_eol) && !tok_is(tokn_endif))
 						line();
 				}
 
