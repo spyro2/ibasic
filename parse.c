@@ -161,8 +161,6 @@ void statement(void) {
 				expr_list();
 			}
 			else {
-				/* FIXME: only one OTHERWISE allowed */
-				/* Also, WHEN after OTHERWISE is pointless */
 				expect(tokn_otherwise);
 			}
 
