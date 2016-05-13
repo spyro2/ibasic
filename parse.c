@@ -10,7 +10,13 @@ static int fd;
 struct line_entry *le;
 
 void next_le(void) {
-	le = get_next_le(fd, NULL);
+	/* Skip comments - This may have implications for writing a
+	 * pretty-printer.
+	 */
+	do {
+		le = get_next_le(fd, NULL);
+	} while (le->tok->id == tokn_comment);
+
 	tok_print_one(le);
 }
 
