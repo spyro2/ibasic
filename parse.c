@@ -226,7 +226,7 @@ void statement(void) {
 		expression();
 	}
 	else{
-		 accept(tokn_end);
+		accept(tokn_end);
 	}
 }
 
