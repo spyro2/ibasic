@@ -240,9 +240,11 @@ static struct token token_list[] = {
 /*	{ "&",}, */
 	{tokn_at, "@",}, /* prefix: system variables */
 
+	/* Comments */
+	{tokn_comment, "/*", tokfn_comment},
+
 	/* special cases in the lexer - NOT IMPLEMENTED YET */
 	/* \ - line continuation */
-	/* { "/ *",}, - need evaluator for comments */
 
 	/* 0-9 - numbers */
 	/* 0n (where n is one or more digits) - octal */
