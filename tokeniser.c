@@ -148,6 +148,7 @@ static struct token token_list[] = {
 	/* Define functions / procedures / structures / types */
 	{tokn_def, "DEF",},
 
+#if 0
 	/* Allow for more sophisticated types without sigil-hell */
 	{tokn_let, "LET",},
 	{tokn_be, "BE",},
@@ -156,17 +157,20 @@ static struct token token_list[] = {
 	{tokn_unsigned, "UNSIGNED",},
 	{tokn_int, "INT",},
 	{tokn_bit, "BIT",},
+#endif
 
 /*	{ "MACRO",}, */
 
 	/* Memory allocation */
-	{tokn_alloc, "ALLOC",},
+/*	{tokn_alloc, "ALLOC",}, */
+#if 0
 	{tokn_dim, "DIM",},
 	{tokn_list, "LIST",}, /* Unlike older BASICs - for creating lists! */
 	{tokn_add, "ADD",},
 	{tokn_before, "BEFORE",},
 	{tokn_after, "AFTER",},
 	{tokn_remove, "REMOVE",},
+#endif
 	/* SIZEOF */
 
 	/* Allow loading of additional libraries at runtime */
