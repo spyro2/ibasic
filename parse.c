@@ -45,8 +45,40 @@ int expect(enum tokid id) {
 	return 0;
 }
 
+void expression(void);
+
+void factor(void){
+	if(accept(tokn_label)) {
+		;
+	}
+#if 0
+	/* numbers and labels are all the same to the tokeniser right now */
+	else if (accept(number)) {
+		;
+	}
+#endif
+	else if(accept(tokn_oparen)) {
+		expression();
+		expect(tokn_cparen);
+	}
+}
+
+void term(void) {
+	factor();
+	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
+		next_le();
+		factor();
+	}
+}
+
 void expression(void) {
-	accept(tokn_label);
+	if(tok_is(tokn_plus) || tok_is(tokn_minus))
+		next_le();
+	term();
+	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
+		next_le();
+		term();
+	}
 }
 
 void condition(void) {
