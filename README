@@ -1,7 +1,7 @@
-ibasic
+iBASIC
 ======
 
-ibasic is an attempt to build a BASIC interpretter that meets the
+iBASIC is an attempt to build a BASIC interpretter that meets the
 following criteria:
 
 * Reject some of BASIC's worst syntax.
@@ -21,3 +21,4 @@ design and implementation might find them useful.
 I hope you find it as useful / enjoyable as I am finding it to write.
 
 PS. The name is derived from my own. iBASIC means "Ian's BASIC".
+PPS. STFU, Apple Inc. :-)
