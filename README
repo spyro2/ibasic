@@ -1,0 +1,21 @@
+ibasic
+======
+
+ibasic is an attempt to build a BASIC interpretter that meets the
+following criteria:
+
+* Reject some of BASIC's worst syntax.
+* Attempt to regularise the types available to allow easier integration with C.
+* Aim for acceptable performance.
+* Retain as much of BASIC's simplistic charm.
+* Try to incorporate some modern language features, eg. structures and types.
+
+It is loosely based around BBC BASIC, which I used whilst I was growing up
+and learning how to program computers. It is not intended to be a drop in
+replacement.
+
+I am attempting to document the thought processes behind the project as much
+as anything else, in the hope that others wishing to learn about language
+design and implementation might find them useful.
+
+I hope you find it as useful / enjoyable as I am finding it to write.
