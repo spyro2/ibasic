@@ -131,7 +131,9 @@ void definition(void) {
 		if(accept(tokn_colon))
 			statement_list(); /* What about IF and ENDPROC? */
 
-		while(accept(tokn_eol) || !accept(tokn_endproc))
+		expect(tokn_eol);
+
+		while(!accept(tokn_endproc))
 			line();
 
 	}
