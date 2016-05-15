@@ -170,12 +170,14 @@ void statement(void) {
 
 				line();
 
-				if(accept(tokn_eol) && accept(tokn_else)) {
+				if(accept(tokn_else)) {
 
 					if(tok_is(tokn_if))
-						statement();
+						line();
+					else
+						expect(tokn_eol);
 
-					while (expect(tokn_eol) && !tok_is(tokn_endif))
+					while (!tok_is(tokn_endif))
 						line();
 				}
 
@@ -207,7 +209,7 @@ void statement(void) {
 			}
 
 			if(accept(tokn_eol)) {
-				while(accept(tokn_eol) || !(tok_is(tokn_when) ||
+				while(!(tok_is(tokn_when) ||
 				        tok_is(tokn_otherwise) ||
 				        tok_is(tokn_endcase))) {
 					line();
@@ -238,10 +240,13 @@ void statement(void) {
 	}
 	else if (accept(tokn_repeat)) {
 
-		if(accept(tokn_colon) || expect(tokn_eol)) {
-			while(accept(tokn_eol) || !accept(tokn_until))
-				line();
-		}
+		if(accept(tokn_colon))
+			statement_list();
+		else
+			expect(tokn_eol);
+
+		while(!accept(tokn_until))
+			line();
 
 		condition();
 	}
@@ -249,10 +254,13 @@ void statement(void) {
 
 		condition();
 
-		if(accept(tokn_colon) || expect(tokn_eol)) {
-			while(accept(tokn_eol) || !accept(tokn_endwhile))
-				line();
-		}
+		if(accept(tokn_colon))
+			statement_list();
+		else 
+			expect(tokn_eol);
+
+		while(!accept(tokn_endwhile))
+			line();
 	}
 	else if (accept(tokn_goto)) {
 		expect(tokn_label);
@@ -273,30 +281,40 @@ void statement(void) {
 }
 
 void line(void) {
+	if(tok_is(tokn_eol))
+		goto out; /* Empty line */
+
 	if(accept(tokn_label)) {
 		if(!accept(tokn_colon)) {
 			assign();
 			expression();
-			if(accept(tokn_colon))
+			if(accept(tokn_colon) && !tok_is(tokn_eol)) {
 				statement_list();
+			}
 		}
 	}
 	else if(accept(tokn_library)) {
 		expect(tokn_string);
-		if(accept(tokn_colon))
+		if(accept(tokn_colon) && !tok_is(tokn_eol)){
 			statement_list();
+		}
 	}
 	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {
 		next_le();
 		expect(tokn_label);
 		if(accept(tokn_eq))
 			expression();
-		if(accept(tokn_colon))
+
+		if(accept(tokn_colon) && !tok_is(tokn_eol)) {
 			statement_list();
+		}
 	}
 	else {
 		statement_list();
 	}
+
+out:
+	expect(tokn_eol);
 }
 
 void toplevel_line(void) {
@@ -306,7 +324,6 @@ void toplevel_line(void) {
 	}
 	else {
 		line();
-		expect(tokn_eol);
 	}
 }
 
