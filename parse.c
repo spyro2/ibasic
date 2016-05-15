@@ -149,7 +149,9 @@ void definition(void) {
 		if (accept(tokn_colon))
 			statement_list(); /* What about IF and = ? */
 
-		while (accept(tokn_eol) || !accept(tokn_eq))
+		expect(tokn_eol);
+
+		while (!accept(tokn_eq))
 			line(); /* What about IF and = ? */
 
 		expression();
