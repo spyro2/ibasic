@@ -281,8 +281,8 @@ void statement(void) {
 		assign();
 		expression();
 	}
-	else{
-		accept(tokn_end);
+	else if (accept(tokn_end)) {
+		;
 	}
 }
 
