@@ -5,9 +5,16 @@
 #include <fcntl.h>
 
 #include "tokeniser.h"
+#include "colours.h"
 
 static int fd;
 struct line_entry *le;
+
+void print_current_token(char *s) {
+	printf("%s", s);
+        tok_print_one(le);
+        printf(ANSI_RESET);
+}
 
 void next_le(void) {
 	/* Skip comments - This may have implications for writing a
@@ -17,7 +24,11 @@ void next_le(void) {
 		le = get_next_le(fd, NULL);
 	} while (le->tok->id == tokn_comment);
 
+#if 0
+	printf(ANSI_GREEN);
 	tok_print_one(le);
+	printf(ANSI_RESET);
+#endif
 }
 
 int tok_is(enum tokid id) {
