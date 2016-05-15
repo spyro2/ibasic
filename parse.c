@@ -56,6 +56,36 @@ int expect(enum tokid id) {
 	return 0;
 }
 
+static int indent_l = 0;
+
+#define emit_noindent(a) printf((a))
+
+#define indent \
+	do { \
+		int i; \
+		for(i = 0 ; i < indent_l ; i++) \
+			printf("\t"); \
+	} while(0)
+
+#define emit(a) \
+	do { \
+	indent; \
+	emit_noindent((a)); \
+	} while(0)
+
+#define emit_i(a) \
+	do { \
+	emit((a)); \
+	indent_l++; \
+	} while(0)
+
+#define emit_o(a) \
+	do { \
+	indent_l--; \
+	emit((a)); \
+	} while(0)
+
+
 void expression(void);
 
 void factor(void){
