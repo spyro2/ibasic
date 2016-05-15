@@ -81,7 +81,7 @@ static struct line_entry *tokfn_comment(struct token *t, char **ps) {
 }
 
 static void print_eol(struct line_entry *le) {
-	printf(" <EOL>\n");
+	printf(" <EOL>");
 }
 
 static struct line_entry *default_tokfn(struct token *t, char **ps) {
