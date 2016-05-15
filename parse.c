@@ -266,10 +266,16 @@ void statement(void) {
 		expect(tokn_label);
 	}
 	else if(accept(tokn_print)) {
-		do {
-			if(!accept(tokn_string))
-				expression();
-		} while(accept(tokn_semicolon));
+		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
+			do {
+				if(accept(tokn_string))
+					;
+				else {
+					indent;
+					expression();
+				}
+			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
+		}
 	}
 	else if(accept(tokn_label)) {
 		assign();
