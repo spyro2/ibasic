@@ -1,10 +1,14 @@
 /* First comment */
 LIBRARY "graphics.bas"
 
-PRINT "Hello World!"
-IF A = 7 THEN PRINT A ELSE PRINT "sharks!"
+PRINT:
+l = d
+:PRINT
 
-A = 7 /* Set A to 7 */
+PRINT "Hello World!"
+IF A = 7 THEN PRINT A ELSE PRINT "sharks!":L=7
+
+A = +7-(+b-3) /* Set A to 7 */
 
 STATIC A:
 GLOBAL B = 8:PRINT B
@@ -65,7 +69,8 @@ DEFPROCbar
 PRINT "Hi!"
 ENDPROC
 
-DEFPROC whizz(m):PRINT F: ENDPROC
+DEFPROC whizz(m):PRINT F
+ENDPROC
 
 DEF FN getreg(reg)
 PRINT "Get reg ";reg
@@ -79,6 +84,9 @@ A = B
 	ENDWHILE
 UNTIL C
 
+REPEAT:PRINT fun:UNTIL 2=h:PRINT bags
+WHILE boo=argh: PRINT wheee:ENDWHILE:GOTO label
+
 WHILE 1
 	PRINT "Endless"
 ENDWHILE
@@ -88,6 +96,14 @@ CASE foo OF
 	WHEN 10
 		PRINT "HI!"
 		PRINT "Bye":PRINT:PRINT:PRINT "googley eyes"
+	WHEN B+8
+		REPEAT
+		A = B
+			WHILE D
+				PRINT E
+				IF A THEN PROCbar ELSE PROCbaz(0, 8)
+			ENDWHILE
+		UNTIL C
 	OTHERWISE
 		IF A THEN PRINT "Dog":
 ENDCASE
@@ -97,14 +113,13 @@ END
 IF 7 THEN
 	PRINT "Foo!"
 ELSE
-ELSE
 	PRINT "BAR!"
 ENDIF
 
 label:
 SUM = A+B
 variable = 3+7*4+(7-5/2)
-PRINT A B SUM "SUM THING!"
+PRINT A; B; SUM; "SUM THING!"
 
 C = 0
 FOR C = 0 TO 1000 STEP 10
