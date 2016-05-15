@@ -113,13 +113,16 @@ void term(void) {
 }
 
 void expression(void) {
+	emit_noindent("<expr>");
 	if(tok_is(tokn_plus) || tok_is(tokn_minus))
 		next_le();
 	term();
 	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 		next_le();
+		emit_noindent(" ");
 		term();
 	}
+	emit_noindent("<\\expr> ");
 }
 
 void condition(void) {
@@ -128,6 +131,7 @@ void condition(void) {
 	if(tok_is(tokn_lt) || tok_is(tokn_gt) ||
 	   tok_is(tokn_le) || tok_is(tokn_ge) ||
 	   tok_is(tokn_ne) || tok_is(tokn_eq)) {
+		emit_noindent("<cond> ");
 		next_le();
 		expression();
 	}
@@ -142,60 +146,107 @@ void line(void);
 void statement(void);
 
 void statement_list(void) {
+	int d = 0;
+
+	accept(tokn_colon);
+
 	do {
+		if(d && !tok_is(tokn_eol))
+			emit_noindent("\n");
+
 		statement();
-	} while(accept(tokn_colon));
+
+	} while(d = accept(tokn_colon));
 }
 
 void expr_list(void) {
 	do {
 		expression();
+		if(tok_is(tokn_comma))
+			emit_noindent(", ");
 	} while(accept(tokn_comma));
 }
 
 void input_param_list(void) {
 	do {
-		accept(tokn_return);
+		if(accept(tokn_return))
+			emit_noindent("RETURN ");
+
 		expect(tokn_label);
+
+		emit_noindent("<label>");
+
+		if(tok_is(tokn_comma))
+			emit_noindent(", ");
+
 	} while(accept(tokn_comma));
 }
 
 void definition(void) {
+	emit_i("DEF ");
 	if(accept(tokn_proc)) {
+
+		emit_noindent("PROC");
+
 		expect(tokn_label);
 
+		emit_noindent("<label>");
+
 		if(accept(tokn_oparen)) {
+			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
+			emit_noindent(" ) ");
 		}
 
-		if(accept(tokn_colon))
+		emit_noindent(" {\n");
+
+		if(accept(tokn_colon)) {
 			statement_list(); /* What about IF and ENDPROC? */
+			emit_noindent("\n");
+		}
 
 		expect(tokn_eol);
 
 		while(!accept(tokn_endproc))
 			line();
 
+		emit_o("} ENDPROC\n");
+
 	}
 	else if(accept(tokn_fn)) {
 
+		emit_noindent("FN");
+
 		expect(tokn_label);
 
+		emit_noindent("<label>");
+
 		if(accept(tokn_oparen)) {
+			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
+			emit_noindent(" )");
 		}
 
-		if (accept(tokn_colon))
+		emit_noindent(" {\n");
+
+		if(accept(tokn_colon)) {
 			statement_list(); /* What about IF and = ? */
+			emit_noindent("\n");
+		}
 
 		expect(tokn_eol);
 
 		while (!accept(tokn_eq))
 			line(); /* What about IF and = ? */
 
+		emit("RETURN ");
+
 		expression();
+
+		emit_noindent("\n");
+		emit_o("} ENDFN\n");
 	}
 
 	expect(tokn_eol);
@@ -203,8 +254,12 @@ void definition(void) {
 
 void statement(void) {
 	if(accept(tokn_if)) {
+		emit("IF (");
 
 		condition();
+
+		emit_noindent(") {\n");
+		indent_l++;
 
 		if(accept(tokn_then) && accept(tokn_eol)) {
 			while(!tok_is(tokn_endif)) {
@@ -212,6 +267,8 @@ void statement(void) {
 				line();
 
 				if(accept(tokn_else)) {
+					emit_o("}\n");
+					emit_i("ELSE {\n");
 
 					if(tok_is(tokn_if))
 						line();
@@ -229,24 +286,38 @@ void statement(void) {
 		else {
 			statement_list();
 
-			if (accept(tokn_else))
+			if (accept(tokn_else)) {
+				emit_noindent("\n");
+				emit_o("}\n");
+				emit_i("ELSE {\n");
+
 				statement_list();
+			}
+
+			emit_noindent("\n");
 
 			accept(tokn_endif);
+
 		}
+		emit_o("} ENDIF");
 	}
 	else if(accept(tokn_case)) {
+		emit_i("CASE ");
 
 		expression();
 		expect(tokn_of);
+		emit_noindent("OF {\n");
 		expect(tokn_eol);
 
 		while(!tok_is(tokn_endcase)) {
 			if(accept(tokn_when)) {
+				emit_i("WHEN ");
 				expr_list();
+				emit_noindent(" {\n");
 			}
 			else {
 				expect(tokn_otherwise);
+				emit_i("OTHERWISE {\n");
 			}
 
 			if(accept(tokn_eol)) {
@@ -260,26 +331,38 @@ void statement(void) {
 				expect(tokn_colon);
 				statement_list();
 				expect(tokn_eol);
+				emit_noindent("\n");
 			}
+			emit_o("}\n");
 		}
 		expect(tokn_endcase);
+		emit_o("} ENDCASE");
 
 	}
 	else if (accept(tokn_proc)) {
+		emit("PROC");
 		expect(tokn_label);
+		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
+			emit_noindent(" (");
 			expr_list();
 			expect(tokn_cparen);
+			emit_noindent(")");
 		}
 	}
 	else if (accept(tokn_fn)) {
+		emit("FN");
 		expect(tokn_label);
+		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
+			emit_noindent(" (");
 			expr_list();
 			expect(tokn_cparen);
+			emit_noindent(" )");
 		}
 	}
 	else if (accept(tokn_repeat)) {
+		emit_i("REPEAT {\n");
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -289,11 +372,18 @@ void statement(void) {
 		while(!accept(tokn_until))
 			line();
 
-		condition();
-	}
-	else if (accept(tokn_while)) {
+		emit_o("} UNTIL ( ");
 
 		condition();
+
+		emit_noindent(")");
+	}
+	else if (accept(tokn_while)) {
+		emit_i("WHILE ( ");
+
+		condition();
+
+		emit_noindent(") {\n");
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -302,28 +392,38 @@ void statement(void) {
 
 		while(!accept(tokn_endwhile))
 			line();
+
+		emit_o("} ENDWHILE");
 	}
 	else if (accept(tokn_goto)) {
+		emit("GOTO ");
 		expect(tokn_label);
+		emit_noindent("<label>");
 	}
 	else if(accept(tokn_print)) {
+		emit("PRINT");
 		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
+			emit_noindent(" {\n");
+			indent_l++;
 			do {
 				if(accept(tokn_string))
-					;
+					emit("{string}");
 				else {
 					indent;
 					expression();
 				}
+				emit_noindent("\n");
 			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
+			emit_o("}");
 		}
 	}
 	else if(accept(tokn_label)) {
+		emit("l-value = ");
 		assign();
 		expression();
 	}
 	else if (accept(tokn_end)) {
-		;
+		emit("END");
 	}
 }
 
@@ -333,26 +433,48 @@ void line(void) {
 
 	if(accept(tokn_label)) {
 		if(!accept(tokn_colon)) {
+			emit("l-value = ");
 			assign();
 			expression();
 			if(accept(tokn_colon) && !tok_is(tokn_eol)) {
+				emit_noindent("\n");
 				statement_list();
 			}
 		}
+		else {
+			emit("<label>:");
+		}
 	}
 	else if(accept(tokn_library)) {
+		emit("LIBRARY ");
 		expect(tokn_string);
+		emit_noindent("<filename>");
 		if(accept(tokn_colon) && !tok_is(tokn_eol)){
+			emit_noindent("\n");
 			statement_list();
 		}
 	}
 	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {
+		if(tok_is(tokn_static))
+			emit("STATIC ");
+		if(tok_is(tokn_global))
+			emit("GLOBAL ");
+		if(tok_is(tokn_const))
+			emit("CONST ");
+
 		next_le();
+
 		expect(tokn_label);
-		if(accept(tokn_eq))
+
+		emit_noindent("<label>");
+
+		if(accept(tokn_eq)) {
+			emit_noindent(" = ");
 			expression();
+		}
 
 		if(accept(tokn_colon) && !tok_is(tokn_eol)) {
+			emit_noindent("\n");
 			statement_list();
 		}
 	}
@@ -361,6 +483,7 @@ void line(void) {
 	}
 
 out:
+	emit_noindent("\n");
 	expect(tokn_eol);
 }
 
