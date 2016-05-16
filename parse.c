@@ -156,7 +156,7 @@ void statement_list(void) {
 
 		statement();
 
-	} while(d = accept(tokn_colon));
+	} while((d = accept(tokn_colon)));
 }
 
 void expr_list(void) {
