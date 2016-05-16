@@ -344,7 +344,7 @@ void statement(void) {
 		expect(tokn_label);
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
-			emit_noindent(" (");
+			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
 			emit_noindent(")");
@@ -355,7 +355,7 @@ void statement(void) {
 		expect(tokn_label);
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
-			emit_noindent(" (");
+			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
