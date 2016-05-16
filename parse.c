@@ -437,10 +437,6 @@ void line(void) {
 			emit("l-value = ");
 			assign();
 			expression();
-			if(accept(tokn_colon) && !tok_is(tokn_eol)) {
-				emit_noindent("\n");
-				statement_list();
-			}
 		}
 		else {
 			emit("<label>:");
@@ -451,10 +447,6 @@ void line(void) {
 		emit("LIBRARY ");
 		expect(tokn_string);
 		emit_noindent("<filename>");
-		if(accept(tokn_colon) && !tok_is(tokn_eol)){
-			emit_noindent("\n");
-			statement_list();
-		}
 	}
 	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {
 		if(tok_is(tokn_static))
@@ -473,11 +465,6 @@ void line(void) {
 		if(accept(tokn_eq)) {
 			emit_noindent(" = ");
 			expression();
-		}
-
-		if(accept(tokn_colon) && !tok_is(tokn_eol)) {
-			emit_noindent("\n");
-			statement_list();
 		}
 	}
 
