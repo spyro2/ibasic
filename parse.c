@@ -148,8 +148,6 @@ void statement(void);
 void statement_list(void) {
 	int d = 0;
 
-	accept(tokn_colon);
-
 	do {
 		if(d && !tok_is(tokn_eol))
 			emit_noindent("\n");
@@ -431,7 +429,10 @@ void line(void) {
 	if(tok_is(tokn_eol))
 		goto out; /* Empty line */
 
-	if(accept(tokn_label)) {
+	if(accept(tokn_colon)) {
+		; /* Skip leading : at beginning of lines */
+	}
+	else if(accept(tokn_label)) {
 		if(!accept(tokn_colon)) {
 			emit("l-value = ");
 			assign();
@@ -443,6 +444,7 @@ void line(void) {
 		}
 		else {
 			emit("<label>:");
+			goto out;
 		}
 	}
 	else if(accept(tokn_library)) {
@@ -478,9 +480,8 @@ void line(void) {
 			statement_list();
 		}
 	}
-	else {
-		statement_list();
-	}
+
+	statement_list();
 
 out:
 	emit_noindent("\n");
