@@ -7,6 +7,7 @@ l = d
 
 PRINT "Hello World!"
 IF A = 7 THEN PRINT A ELSE PRINT "sharks!":L=7
+IF A = 7 PRINT A ELSE PRINT "sharks!" ENDIF:L=7
 
 A = +7-(+b-3) /* Set A to 7 */
 
