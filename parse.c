@@ -132,6 +132,14 @@ struct line_entry *pop(struct stack *s) {
 	return s->le[s->sp];
 }
 
+struct line_entry *pop_nocheck(struct stack *s) {
+
+	if(--s->sp >= 0)
+		return s->le[s->sp];
+
+	return NULL;
+}
+
 struct line_entry *peek(struct stack *s) {
 	if(s->sp > 0)
 		return s->le[s->sp-1];
