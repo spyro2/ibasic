@@ -288,7 +288,7 @@ void expression() {
 			printf("u");
 		tok_print_one(t);
 		if(tokid(t) == tokn_fn)
-			tok_print_one(t->next);
+			tok_print_one(t->next); /* FIXME: Check it exists */
 
 		pop(&output);
 	}
