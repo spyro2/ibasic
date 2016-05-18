@@ -85,10 +85,54 @@ static int indent_l = 0;
 	emit((a)); \
 	} while(0)
 
+#define MAX_EXPR_STACK 64
+
+static struct stack {
+	struct line_entry *le[MAX_EXPR_STACK];
+	int sp;
+} operator, output;
 
 void expression(void);
 #define tokid(a) (a)->tok->id
 
+void push(struct stack *s, struct line_entry *le) {
+//	printf("push(%s): ", s == &operator?"operator":"output  ");
+//	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
+//		printf("u");
+//	tok_print_one(le);
+//	printf("\n");
+
+	s->le[s->sp++] = le;
+	if (s->sp >= MAX_EXPR_STACK) {
+		printf("expression stack overflow\n");
+		exit(1);
+	}
+}
+
+struct line_entry *pop(struct stack *s) {
+//	struct line_entry *le;
+
+	if(--s->sp < 0) {
+		printf("expression stack underflow\n");
+		exit(1);
+	}
+
+//	le = s->le[s->sp];
+//	printf("pop (%s): ", s == &operator?"operator":"output  ");
+//	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
+//		printf("u");
+//	tok_print_one(le);
+//	printf("\n");
+
+	return s->le[s->sp];
+}
+
+struct line_entry *peek(struct stack *s) {
+	if(s->sp > 0)
+		return s->le[s->sp-1];
+
+	return NULL;
+}
 
 void factor(void){
 	if(accept(tokn_label)) {
