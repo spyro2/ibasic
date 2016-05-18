@@ -193,30 +193,44 @@ void factor(struct stack *output, struct stack *operator){
 #endif
 	else if(tok_is(tokn_oparen)) {
 		push(operator, le);
+
 		next_le();
+
 		do_expression(output, operator);
+
 		expect(tokn_cparen);
+
 		pop(operator); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
 		struct line_entry *tt = le;
 		next_le();
+
 		expect(tokn_label);
+
 		if(tok_is(tokn_oparen)) {
+
 			push(operator, le);
+
 			next_le();
+
 			do {
 				do_expression(output, operator);
 			} while(accept(tokn_comma));
+
 			expect(tokn_cparen);
+
 			pop(operator); /* pop the open parentesis */
 		}
+
 		push(output, tt);
 	}
 }
 
 void term(struct stack *output, struct stack *operator) {
+
 	factor(output, operator);
+
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
 
 		struct line_entry *t = peek(operator);
@@ -227,6 +241,7 @@ void term(struct stack *output, struct stack *operator) {
 		push(operator, le);
 
 		next_le();
+
 		factor(output, operator);
 	}
 }
@@ -249,25 +264,32 @@ void do_expression(struct stack *output, struct stack *operator) {
 		term(output, operator);
 	}
 
+	/* Flush operator stack */
 	while((t = peek(operator)) && tokid(t) != tokn_oparen)
 		push(output, pop(operator));
+
 }
 
 void expression() {
 	struct line_entry *t;
 	struct stack output = {0}, operator = {0};
 
+	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
 
+	/* Display evaluated expression */
 	while((t = pop_nocheck(&output))) {
 
 		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
 			printf("u");
+
 		tok_print_one(t);
+
 		if(tokid(t) == tokn_fn)
 			tok_print_one(t->next); /* FIXME: Check it exists */
 
 	}
+
 }
 
 void condition(void) {
