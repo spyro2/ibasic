@@ -87,6 +87,8 @@ static int indent_l = 0;
 
 
 void expression(void);
+#define tokid(a) (a)->tok->id
+
 
 void factor(void){
 	if(accept(tokn_label)) {
