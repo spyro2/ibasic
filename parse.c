@@ -87,15 +87,15 @@ static int indent_l = 0;
 
 #define MAX_EXPR_STACK 64
 
-static struct stack {
+struct stack {
 	struct line_entry *le[MAX_EXPR_STACK];
 	int sp;
-} operator, output;
+};
 
 #define tokid(a) (a)->tok->id
 
 void push(struct stack *s, struct line_entry *le) {
-//	printf("push(%s): ", s == &operator?"operator":"output  ");
+//	printf("push(%08x): ", s);
 //	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
 //		printf("u");
 //	tok_print_one(le);
@@ -117,7 +117,7 @@ struct line_entry *pop(struct stack *s) {
 	}
 
 //	le = s->le[s->sp];
-//	printf("pop (%s): ", s == &operator?"operator":"output  ");
+//	printf("pop (%08x): ", s);
 //	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
 //		printf("u");
 //	tok_print_one(le);
@@ -144,28 +144,30 @@ int preceeds(struct line_entry *a, struct line_entry *b) {
 	return 0;
 }
 
-void do_expression(void);
+void do_expression(struct stack *output, struct stack *operator);
+void expression(void);
+void expr_list(void);
 
-void factor(void){
+void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 		struct line_entry *t;
 
-		t = peek(&operator);
+		t = peek(operator);
 
 		if(t && preceeds(le, t) && tokid(t) != tokn_oparen)
-			push(&output, pop(&operator));
+			push(output, pop(operator));
 
 		le->data = (void *)1;
 
-		push(&operator, le);
+		push(operator, le);
 
 		next_le();
 	}
 
 	if(tok_is(tokn_label)) {
-		push(&output, le);
+		push(output, le);
 
 		next_le();
 	}
@@ -176,66 +178,116 @@ void factor(void){
 	}
 #endif
 	else if(tok_is(tokn_oparen)) {
-		push(&operator, le);
+	struct line_entry *t;
+		push(operator, le);
 		next_le();
-		do_expression();
+		do_expression(output, operator);
 		expect(tokn_cparen);
+		while((t = peek(operator))) {
+			if(tokid(t) == tokn_oparen) {
+				pop(operator);
+				break;
+			}
+			push(output, pop(operator));
+		}
+	}
+	else if(tok_is(tokn_fn)) {
+		struct line_entry *tt = le;
+		next_le();
+		expect(tokn_label);
+		if(tok_is(tokn_oparen)) {
+			struct line_entry *t;
+			push(operator, le);
+			next_le();
+			do {
+				do_expression(output, operator);
+				if(tok_is(tokn_comma)) {
+					push(output,le);
+					while((t = peek(operator))) {
+						if(tokid(t) == tokn_oparen) {
+							break;
+						}
+						push(output, pop(operator));
+					}
+				}
+			} while(accept(tokn_comma));
+			expect(tokn_cparen);
+			while((t = peek(operator))) {
+				if(tokid(t) == tokn_oparen) {
+					pop(operator);
+					break;
+				}
+				push(output, pop(operator));
+			}
+		}
+		push(output, tt);
 	}
 }
 
-void term(void) {
-	factor();
+void term(struct stack *output, struct stack *operator) {
+	factor(output, operator);
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
 
-		struct line_entry *t = peek(&operator);
+		struct line_entry *t = peek(operator);
 
 		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
-			push(&output, pop(&operator));
+			push(output, pop(operator));
 
-		push(&operator, le);
+		push(operator, le);
 
 		next_le();
-		factor();
+		factor(output, operator);
 	}
 }
 
-void do_expression(void) {
+void do_expression(struct stack *output, struct stack *operator) {
 	struct line_entry *t;
+//	static int ident;
+//	int i;
 
-	term();
+//ident++;
+//for(i = 0 ; i < ident ; i++)
+//	printf("#");
+//printf("\n");
+
+	term(output, operator);
 
 	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 
-		t = peek(&operator);
+		t = peek(operator);
 
 		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
-			push(&output, pop(&operator));
+			push(output, pop(operator));
 
-		push(&operator, le);
+		push(operator, le);
 
 		next_le();
-		term();
+		term(output, operator);
 	}
 
-	while((t = peek(&operator))) {
-		if(tokid(t) == tokn_oparen) {
-			pop(&operator);
-			break;
-		}
-		push(&output, pop(&operator));
-	}
-
+//ident--;
+//for(i = 0 ; i < ident ; i++)
+//	printf("#");
+//printf("\n");
 }
 
-void expression(void) {
+void expression() {
 	struct line_entry *t;
-	do_expression();
+	struct stack output = {0}, operator = {0};
+
+	do_expression(&output, &operator);
+
+	while((t = peek(&operator)))
+		push(&output, pop(&operator));
 
 //printf("result: \n");
 	while((t = peek(&output))) {
 		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
 			printf("u");
 		tok_print_one(t);
+		if(tokid(t) == tokn_fn)
+			tok_print_one(t->next);
+
 		pop(&output);
 	}
 }
