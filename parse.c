@@ -256,13 +256,6 @@ void term(struct stack *output, struct stack *operator) {
 
 void do_expression(struct stack *output, struct stack *operator) {
 	struct line_entry *t;
-//	static int ident;
-//	int i;
-
-//ident++;
-//for(i = 0 ; i < ident ; i++)
-//	printf("#");
-//printf("\n");
 
 	term(output, operator);
 
@@ -279,10 +272,6 @@ void do_expression(struct stack *output, struct stack *operator) {
 		term(output, operator);
 	}
 
-//ident--;
-//for(i = 0 ; i < ident ; i++)
-//	printf("#");
-//printf("\n");
 }
 
 void expression() {
@@ -294,7 +283,6 @@ void expression() {
 	while((t = peek(&operator)))
 		push(&output, pop(&operator));
 
-//printf("result: \n");
 	while((t = peek(&output))) {
 		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
 			printf("u");
