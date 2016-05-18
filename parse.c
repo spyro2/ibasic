@@ -282,15 +282,14 @@ void expression() {
 
 	while((t = peek(&operator)))
 		push(&output, pop(&operator));
+	while((t = pop_nocheck(&output))) {
 
-	while((t = peek(&output))) {
 		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
 			printf("u");
 		tok_print_one(t);
 		if(tokid(t) == tokn_fn)
 			tok_print_one(t->next); /* FIXME: Check it exists */
 
-		pop(&output);
 	}
 }
 
