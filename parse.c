@@ -192,47 +192,24 @@ void factor(struct stack *output, struct stack *operator){
 	}
 #endif
 	else if(tok_is(tokn_oparen)) {
-	struct line_entry *t;
 		push(operator, le);
 		next_le();
 		do_expression(output, operator);
 		expect(tokn_cparen);
-		while((t = peek(operator))) {
-			if(tokid(t) == tokn_oparen) {
-				pop(operator);
-				break;
-			}
-			push(output, pop(operator));
-		}
+		pop(operator); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
 		struct line_entry *tt = le;
 		next_le();
 		expect(tokn_label);
 		if(tok_is(tokn_oparen)) {
-			struct line_entry *t;
 			push(operator, le);
 			next_le();
 			do {
 				do_expression(output, operator);
-				if(tok_is(tokn_comma)) {
-					push(output,le);
-					while((t = peek(operator))) {
-						if(tokid(t) == tokn_oparen) {
-							break;
-						}
-						push(output, pop(operator));
-					}
-				}
 			} while(accept(tokn_comma));
 			expect(tokn_cparen);
-			while((t = peek(operator))) {
-				if(tokid(t) == tokn_oparen) {
-					pop(operator);
-					break;
-				}
-				push(output, pop(operator));
-			}
+			pop(operator); /* pop the open parentesis */
 		}
 		push(output, tt);
 	}
@@ -272,6 +249,8 @@ void do_expression(struct stack *output, struct stack *operator) {
 		term(output, operator);
 	}
 
+	while((t = peek(operator)) && tokid(t) != tokn_oparen)
+		push(output, pop(operator));
 }
 
 void expression() {
@@ -280,8 +259,6 @@ void expression() {
 
 	do_expression(&output, &operator);
 
-	while((t = peek(&operator)))
-		push(&output, pop(&operator));
 	while((t = pop_nocheck(&output))) {
 
 		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
