@@ -1,6 +1,10 @@
 /* First comment */
 LIBRARY "graphics.bas"
 
+B = -B+9*3+A--2*-d
+
+A = 3 + 4 * 2 / ( 1 - 5 )
+
 PRINT:
 l = d
 :PRINT
