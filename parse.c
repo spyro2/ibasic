@@ -596,10 +596,7 @@ void line(void) {
 	if(tok_is(tokn_eol))
 		goto out; /* Empty line */
 
-	if(accept(tokn_colon)) {
-		; /* Skip leading : at beginning of lines */
-	}
-	else if(accept(tokn_label)) {
+	if(accept(tokn_label)) {
 		if(!accept(tokn_colon)) {
 			emit("l-value = ");
 			assign();
@@ -609,6 +606,9 @@ void line(void) {
 			emit("<label>:");
 			goto out;
 		}
+	}
+	else if(accept(tokn_colon)) {
+		; /* Skip leading : at beginning of lines */
 	}
 	else if(accept(tokn_library)) {
 		emit("LIBRARY ");
