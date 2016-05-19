@@ -597,14 +597,14 @@ void line(void) {
 		goto out; /* Empty line */
 
 	if(accept(tokn_label)) {
-		if(!accept(tokn_colon)) {
+		if(accept(tokn_colon)) {
+			emit("<label>:");
+			goto out; /* Labels must be on their own on a line? */
+		}
+		else {
 			emit("l-value = ");
 			assign();
 			expression();
-		}
-		else {
-			emit("<label>:");
-			goto out;
 		}
 	}
 	else if(accept(tokn_colon)) {
