@@ -147,15 +147,33 @@ struct line_entry *peek(struct stack *s) {
 	return NULL;
 }
 
-int preceeds(struct line_entry *a, struct line_entry *b) {
-	if(!b)
-		return 1;
-	if(a->data)
-		return 1;
-	if(tokid(a) == tokn_asterisk || tokid(a) == tokn_slash)
-		if(tokid(b) == tokn_plus || tokid(b) == tokn_minus)
+int get_prec(struct line_entry *a) {
+	int t;
+
+	if(!a)
+		goto out;
+
+	t = tokid(a);
+
+	if(t == tokn_minus || t == tokn_plus) {
+		if(a->data)
+			return 3;
+		else
 			return 1;
+	}
+	if(t == tokn_asterisk || t == tokn_slash)
+		return 2;
+	if(t == tokn_oparen)
+		return 4;
+
+out:
 	return 0;
+}
+
+int preceeds(struct line_entry *a, struct line_entry *b) {
+	int pa = get_prec(a), pb = get_prec(b);
+
+	return pa > pb;
 }
 
 void do_expression(struct stack *output, struct stack *operator);
@@ -166,14 +184,12 @@ void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
-		struct line_entry *t;
-
-		t = peek(operator);
-
-		if(t && preceeds(le, t) && tokid(t) != tokn_oparen)
-			push(output, pop(operator));
+		struct line_entry *t = peek(operator);
 
 		le->data = (void *)1;
+
+		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
+			push(output, pop(operator));
 
 		push(operator, le);
 
