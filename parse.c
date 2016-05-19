@@ -219,7 +219,8 @@ void factor(struct stack *output, struct stack *operator){
 		pop(operator); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
-		struct line_entry *tt = le;
+		struct line_entry *t = le;
+
 		next_le();
 
 		expect(tokn_label);
@@ -239,7 +240,7 @@ void factor(struct stack *output, struct stack *operator){
 			pop(operator); /* pop the open parentesis */
 		}
 
-		push(output, tt);
+		push(output, t);
 	}
 }
 
@@ -248,7 +249,6 @@ void term(struct stack *output, struct stack *operator) {
 	factor(output, operator);
 
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
-
 		struct line_entry *t = peek(operator);
 
 		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
