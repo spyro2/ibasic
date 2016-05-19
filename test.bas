@@ -1,11 +1,14 @@
 /* First comment */
 LIBRARY "graphics.bas"
 
+A = -3 + 4 * 2 / ( 1 - 5 )
 A = 3 + 4 * 2 / ( 1 - 5 )
 A = 3 + 4 * 2 / ( FNdoit(A, B, C, D) - 5 )
+A = 3 + 4 * 2 / ( -FNdoit(A, B, C, D) - 5 )
 A = 3 + 4 * 2 / ( FNdoit(A, B, 4*g-(a*-3)) - 5 )
 A = 3 + 4 * 2 / ( FNdoit(A, FNdothat(B,3*4-a), 4*g-(a*-3)) - 5 )
 B = -B+9*3+A--2*-d
+B = -B+9*3*A--2*-d
 
 /* From wikipedia - ((15 ÷ (7 − (1 + 1))) × 3) − (2 + (1 + 1)) */
 /* The above should evaluate to: - + + {1} {1} {2} * {3} / - + {1} {1} {7} {15} */
@@ -14,6 +17,7 @@ B = -B+9*3+A--2*-d
 l = ((15 / (7 - (1 + 1))) * 3) - (2 + (1 + 1))
 
 A = 4*g-(a*-3)
+A = 4*g-(-a*-3)
 
 PRINT:
 l = d
@@ -106,7 +110,7 @@ WHILE 1
 	PRINT "Endless"
 ENDWHILE
 
-CASE foo OF
+CASE FNdothing(A, 5, (3-6*(5-b)/(76-A*n))) OF
 	WHEN 7,8,9: PRINT A:IF foo=8 PRINT "Yay" ELSE PRINT "boooo":PRINT B
 	WHEN 10
 		PRINT "HI!"
