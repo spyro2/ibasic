@@ -200,6 +200,11 @@ void factor(struct stack *output, struct stack *operator){
 		next_le();
 	}
 
+	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
+		printf("Syntax error!\n");
+		exit(1);
+	}
+
 	if(tok_is(tokn_label)) {
 		push(output, le);
 
