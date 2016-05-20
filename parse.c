@@ -332,6 +332,62 @@ void print_expr(struct stack *o) {
 	}
 }
 
+int eval(struct stack *o) {
+	struct line_entry *t = pop(o);
+	int i = tokid(t);
+
+	if(i == tokn_label)
+		return strtol(t->data, NULL, 10);
+	else if(i == tokn_plus) {
+		if(t->data) {
+			return eval(o);
+		}
+		else {
+			return eval(o) + eval(o);
+		}
+	}
+	else if(i == tokn_minus) {
+		if(t->data) {
+			return -eval(o);
+		}
+		else {
+			int a = eval(o), b = eval(o);
+			return b-a;
+		}
+	}
+	else if(i == tokn_asterisk) {
+		if(t->data) {
+			return eval(o);
+		}
+		else {
+			int a = eval(o), b = eval(o);
+			return b*a;
+		}
+	}
+	else if(i == tokn_slash) {
+		if(t->data) {
+			return eval(o);
+		}
+		else {
+			int a = eval(o), b = eval(o);
+			return b/a;
+		}
+	}
+	else if(i == tokn_fn) {
+		int n = (int)t->data;
+		int r = 0;
+
+		while(n) {
+			r += eval(o); // Temporarily, lets just sum the params
+			n--;
+		}
+		return r;
+	}
+
+	printf("Error: unknown operator\n");
+	exit(1);
+}
+
 void expression() {
 	struct stack output = {0}, operator = {0};
 
@@ -339,8 +395,11 @@ void expression() {
 	do_expression(&output, &operator);
 
 	/* Display evaluated expression */
+//	if(peek(&output))
+//		print_expr(&output);
+
 	if(peek(&output))
-		print_expr(&output);
+		printf("%d ", eval(&output));
 }
 
 void condition(void) {
