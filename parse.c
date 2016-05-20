@@ -94,9 +94,11 @@ struct stack {
 
 #define tokid(a) (a)->tok->id
 
+//#define DEBUG_EXPR_STACK
+
 void push(struct stack *s, struct line_entry *le) {
 #ifdef DEBUG_EXPR_STACK
-	printf("push(%08x): ", s);
+	printf("push(%08x) %d: ", s, s->sp);
 	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
 		printf("u");
 	tok_print_one(le);
@@ -121,7 +123,7 @@ struct line_entry *pop(struct stack *s) {
 	do {
 	struct line_entry *le;
 	le = s->le[s->sp];
-	printf("pop (%08x): ", s);
+	printf("pop (%08x) %d: ", s, s->sp);
 	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
 		printf("u");
 	tok_print_one(le);
