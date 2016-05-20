@@ -166,6 +166,9 @@ int get_prec(struct line_entry *a) {
 	if(t == tokn_oparen)
 		return 4;
 
+	printf("Unknown Operator!\n");
+	exit(1);
+
 out:
 	return 0;
 }
