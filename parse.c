@@ -229,6 +229,7 @@ void factor(struct stack *output, struct stack *operator){
 	}
 	else if(tok_is(tokn_fn)) {
 		struct line_entry *t = le;
+		int n_params = 0;
 
 		next_le();
 
@@ -242,12 +243,15 @@ void factor(struct stack *output, struct stack *operator){
 
 			do {
 				do_expression(output, operator);
+				n_params++;
 			} while(accept(tokn_comma));
 
 			expect(tokn_cparen);
 
 			pop(operator); /* pop the open parentesis */
 		}
+
+		t->data = (void *)n_params;
 
 		push(output, t);
 	}
