@@ -296,26 +296,51 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
+void print_expr(struct stack *o) {
+	struct line_entry *t = pop(o);
+	int i = tokid(t);
+
+	if(i == tokn_label)
+		tok_print_one(t);
+	else if(i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
+	        i == tokn_slash) {
+
+		tok_print_one(t);
+
+		if(t->data) {
+			printf("u");
+			print_expr(o);
+		}
+		else {
+			print_expr(o);
+			print_expr(o);
+		}
+	}
+	else if(i == tokn_fn) {
+		int n = (int)t->data;
+
+		tok_print_one(t);
+
+		printf("( ");
+		while(n) {
+			print_expr(o);
+			n--;
+			if(n)
+				printf(", ");
+		}
+		printf(") ");
+	}
+}
+
 void expression() {
-	struct line_entry *t;
 	struct stack output = {0}, operator = {0};
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
 
 	/* Display evaluated expression */
-	while((t = pop_nocheck(&output))) {
-
-		if((tokid(t) == tokn_plus || tokid(t) == tokn_minus) && t->data)
-			printf("u");
-
-		tok_print_one(t);
-
-		if(tokid(t) == tokn_fn)
-			tok_print_one(t->next); /* FIXME: Check it exists */
-
-	}
-
+	if(peek(&output))
+		print_expr(&output);
 }
 
 void condition(void) {
