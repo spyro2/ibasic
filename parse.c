@@ -164,7 +164,7 @@ int get_prec(struct line_entry *a) {
 	if(t == tokn_asterisk || t == tokn_slash)
 		return 2;
 	if(t == tokn_oparen)
-		return 4;
+		return -1;
 
 	printf("Unknown Operator!\n");
 	exit(1);
@@ -187,11 +187,10 @@ void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
-		struct line_entry *t = peek(operator);
 
 		le->data = (void *)1;
 
-		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
+		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));
 
 		push(operator, le);
@@ -252,9 +251,8 @@ void term(struct stack *output, struct stack *operator) {
 	factor(output, operator);
 
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
-		struct line_entry *t = peek(operator);
 
-		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
+		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));
 
 		push(operator, le);
@@ -272,9 +270,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 
-		t = peek(operator);
-
-		if(!preceeds(le, t) && tokid(t) != tokn_oparen)
+		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));
 
 		push(operator, le);
@@ -285,7 +281,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 	/* Flush operator stack */
 	while((t = peek(operator)) && tokid(t) != tokn_oparen)
-		push(output, pop(operator));
+		push(output, pop_nocheck(operator));
 
 }
 
