@@ -94,14 +94,11 @@ struct stack {
 
 #define tokid(a) (a)->tok->id
 
-#define is_unary(a) ((a)->data.i)
 //#define DEBUG_EXPR_STACK
 
 void push(struct stack *s, struct line_entry *le) {
 #ifdef DEBUG_EXPR_STACK
 	printf("push(%08x) %d: ", s, s->sp);
-	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && is_unary(le))
-		printf("u");
 	tok_print_one(le);
 	printf("\n");
 #endif
@@ -125,8 +122,6 @@ struct line_entry *pop(struct stack *s) {
 	struct line_entry *le;
 	le = s->le[s->sp];
 	printf("pop (%08x) %d: ", s, s->sp);
-	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && is_unary(le))
-		printf("u");
 	tok_print_one(le);
 	printf("\n");
 	} while (0);
@@ -158,14 +153,12 @@ int get_prec(struct line_entry *a) {
 
 	t = tokid(a);
 
-	if(t == tokn_minus || t == tokn_plus) {
-		if(is_unary(a))
-			return 3;
-		else
-			return 1;
-	}
+	if(t == tokn_uminus || t == tokn_uplus)
+		return 3;
 	if(t == tokn_asterisk || t == tokn_slash)
 		return 2;
+	if(t == tokn_minus || t == tokn_plus)
+		return 1;
 	if(t == tokn_oparen)
 		return -1;
 
@@ -186,13 +179,23 @@ void do_expression(struct stack *output, struct stack *operator);
 void expression(void);
 void expr_list(void);
 
+/* Special case, replacement tokens for unary + and -
+ * These are never emitted by the tokeniser, so it does not matter
+ * that their names are not valid syntax
+ */
+struct token token_uplus  = {tokn_uplus, "u+"};
+struct token token_uminus = {tokn_uminus, "u-"};
+
 void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 
-		/* Set data nonzero to indicate this is a unary operator */
-		le->data.i = 1;
+		/* Promote token to a unary one */
+		if(tok_is(tokn_plus))
+			le->tok = &token_uplus;
+		else
+			le->tok = &token_uminus;
 
 		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));
@@ -304,19 +307,17 @@ void print_expr(struct stack *o) {
 
 	if(i == tokn_label)
 		tok_print_one(t);
-	else if(i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
-	        i == tokn_slash) {
-
+	else if(i == tokn_uplus || i == tokn_uminus) {
 		tok_print_one(t);
 
-		if(is_unary(t)) {
-			printf("u");
-			print_expr(o);
-		}
-		else {
-			print_expr(o);
-			print_expr(o);
-		}
+		print_expr(o);
+	}
+	else if(i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
+	        i == tokn_slash) {
+		tok_print_one(t);
+
+		print_expr(o);
+		print_expr(o);
 	}
 	else if(i == tokn_fn) {
 		int n = t->data.i;
@@ -332,6 +333,10 @@ void print_expr(struct stack *o) {
 		}
 		printf(") ");
 	}
+	else {
+		printf("Error: unknown operator\n");
+		exit(1);
+	}
 }
 
 int eval(struct stack *o) {
@@ -340,22 +345,18 @@ int eval(struct stack *o) {
 
 	if(i == tokn_label)
 		return strtol(t->data.s, NULL, 10);
-	else if(i == tokn_plus) {
-		if(is_unary(t)) {
+	else if(i == tokn_uplus) {
 			return eval(o);
-		}
-		else {
-			return eval(o) + eval(o);
-		}
+	}
+	else if(i == tokn_uminus) {
+			return -eval(o);
+	}
+	else if(i == tokn_plus) {
+		return eval(o) + eval(o);
 	}
 	else if(i == tokn_minus) {
-		if(is_unary(t)) {
-			return -eval(o);
-		}
-		else {
-			int a = eval(o), b = eval(o);
-			return b-a;
-		}
+		int a = eval(o), b = eval(o);
+		return b-a;
 	}
 	else if(i == tokn_asterisk) {
 		int a = eval(o), b = eval(o);
@@ -386,10 +387,11 @@ void expression() {
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
 
-	/* Display evaluated expression */
+	/* Display RPN form of expression */
 //	if(peek(&output))
 //		print_expr(&output);
 
+	/* Display evaluated expression */
 	if(peek(&output))
 		printf("%d ", eval(&output));
 }
