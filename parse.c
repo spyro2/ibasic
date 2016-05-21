@@ -301,44 +301,6 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
-void print_expr(struct stack *o) {
-	struct line_entry *t = pop(o);
-	int i = tokid(t);
-
-	if(i == tokn_label)
-		tok_print_one(t);
-	else if(i == tokn_uplus || i == tokn_uminus) {
-		tok_print_one(t);
-
-		print_expr(o);
-	}
-	else if(i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
-	        i == tokn_slash) {
-		tok_print_one(t);
-
-		print_expr(o);
-		print_expr(o);
-	}
-	else if(i == tokn_fn) {
-		int n = t->data.i;
-
-		tok_print_one(t);
-
-		printf("( ");
-		while(n) {
-			print_expr(o);
-			n--;
-			if(n)
-				printf(", ");
-		}
-		printf(") ");
-	}
-	else {
-		printf("Error: unknown operator\n");
-		exit(1);
-	}
-}
-
 int eval(struct stack *o) {
 	struct line_entry *t = pop(o);
 	int i = tokid(t);
@@ -386,10 +348,6 @@ void expression() {
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
-
-	/* Display RPN form of expression */
-//	if(peek(&output))
-//		print_expr(&output);
 
 	/* Display evaluated expression */
 	if(peek(&output))
