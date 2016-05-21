@@ -18,6 +18,10 @@ enum tokid {
 	tokn_colon, tokn_at, tokn_oparen, tokn_cparen, tokn_obrace,
 	tokn_cbrace, tokn_percent, tokn_dollar,	tokn_label, tokn_otherwise,
 	tokn_comment,
+	/* These tokens will never be emitted by the tokeniser and are
+	 * for the use of the parser only.
+	 */
+	tokn_uminus, tokn_uplus,
 };
 
 struct line_entry {
