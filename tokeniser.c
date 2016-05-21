@@ -10,7 +10,7 @@ static struct line_entry *le_alloc(int len) {
 	struct line_entry *le = malloc(sizeof(*le)+len);
 
 	if(len)
-		le->data = le+1;
+		le->data.v = le+1;
 
 	return le;
 }
@@ -34,7 +34,7 @@ static struct line_entry *tokfn_string(struct token *t, char **ps) {
 
 	le = le_alloc(len+1); // FIXME: Check failure
 
-	dest = (char *)le->data;
+	dest = le->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
@@ -46,8 +46,8 @@ static struct line_entry *tokfn_string(struct token *t, char **ps) {
 }
 
 static void print_string(struct line_entry *le) {
-	if(le->data)
-		printf("\"%s\"", (char *)le->data);
+	if(le->data.s)
+		printf("\"%s\"", le->data.s);
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
@@ -69,7 +69,7 @@ static struct line_entry *tokfn_comment(struct token *t, char **ps) {
 
 	le = le_alloc(len+1); // FIXME: Check failure
 
-	dest = (char *)le->data;
+	dest = le->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
@@ -260,8 +260,8 @@ static struct token token_list[] = {
 };
 
 static void print_label(struct line_entry *le) {
-	if(le->data)
-		printf("{%s} ", (char *)le->data);
+	if(le->data.s)
+		printf("{%s} ", le->data.s);
 }
 
 static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
@@ -369,7 +369,7 @@ static struct line_entry *extract_label(char **ps) {
 
 	le = le_alloc(len+1); // FIXME: Check failure
 
-	dest = (char *)le->data;
+	dest = le->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 

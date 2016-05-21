@@ -23,7 +23,11 @@ enum tokid {
 struct line_entry {
         struct token *tok;
         struct line_entry *next;
-        void *data;
+        union {
+		char *s;
+		void *v;
+		int i;
+	} data;
 };
 
 struct token {

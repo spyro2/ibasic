@@ -94,12 +94,13 @@ struct stack {
 
 #define tokid(a) (a)->tok->id
 
+#define is_unary(a) ((a)->data.i)
 //#define DEBUG_EXPR_STACK
 
 void push(struct stack *s, struct line_entry *le) {
 #ifdef DEBUG_EXPR_STACK
 	printf("push(%08x) %d: ", s, s->sp);
-	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
+	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && is_unary(le))
 		printf("u");
 	tok_print_one(le);
 	printf("\n");
@@ -124,7 +125,7 @@ struct line_entry *pop(struct stack *s) {
 	struct line_entry *le;
 	le = s->le[s->sp];
 	printf("pop (%08x) %d: ", s, s->sp);
-	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && le->data)
+	if((tokid(le) == tokn_plus || tokid(le) == tokn_minus) && is_unary(le))
 		printf("u");
 	tok_print_one(le);
 	printf("\n");
@@ -158,7 +159,7 @@ int get_prec(struct line_entry *a) {
 	t = tokid(a);
 
 	if(t == tokn_minus || t == tokn_plus) {
-		if(a->data)
+		if(is_unary(a))
 			return 3;
 		else
 			return 1;
@@ -190,7 +191,8 @@ void factor(struct stack *output, struct stack *operator){
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 
-		le->data = (void *)1;
+		/* Set data nonzero to indicate this is a unary operator */
+		le->data.i = 1;
 
 		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));
@@ -251,7 +253,7 @@ void factor(struct stack *output, struct stack *operator){
 			pop(operator); /* pop the open parentesis */
 		}
 
-		t->data = (void *)n_params;
+		t->data.i = n_params;
 
 		push(output, t);
 	}
@@ -307,7 +309,7 @@ void print_expr(struct stack *o) {
 
 		tok_print_one(t);
 
-		if(t->data) {
+		if(is_unary(t)) {
 			printf("u");
 			print_expr(o);
 		}
@@ -317,7 +319,7 @@ void print_expr(struct stack *o) {
 		}
 	}
 	else if(i == tokn_fn) {
-		int n = (int)t->data;
+		int n = t->data.i;
 
 		tok_print_one(t);
 
@@ -337,9 +339,9 @@ int eval(struct stack *o) {
 	int i = tokid(t);
 
 	if(i == tokn_label)
-		return strtol(t->data, NULL, 10);
+		return strtol(t->data.s, NULL, 10);
 	else if(i == tokn_plus) {
-		if(t->data) {
+		if(is_unary(t)) {
 			return eval(o);
 		}
 		else {
@@ -347,7 +349,7 @@ int eval(struct stack *o) {
 		}
 	}
 	else if(i == tokn_minus) {
-		if(t->data) {
+		if(is_unary(t)) {
 			return -eval(o);
 		}
 		else {
@@ -364,7 +366,7 @@ int eval(struct stack *o) {
 		return b/a;
 	}
 	else if(i == tokn_fn) {
-		int n = (int)t->data;
+		int n = t->data.i;
 		int r = 0;
 
 		while(n) {
