@@ -356,22 +356,12 @@ int eval(struct stack *o) {
 		}
 	}
 	else if(i == tokn_asterisk) {
-		if(t->data) {
-			return eval(o);
-		}
-		else {
-			int a = eval(o), b = eval(o);
-			return b*a;
-		}
+		int a = eval(o), b = eval(o);
+		return b*a;
 	}
 	else if(i == tokn_slash) {
-		if(t->data) {
-			return eval(o);
-		}
-		else {
-			int a = eval(o), b = eval(o);
-			return b/a;
-		}
+		int a = eval(o), b = eval(o);
+		return b/a;
 	}
 	else if(i == tokn_fn) {
 		int n = (int)t->data;
