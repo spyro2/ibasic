@@ -1,6 +1,11 @@
 /* First comment */
 LIBRARY "graphics.bas"
 
+PRINT 37
+PRINT 0xfead0123
+PRINT 0744
+PRINT 3.14159
+
 A = -3 + 4 * 2 / ( 1 - 5 )
 A = 3 + 4 * 2 / ( 1 - 5 )
 A = 3 + 4 * 2 / ( FNdoit(A, B, C, D) - 5 )
