@@ -308,10 +308,10 @@ int eval(struct stack *o) {
 	if(i == tokn_label)
 		return strtol(t->data.s, NULL, 10);
 	else if(i == tokn_uplus) {
-			return eval(o);
+		return eval(o);
 	}
 	else if(i == tokn_uminus) {
-			return -eval(o);
+		return -eval(o);
 	}
 	else if(i == tokn_plus) {
 		return eval(o) + eval(o);
