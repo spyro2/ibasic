@@ -1,4 +1,4 @@
 
 all:
-	gcc -Wall -c tokeniser.c
-	gcc -Wall parse.c tokeniser.o -o ibasic
+	gcc -g -Wall -c tokeniser.c
+	gcc -g -Wall parse.c tokeniser.o -o ibasic
