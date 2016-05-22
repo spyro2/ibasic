@@ -349,24 +349,71 @@ static void print_label(struct line_entry *le) {
 		printf("%s ", le->data.s);
 }
 
+static void print_int(struct line_entry *le) {
+	printf("%d ", le->data.i);
+}
+
+static void print_float(struct line_entry *le) {
+	printf("%f ", le->data.d);
+}
+
 static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
+static struct token tok_int   = {tokn_int,   "<int>", NULL, print_int};
+static struct token tok_float = {tokn_float, "<float>", NULL, print_float};
 
 static struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
-	struct line_entry *le;
+	struct line_entry *le = NULL;
 	int len;
 	char *dest;
 
-	while(*s && IS_LABEL(*s))
+	while(*s && IS_LABEL(*s)) {
 		s++;
-
-	/* We cannot handle bad characters, skip them */
-	if ( s == *ps ) {
-		*ps = ++s;
-		return 0;
 	}
 
+	/* We cannot handle zero length labels. */
+	if ( s == *ps )
+		goto out;
+
 	len = s-*ps;
+
+	/* Numbers */
+	if ( IS_DIGIT(**ps) ) {
+		char *sc = *ps;
+		char n = len>1?sc[1]:0;
+
+		le = le_alloc(0);
+
+		if(*sc == '0') {
+			if (n == 'x') { /* hex */
+				if(len < 3)
+					goto out_free;
+				le->tok = &tok_int;
+				le->data.i = strtoul(*ps, ps, 0);
+				goto out;
+			}
+			else if(IS_DIGIT(n)) { /* octal */
+				le->tok = &tok_int;
+				le->data.i = strtoul(*ps, ps, 0);
+				goto out;
+			}
+		}
+		else if(strchr(*ps, '.')) { /* decimal */
+			le->tok = &tok_float;
+			le->data.d = strtod(*ps, ps);
+			goto out;
+		}
+
+		/* ordinary integer */
+		le->tok = &tok_int;
+		le->data.i = strtoul(*ps, ps, 10);
+
+		goto out;
+	}
+
+	/* Labels may not contain . */
+	if(strchr(*ps, '.'))
+		goto out;
 
 	le = le_alloc(len+1); // FIXME: Check failure
 
@@ -378,7 +425,13 @@ static struct line_entry *extract_label(char **ps) {
 
 	*ps = s;
 
-	return le; // This is crap, but non-zero is enough for now.
+	return le;
+
+out_free:
+	free(le);
+	le = NULL;
+out:
+	return le;
 }
 
 /*
