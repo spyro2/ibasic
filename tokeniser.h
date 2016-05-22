@@ -30,6 +30,7 @@ struct line_entry {
         union {
 		char *s;
 		void *v;
+		float d;
 		int i;
 	} data;
 };
