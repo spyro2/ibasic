@@ -453,8 +453,13 @@ static struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string
 			else
 				le = default_tokfn(t, &s);
 		}
-		else     /* Non-token thing found */
+		else {     /* Non-token thing found */
 			le = extract_label(&s);
+			if(!le) {
+				printf("Bad Label\n");
+				exit(1);
+			}
+		}
 
 		/* Handle errors here. FIXME: dont silently skip badness */
 
