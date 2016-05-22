@@ -210,17 +210,11 @@ void factor(struct stack *output, struct stack *operator){
 		exit(1);
 	}
 
-	if(tok_is(tokn_label)) {
+	if(tok_is(tokn_label) || tok_is(tokn_int) || tok_is(tokn_float)) {
 		push(output, le);
 
 		next_le();
 	}
-#if 0
-	/* numbers and labels are all the same to the tokeniser right now */
-	else if (accept(number)) {
-		;
-	}
-#endif
 	else if(tok_is(tokn_oparen)) {
 		push(operator, le);
 
@@ -306,7 +300,13 @@ int eval(struct stack *o) {
 	int i = tokid(t);
 
 	if(i == tokn_label)
-		return strtol(t->data.s, NULL, 10);
+		return 0;
+	else if(i == tokn_int) {
+		return t->data.i;
+	}
+	else if(i == tokn_float) {
+		return (int)t->data.d;
+	}
 	else if(i == tokn_uplus) {
 		return eval(o);
 	}
