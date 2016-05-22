@@ -259,13 +259,6 @@ static struct token token_list[] = {
 	{0, NULL},
 };
 
-static void print_label(struct line_entry *le) {
-	if(le->data.s)
-		printf("{%s} ", le->data.s);
-}
-
-static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
-
 struct tok_tree_entry {
 	char c;
 	struct tok_tree_entry *next;
@@ -351,6 +344,12 @@ static int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
 #define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define IS_LABEL(c) (IS_DIGIT(c) || IS_ALPHA(c) || ((c) == '_') || ((c) == '.'))
 
+static void print_label(struct line_entry *le) {
+	if(le->data.s)
+		printf("%s ", le->data.s);
+}
+
+static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
 
 static struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
