@@ -22,7 +22,7 @@ void next_le(void) {
 	 */
 	do {
 		le = get_next_le(fd, NULL);
-	} while (le->tok->id == tokn_comment);
+	} while (le->sym->id == tokn_comment);
 
 #if 0
 	printf(ANSI_GREEN);
@@ -32,12 +32,12 @@ void next_le(void) {
 }
 
 int tok_is(enum tokid id) {
-	return le->tok->id == id ? 1 : 0;
+	return le->sym->id == id ? 1 : 0;
 }
 
 int accept(enum tokid id) {
 
-	if (le->tok->id == id) {
+	if (le->sym->id == id) {
 		next_le();
 		return 1;
 	}
@@ -49,8 +49,8 @@ int expect(enum tokid id) {
 	if (accept(id))
 		return 1;
 
-	printf("Unexpected token: %s\n", le->tok->name?le->tok->name:"Unknown");
-	printf("Expected: %d (%s)\n", id, tok_from_id(id)?tok_from_id(id)->name:"null"); // FIXME: null deref
+	printf("Unexpected token: %s\n", le->sym->name?le->sym->name:"Unknown");
+	printf("Expected: %d (%s)\n", id, sym_from_id(id)?sym_from_id(id)->name:"null"); // FIXME: null deref
 	exit(1);
 
 	return 0;
@@ -92,7 +92,7 @@ struct stack {
 	int sp;
 };
 
-#define tokid(a) (a)->tok->id
+#define tokid(a) (a)->sym->id
 
 //#define DEBUG_EXPR_STACK
 
@@ -183,8 +183,8 @@ void expr_list(void);
  * These are never emitted by the tokeniser, so it does not matter
  * that their names are not valid syntax
  */
-struct token token_uplus  = {tokn_uplus, "u+"};
-struct token token_uminus = {tokn_uminus, "u-"};
+struct symbol sym_uplus  = {tokn_uplus, "u+"};
+struct symbol sym_uminus = {tokn_uminus, "u-"};
 
 void factor(struct stack *output, struct stack *operator){
 
@@ -193,9 +193,9 @@ void factor(struct stack *output, struct stack *operator){
 
 		/* Promote token to a unary one */
 		if(tok_is(tokn_plus))
-			le->tok = &token_uplus;
+			le->sym = &sym_uplus;
 		else
-			le->tok = &token_uminus;
+			le->sym = &sym_uminus;
 
 		if(!preceeds(le, peek(operator)))
 			push(output, pop(operator));

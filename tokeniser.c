@@ -18,7 +18,7 @@ static struct line_entry *le_alloc(int len) {
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
  */
-static struct line_entry *tokfn_string(struct token *t, char **ps) {
+static struct line_entry *tokfn_string(struct symbol *t, char **ps) {
 	char *s = *ps;
 	char *dest;
 	int len;
@@ -38,7 +38,7 @@ static struct line_entry *tokfn_string(struct token *t, char **ps) {
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->tok = t;
+	le->sym = t;
 
 	*ps = ++s;
 
@@ -51,7 +51,7 @@ static void print_string(struct line_entry *le) {
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
-static struct line_entry *tokfn_comment(struct token *t, char **ps) {
+static struct line_entry *tokfn_comment(struct symbol *t, char **ps) {
 	char *s = *ps;
 	char *dest;
 	int len;
@@ -73,7 +73,7 @@ static struct line_entry *tokfn_comment(struct token *t, char **ps) {
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->tok = t;
+	le->sym = t;
 
 	*ps = ++s;
 
@@ -84,14 +84,14 @@ static void print_eol(struct line_entry *le) {
 	printf(" <EOL>");
 }
 
-static struct line_entry *default_tokfn(struct token *t, char **ps) {
+static struct line_entry *default_tokfn(struct symbol *t, char **ps) {
 	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
-	le->tok = t;
+	le->sym = t;
 
 	return le;
 }
 
-static struct token token_list[] = {
+static struct symbol symbol_list[] = {
 	/* Flow control and error handling */
 	{tokn_if, "IF",},
 	{tokn_then, "THEN",},
@@ -259,81 +259,81 @@ static struct token token_list[] = {
 	{0, NULL},
 };
 
-struct tok_tree_entry {
+struct sym_tree_entry {
 	char c;
-	struct tok_tree_entry *next;
-	struct tok_tree_entry *children;
-	struct token *tok;
+	struct sym_tree_entry *next;
+	struct sym_tree_entry *children;
+	struct symbol *sym;
 };
 
-static struct tok_tree_entry *tok_tree = NULL;
+static struct sym_tree_entry *sym_tree = NULL;
 
 /*
- * We assume the token being added is valid - this function is recursive and
+ * We assume the symbol being added is valid - this function is recursive and
  * so we dont know if we are being called initially or are already at some
- * stage in the process of adding a token
+ * stage in the process of adding a symbol
  */
 
-static int tok_add(struct tok_tree_entry **ptte, struct token *t, char *c) {
-	struct tok_tree_entry *tte;
+static int sym_add(struct sym_tree_entry **pste, struct symbol *s, char *c) {
+	struct sym_tree_entry *ste;
 
-	if(!ptte)
+	if(!pste)
 		return -EINVAL;
 
-	tte = *ptte;
+	ste = *pste;
 
 	/* Are we creating a new entry? */
-	if(!tte) {
-		struct tok_tree_entry *tte_new;
+	if(!ste) {
+		struct sym_tree_entry *ste_new;
 		int ret = 0;
 
-		tte_new = calloc(1, sizeof(*tte_new));
+		ste_new = calloc(1, sizeof(*ste_new));
 
-		if(!tte_new)
+		if(!ste_new)
 			return -ENOMEM;
 
-		tte_new->c = *c++;
+		ste_new->c = *c++;
 
 		/*
-		 * If this is the last character, add a pointer to the token
+		 * If this is the last character, add a pointer to the symbol
 		 * descriptor.
 		 * Otherwise, keep recursing...
 		 */
 		if(!*c)
-			tte_new->tok = t;
+			ste_new->sym = s;
 		else
-			ret = tok_add(&tte_new->children, t, c);
+			ret = sym_add(&ste_new->children, s, c);
 
 		/*
 		 * If adding a child entry failed, clean up.
 		 * Otherwise, link the entry to the tree.
 		 */
 		if(ret == -ENOMEM)
-			free(tte_new);
+			free(ste_new);
 		else
-			*ptte = tte_new;
+			*pste = ste_new;
 
 		return ret;
 	}
 
-	while(tte) {
-		if(tte->c == *c) { /* Entry exists, descend. */
+	while(ste) {
+		if(ste->c == *c) { /* Entry exists, descend. */
 			c++;
 			if(!*c)
-				if(!tte->tok) {
-					tte->tok = t;
+				if(!ste->sym) {
+					ste->sym = s;
 					return 0;
 				}
 				else /* Entry is a duplicate */
 					return 1;
 			else    /* Add new entry */
-				return tok_add(&tte->children, t, c);
+				return sym_add(&ste->children, s, c);
 		}
 		/* No existing entry, recursively add */
-		else if(!tte->next)
-				return tok_add(&tte->next, t, c);
+		else if(!ste->next)
+				return sym_add(&ste->next, s, c);
 
-		tte = tte->next;
+		ste = ste->next;
 	}
 
 	return 1; /* Shut compiler up */
@@ -357,9 +357,9 @@ static void print_float(struct line_entry *le) {
 	printf("%f ", le->data.d);
 }
 
-static struct token tok_label = {tokn_label, "<label>", NULL, print_label};
-static struct token tok_int   = {tokn_int,   "<int>", NULL, print_int};
-static struct token tok_float = {tokn_float, "<float>", NULL, print_float};
+static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
+static struct symbol sym_int   = {tokn_int,   "<int>", NULL, print_int};
+static struct symbol sym_float = {tokn_float, "<float>", NULL, print_float};
 
 static struct line_entry *extract_label(char **ps) {
 	char *s = *ps;
@@ -388,24 +388,24 @@ static struct line_entry *extract_label(char **ps) {
 			if (n == 'x') { /* hex */
 				if(len < 3)
 					goto out_free;
-				le->tok = &tok_int;
+				le->sym = &sym_int;
 				le->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 			else if(IS_DIGIT(n)) { /* octal */
-				le->tok = &tok_int;
+				le->sym = &sym_int;
 				le->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 		}
 		else if(strchr(*ps, '.')) { /* decimal */
-			le->tok = &tok_float;
+			le->sym = &sym_float;
 			le->data.d = strtod(*ps, ps);
 			goto out;
 		}
 
 		/* ordinary integer */
-		le->tok = &tok_int;
+		le->sym = &sym_int;
 		le->data.i = strtoul(*ps, ps, 10);
 
 		goto out;
@@ -421,7 +421,7 @@ static struct line_entry *extract_label(char **ps) {
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->tok = &tok_label;
+	le->sym = &sym_label;
 
 	*ps = s;
 
@@ -435,78 +435,78 @@ out:
 }
 
 /*
- * Currently, this tokeniser does store "back references" so that it can
- * correctly parse a label which follows a partially matched token, eg.
- * "ENDPROD" instead of ENDPROC (END is a token, followed by PROD).
- * This could be avoided by allowing the tokeniser to copy each character
- * it following a token into a buffer, until it realises what the next thing is.
+ * Currently, this lexer does store "back references" so that it can
+ * correctly parse a label which follows a partially matched symbol, eg.
+ * "ENDPROD" instead of ENDPROC (END is a symbol, followed by PROD).
+ * This could be avoided by allowing the lexer to copy each character
+ * following a symbol into a buffer, until it realises what the next thing is.
  * but this seems un-necessary (as long as it parses whole lines at a time).
  */
 
 /*
- * Perhaps we can skip whitespace by making it a token that is always discarded?
+ * Perhaps we can skip whitespace using a symbol that is always discarded?
  */
 
-static struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string) {
-	struct tok_tree_entry *tte;
-	struct token *t;
-	char *s = string, *b;
+static struct line_entry *tokenise(struct sym_tree_entry *sym_tree, char *string) {
+	struct sym_tree_entry *ste;
+	struct symbol *s;
+	char *r = string, *b;
 	struct line_entry *l = NULL, *le, **pl = &l;
 
-	while(*s) {
+	while(*r) {
 
 		/* Skip whitespace */
-		while(IS_WS(*s))
-			s++;
+		while(IS_WS(*r))
+			r++;
 
 		/* Give up at the end of the string */
-		if(!*s)
+		if(!*r)
 			break;
 
-		tte = tok_tree;
-		t = NULL;
-		b = s; /* Set backtrack point */
+		ste = sym_tree;
+		s = NULL;
+		b = r; /* Set backtrack point */
 
-		while(tte) {
-			if(tte->c == *s) {
-				s++;
+		while(ste) {
+			if(ste->c == *r) {
+				r++;
 
-				/* Potentially found token */
-				if(tte->tok) {
-					t = tte->tok;
-					b = s; /* Set backtrack point */
+				/* Potentially found symbol */
+				if(ste->sym) {
+					s = ste->sym;
+					b = r; /* Set backtrack point */
 				}
 
-				/* Found a token with certainty */
-				if(!tte->children || !*s || IS_WS(*s))
+				/* Found a symbol with certainty */
+				if(!ste->children || !*r || IS_WS(*r))
 					break;
 
-				tte = tte->children;
+				ste = ste->children;
 			}
 			else 
-				tte = tte->next;
+				ste = ste->next;
 		}
 
 		/*
-		 * If we reach this point without t pointing to a token
+		 * If we reach this point without t pointing to a symbol
 		 * we found a label, string, etc.
 		 *
-		 * If we have no valid tte (ie. no match with certainty), then
+		 * If we have no valid ste (ie. no match with certainty), then
 		 * we will need to backtrack in order to remain in sync.
 		 *
 		 */ 
 
-		if(!tte || !t)
-			s = b; /* Backtrack */
+		if(!ste || !s)
+			r = b; /* Backtrack */
 
-		if (t) { /* Found a token */
-			if(t->tok_func)
-				le = t->tok_func(t, &s);
+		if (s) { /* Found a symbol, create a token */
+			if(s->tok_func)
+				le = s->tok_func(s, &r);
 			else
-				le = default_tokfn(t, &s);
+				le = default_tokfn(s, &r);
 		}
-		else {     /* Non-token thing found */
-			le = extract_label(&s);
+		else {     /* Non-symbol thing found */
+			le = extract_label(&r);
 			if(!le) {
 				printf("Bad Label\n");
 				exit(1);
@@ -526,10 +526,10 @@ static struct line_entry *tokenise(struct tok_tree_entry *tok_tree, char *string
 
 void tok_print_one(struct line_entry *le) {
 
-	if(le->tok->print)
-		le->tok->print(le);
+	if(le->sym->print)
+		le->sym->print(le);
 	else
-		printf("%s ", le->tok->name);
+		printf("%s ", le->sym->name);
 }
 
 void tok_print_line(struct line_entry *le) {
@@ -579,7 +579,7 @@ static char *get_one_line(int fd) {
 }
 
 
-static struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int fd) {
+static struct line_entry *attempt_to_get_le(struct sym_tree_entry *sym_tree, int fd) {
 	char *buf;
 	struct line_entry *le;
 
@@ -590,8 +590,7 @@ static struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int
 		exit(1);
 	}
 
-	le = tokenise(tok_tree, buf);
-
+	le = tokenise(sym_tree, buf);
 
 	return le;
 }
@@ -603,7 +602,7 @@ struct line_entry *get_next_le(int fd, struct line_entry *jump) {
 	if(next_le)
 		le = next_le;
 	else
-		le = attempt_to_get_le(tok_tree, fd);
+		le = attempt_to_get_le(sym_tree, fd);
 
 	if(le)
 		next_le = le->next;
@@ -613,8 +612,8 @@ struct line_entry *get_next_le(int fd, struct line_entry *jump) {
 
 /* This is not quite a 1:1 mapping- may need FIXME in future */
 
-struct token *tok_from_id(enum tokid id) {
-	struct token *t = token_list;
+struct symbol *sym_from_id(enum tokid id) {
+	struct symbol *t = symbol_list;
 
         while(t->name) {
 		if(t->id == id)
@@ -628,17 +627,17 @@ struct token *tok_from_id(enum tokid id) {
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,
- * allowing faster matching of tokens (binary search)
+ * allowing faster matching of symbols (binary search)
  */
 
 int tokeniser_init (void) {
-	struct token *t;
+	struct symbol *t;
 
-	t = token_list;
+	t = symbol_list;
 
 	while(t->name) {
-		if(tok_add(&tok_tree, t, t->name)) {
-			printf("Failed whilst adding token: \"%s\"", t->name);
+		if(sym_add(&sym_tree, t, t->name)) {
+			printf("Failed whilst adding symbol: \"%s\"", t->name);
 			exit(1);
 		}
 		t++;
