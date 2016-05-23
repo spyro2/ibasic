@@ -6,89 +6,90 @@
 
 #include "tokeniser.h"
 
-static struct line_entry *le_alloc(int len) {
-	struct line_entry *le = malloc(sizeof(*le)+len);
+static struct token *tok_alloc(int len) {
+	struct token *t = malloc(sizeof(*t)+len);
 
 	if(len)
-		le->data.v = le+1;
+		t->data.v = t+1;
 
-	return le;
+	return t;
 }
 
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
  */
-static struct line_entry *tokfn_string(struct symbol *t, char **ps) {
-	char *s = *ps;
+static struct token *tokfn_string(struct symbol *s, char **ps) {
+	char *r = *ps;
 	char *dest;
 	int len;
-	struct line_entry *le = NULL;
+	struct token *t = NULL;
 
 	/* FIXME: we really need to handle end of line better here */
-	while(*s && *s != '"' && *s != '\n' && *s != '\r')
-		s++;
+	while(*r && *r != '"' && *r != '\n' && *r != '\r')
+		r++;
 
 	// if(!*s)  FIXME: check for end of line / non-string chars
 
-	len = s-*ps;
+	len = r-*ps;
 
-	le = le_alloc(len+1); // FIXME: Check failure
+	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = le->data.s;
+	dest = t->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->sym = t;
+	t->sym = s;
 
-	*ps = ++s;
+	*ps = ++r;
 
-	return le;
+	return t;
 }
 
-static void print_string(struct line_entry *le) {
-	if(le->data.s)
-		printf("\"%s\"", le->data.s);
+static void print_string(struct token *t) {
+	if(t->data.s)
+		printf("\"%s\"", t->data.s);
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
-static struct line_entry *tokfn_comment(struct symbol *t, char **ps) {
-	char *s = *ps;
+static struct token *tokfn_comment(struct symbol *s, char **ps) {
+	char *r = *ps;
 	char *dest;
 	int len;
-	struct line_entry *le = NULL;
+	struct token *t = NULL;
 
 	/* FIXME: we really need to handle end of line better here */
-	while(*s && !(*s == '*' && *(s+1) == '/'))
-		s++;
+	while(*r && !(*r == '*' && *(r+1) == '/'))
+		r++;
 
 	// if(!*s)  FIXME: check for end of line / non-string chars
 
-	len = s-*ps;
+	len = r-*ps;
 
-	s++;
+	r++;
 
-	le = le_alloc(len+1); // FIXME: Check failure
+	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = le->data.s;
+	dest = t->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->sym = t;
+	t->sym = s;
 
-	*ps = ++s;
+	*ps = ++r;
 
-	return le;
+	return t;
 }
 
-static void print_eol(struct line_entry *le) {
+static void print_eol(struct token *t) {
 	printf(" <EOL>");
 }
 
-static struct line_entry *default_tokfn(struct symbol *t, char **ps) {
-	struct line_entry *le = le_alloc(0); //FIXME: alloc failure
-	le->sym = t;
+static struct token *default_tokfn(struct symbol *s, char **ps) {
+	struct token *t = tok_alloc(0); //FIXME: alloc failure
 
-	return le;
+	t->sym = s;
+
+	return t;
 }
 
 static struct symbol symbol_list[] = {
@@ -344,69 +345,69 @@ static int sym_add(struct sym_tree_entry **pste, struct symbol *s, char *c) {
 #define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define IS_LABEL(c) (IS_DIGIT(c) || IS_ALPHA(c) || ((c) == '_') || ((c) == '.'))
 
-static void print_label(struct line_entry *le) {
-	if(le->data.s)
-		printf("%s ", le->data.s);
+static void print_label(struct token *t) {
+	if(t->data.s)
+		printf("%s ", t->data.s);
 }
 
-static void print_int(struct line_entry *le) {
-	printf("%d ", le->data.i);
+static void print_int(struct token *t) {
+	printf("%d ", t->data.i);
 }
 
-static void print_float(struct line_entry *le) {
-	printf("%f ", le->data.d);
+static void print_float(struct token *t) {
+	printf("%f ", t->data.d);
 }
 
 static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
 static struct symbol sym_int   = {tokn_int,   "<int>", NULL, print_int};
 static struct symbol sym_float = {tokn_float, "<float>", NULL, print_float};
 
-static struct line_entry *extract_label(char **ps) {
-	char *s = *ps;
-	struct line_entry *le = NULL;
+static struct token *extract_label(char **ps) {
+	char *r = *ps;
+	struct token *t = NULL;
 	int len;
 	char *dest;
 
-	while(*s && IS_LABEL(*s)) {
-		s++;
+	while(*r && IS_LABEL(*r)) {
+		r++;
 	}
 
 	/* We cannot handle zero length labels. */
-	if ( s == *ps )
+	if ( r == *ps )
 		goto out;
 
-	len = s-*ps;
+	len = r-*ps;
 
 	/* Numbers */
 	if ( IS_DIGIT(**ps) ) {
 		char *sc = *ps;
 		char n = len>1?sc[1]:0;
 
-		le = le_alloc(0);
+		t = tok_alloc(0);
 
 		if(*sc == '0') {
 			if (n == 'x') { /* hex */
 				if(len < 3)
 					goto out_free;
-				le->sym = &sym_int;
-				le->data.i = strtoul(*ps, ps, 0);
+				t->sym = &sym_int;
+				t->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 			else if(IS_DIGIT(n)) { /* octal */
-				le->sym = &sym_int;
-				le->data.i = strtoul(*ps, ps, 0);
+				t->sym = &sym_int;
+				t->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 		}
 		else if(strchr(*ps, '.')) { /* decimal */
-			le->sym = &sym_float;
-			le->data.d = strtod(*ps, ps);
+			t->sym = &sym_float;
+			t->data.d = strtod(*ps, ps);
 			goto out;
 		}
 
 		/* ordinary integer */
-		le->sym = &sym_int;
-		le->data.i = strtoul(*ps, ps, 10);
+		t->sym = &sym_int;
+		t->data.i = strtoul(*ps, ps, 10);
 
 		goto out;
 	}
@@ -415,23 +416,23 @@ static struct line_entry *extract_label(char **ps) {
 	if(strchr(*ps, '.'))
 		goto out;
 
-	le = le_alloc(len+1); // FIXME: Check failure
+	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = le->data.s;
+	dest = t->data.s;
 	memcpy(dest, *ps, len);
 	dest[len] = 0;
 
-	le->sym = &sym_label;
+	t->sym = &sym_label;
 
-	*ps = s;
+	*ps = r;
 
-	return le;
+	return t;
 
 out_free:
-	free(le);
-	le = NULL;
+	free(t);
+	t = NULL;
 out:
-	return le;
+	return t;
 }
 
 /*
@@ -447,11 +448,11 @@ out:
  * Perhaps we can skip whitespace using a symbol that is always discarded?
  */
 
-static struct line_entry *tokenise(struct sym_tree_entry *sym_tree, char *string) {
+static struct token *tokenise(struct sym_tree_entry *sym_tree, char *string) {
 	struct sym_tree_entry *ste;
 	struct symbol *s;
 	char *r = string, *b;
-	struct line_entry *l = NULL, *le, **pl = &l;
+	struct token *l = NULL, *t, **pl = &l;
 
 	while(*r) {
 
@@ -501,13 +502,13 @@ static struct line_entry *tokenise(struct sym_tree_entry *sym_tree, char *string
 
 		if (s) { /* Found a symbol, create a token */
 			if(s->tok_func)
-				le = s->tok_func(s, &r);
+				t = s->tok_func(s, &r);
 			else
-				le = default_tokfn(s, &r);
+				t = default_tokfn(s, &r);
 		}
 		else {     /* Non-symbol thing found */
-			le = extract_label(&r);
-			if(!le) {
+			t = extract_label(&r);
+			if(!t) {
 				printf("Bad Label\n");
 				exit(1);
 			}
@@ -515,28 +516,28 @@ static struct line_entry *tokenise(struct sym_tree_entry *sym_tree, char *string
 
 		/* Handle errors here. FIXME: dont silently skip badness */
 
-		if(le) {
-			*pl = le;
-			pl = &le->next;
+		if(t) {
+			*pl = t;
+			pl = &t->next;
 		}
 	}
 
 	return l;
 }
 
-void tok_print_one(struct line_entry *le) {
+void tok_print_one(struct token *t) {
 
-	if(le->sym->print)
-		le->sym->print(le);
+	if(t->sym->print)
+		t->sym->print(t);
 	else
-		printf("%s ", le->sym->name);
+		printf("%s ", t->sym->name);
 }
 
-void tok_print_line(struct line_entry *le) {
+void tok_print_line(struct token *t) {
 
-	while(le) {
-		tok_print_one(le);
-		le = le->next;
+	while(t) {
+		tok_print_one(t);
+		t = t->next;
 	}
 	printf("\n");
 
@@ -550,7 +551,7 @@ static char *get_one_line(int fd) {
 
 	if(!buf) {
 		buf = malloc(32*1024); //FIXME: return code
-		end = read(fd, buf, 32*1024);
+		end = read(fd, buf, 32*1024); //FIXME: can be merged with later code
 	}
 
 	n = buf;
@@ -579,9 +580,9 @@ static char *get_one_line(int fd) {
 }
 
 
-static struct line_entry *attempt_to_get_le(struct sym_tree_entry *sym_tree, int fd) {
+static struct token *get_more_tokens(struct sym_tree_entry *sym_tree, int fd) {
 	char *buf;
-	struct line_entry *le;
+	struct token *t;
 
 	buf = get_one_line(fd); // FIXME: for now, guarantee newline  terminated or die.
 
@@ -590,35 +591,35 @@ static struct line_entry *attempt_to_get_le(struct sym_tree_entry *sym_tree, int
 		exit(1);
 	}
 
-	le = tokenise(sym_tree, buf);
+	t = tokenise(sym_tree, buf);
 
-	return le;
+	return t;
 }
 
-struct line_entry *get_next_le(int fd, struct line_entry *jump) {
-	static struct line_entry *next_le = NULL;
-	struct line_entry *le;
+struct token *get_next_token(int fd) {
+	static struct token *next_tok = NULL;
+	struct token *t;
 
-	if(next_le)
-		le = next_le;
+	if(next_tok)
+		t = next_tok;
 	else
-		le = attempt_to_get_le(sym_tree, fd);
+		t = get_more_tokens(sym_tree, fd);
 
-	if(le)
-		next_le = le->next;
+	if(t)
+		next_tok = t->next;
 
-	return le;
+	return t;
 }
 
 /* This is not quite a 1:1 mapping- may need FIXME in future */
 
 struct symbol *sym_from_id(enum tokid id) {
-	struct symbol *t = symbol_list;
+	struct symbol *s = symbol_list;
 
-        while(t->name) {
-		if(t->id == id)
-			return t;
-		t++;
+        while(s->name) {
+		if(s->id == id)
+			return s;
+		s++;
 	}
 
 	return NULL;
@@ -631,16 +632,16 @@ struct symbol *sym_from_id(enum tokid id) {
  */
 
 int tokeniser_init (void) {
-	struct symbol *t;
+	struct symbol *s;
 
-	t = symbol_list;
+	s = symbol_list;
 
-	while(t->name) {
-		if(sym_add(&sym_tree, t, t->name)) {
-			printf("Failed whilst adding symbol: \"%s\"", t->name);
+	while(s->name) {
+		if(sym_add(&sym_tree, s, s->name)) {
+			printf("Failed whilst adding symbol: \"%s\"", s->name);
 			exit(1);
 		}
-		t++;
+		s++;
 	}
 
 	return 0;

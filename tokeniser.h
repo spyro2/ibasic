@@ -24,9 +24,9 @@ enum tokid {
 	tokn_uminus, tokn_uplus,
 };
 
-struct line_entry {
+struct token {
         struct symbol *sym;
-        struct line_entry *next;
+        struct token *next;
         union {
 		char *s;
 		void *v;
@@ -38,13 +38,13 @@ struct line_entry {
 struct symbol {
         enum tokid id;
         char *name;
-        struct line_entry *(*tok_func)(struct symbol *t, char **s);
-        void (*print)(struct line_entry *le);
+        struct token *(*tok_func)(struct symbol *s, char **ps);
+        void (*print)(struct token *t);
 };
 
 int tokeniser_init (void);
-struct line_entry *get_next_le(int fd, struct line_entry *jump);
-void tok_print_one(struct line_entry *le);
-void tok_print_line(struct line_entry *le);
+struct token *get_next_token(int fd);
+void tok_print_one(struct token *t);
+void tok_print_line(struct token *t);
 struct symbol *sym_from_id(enum tokid id);
 

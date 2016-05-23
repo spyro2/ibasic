@@ -8,37 +8,37 @@
 #include "colours.h"
 
 static int fd;
-struct line_entry *le;
+struct token *tok;
 
 void print_current_token(char *s) {
 	printf("%s", s);
-        tok_print_one(le);
+        tok_print_one(tok);
         printf(ANSI_RESET);
 }
 
-void next_le(void) {
+void next_token(void) {
 	/* Skip comments - This may have implications for writing a
 	 * pretty-printer.
 	 */
 	do {
-		le = get_next_le(fd, NULL);
-	} while (le->sym->id == tokn_comment);
+		tok = get_next_token(fd);
+	} while (tok->sym->id == tokn_comment);
 
 #if 0
 	printf(ANSI_GREEN);
-	tok_print_one(le);
+	tok_print_one(tok);
 	printf(ANSI_RESET);
 #endif
 }
 
 int tok_is(enum tokid id) {
-	return le->sym->id == id ? 1 : 0;
+	return tok->sym->id == id ? 1 : 0;
 }
 
 int accept(enum tokid id) {
 
-	if (le->sym->id == id) {
-		next_le();
+	if (tok->sym->id == id) {
+		next_token();
 		return 1;
 	}
 
@@ -49,7 +49,7 @@ int expect(enum tokid id) {
 	if (accept(id))
 		return 1;
 
-	printf("Unexpected token: %s\n", le->sym->name?le->sym->name:"Unknown");
+	printf("Unexpected token: %s\n", tok->sym->name?tok->sym->name:"Unknown");
 	printf("Expected: %d (%s)\n", id, sym_from_id(id)?sym_from_id(id)->name:"null"); // FIXME: null deref
 	exit(1);
 
@@ -88,7 +88,7 @@ static int indent_l = 0;
 #define MAX_EXPR_STACK 64
 
 struct stack {
-	struct line_entry *le[MAX_EXPR_STACK];
+	struct token *t[MAX_EXPR_STACK];
 	int sp;
 };
 
@@ -96,21 +96,21 @@ struct stack {
 
 //#define DEBUG_EXPR_STACK
 
-void push(struct stack *s, struct line_entry *le) {
+void push(struct stack *s, struct token *t) {
 #ifdef DEBUG_EXPR_STACK
 	printf("push(%08x) %d: ", s, s->sp);
-	tok_print_one(le);
+	tok_print_one(t);
 	printf("\n");
 #endif
 
-	s->le[s->sp++] = le;
+	s->t[s->sp++] = t;
 	if (s->sp >= MAX_EXPR_STACK) {
 		printf("expression stack overflow\n");
 		exit(1);
 	}
 }
 
-struct line_entry *pop(struct stack *s) {
+struct token *pop(struct stack *s) {
 
 	if(--s->sp < 0) {
 		printf("expression stack underflow\n");
@@ -119,33 +119,33 @@ struct line_entry *pop(struct stack *s) {
 
 #ifdef DEBUG_EXPR_STACK
 	do {
-	struct line_entry *le;
-	le = s->le[s->sp];
+	struct token *t;
+	t = s->t[s->sp];
 	printf("pop (%08x) %d: ", s, s->sp);
-	tok_print_one(le);
+	tok_print_one(t);
 	printf("\n");
 	} while (0);
 #endif
 
-	return s->le[s->sp];
+	return s->t[s->sp];
 }
 
-struct line_entry *pop_nocheck(struct stack *s) {
+struct token *pop_nocheck(struct stack *s) {
 
 	if(--s->sp >= 0)
-		return s->le[s->sp];
+		return s->t[s->sp];
 
 	return NULL;
 }
 
-struct line_entry *peek(struct stack *s) {
+struct token *peek(struct stack *s) {
 	if(s->sp > 0)
-		return s->le[s->sp-1];
+		return s->t[s->sp-1];
 
 	return NULL;
 }
 
-int get_prec(struct line_entry *a) {
+int get_prec(struct token *a) {
 	int t;
 
 	if(!a)
@@ -169,7 +169,7 @@ out:
 	return 0;
 }
 
-int preceeds(struct line_entry *a, struct line_entry *b) {
+int preceeds(struct token *a, struct token *b) {
 	int pa = get_prec(a), pb = get_prec(b);
 
 	return pa > pb;
@@ -193,16 +193,16 @@ void factor(struct stack *output, struct stack *operator){
 
 		/* Promote token to a unary one */
 		if(tok_is(tokn_plus))
-			le->sym = &sym_uplus;
+			tok->sym = &sym_uplus;
 		else
-			le->sym = &sym_uminus;
+			tok->sym = &sym_uminus;
 
-		if(!preceeds(le, peek(operator)))
+		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
 
-		push(operator, le);
+		push(operator, tok);
 
-		next_le();
+		next_token();
 	}
 
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
@@ -211,14 +211,14 @@ void factor(struct stack *output, struct stack *operator){
 	}
 
 	if(tok_is(tokn_label) || tok_is(tokn_int) || tok_is(tokn_float)) {
-		push(output, le);
+		push(output, tok);
 
-		next_le();
+		next_token();
 	}
 	else if(tok_is(tokn_oparen)) {
-		push(operator, le);
+		push(operator, tok);
 
-		next_le();
+		next_token();
 
 		do_expression(output, operator);
 
@@ -227,18 +227,18 @@ void factor(struct stack *output, struct stack *operator){
 		pop(operator); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
-		struct line_entry *t = le;
+		struct token *t = tok;
 		int n_params = 0;
 
-		next_le();
+		next_token();
 
 		expect(tokn_label);
 
 		if(tok_is(tokn_oparen)) {
 
-			push(operator, le);
+			push(operator, tok);
 
-			next_le();
+			next_token();
 
 			do {
 				do_expression(output, operator);
@@ -262,30 +262,30 @@ void term(struct stack *output, struct stack *operator) {
 
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
 
-		if(!preceeds(le, peek(operator)))
+		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
 
-		push(operator, le);
+		push(operator, tok);
 
-		next_le();
+		next_token();
 
 		factor(output, operator);
 	}
 }
 
 void do_expression(struct stack *output, struct stack *operator) {
-	struct line_entry *t;
+	struct token *t;
 
 	term(output, operator);
 
 	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
 
-		if(!preceeds(le, peek(operator)))
+		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
 
-		push(operator, le);
+		push(operator, tok);
 
-		next_le();
+		next_token();
 		term(output, operator);
 	}
 
@@ -296,7 +296,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 }
 
 int eval(struct stack *o) {
-	struct line_entry *t = pop(o);
+	struct token *t = pop(o);
 	int i = tokid(t);
 
 	if(i == tokn_label)
@@ -361,7 +361,7 @@ void condition(void) {
 	   tok_is(tokn_le) || tok_is(tokn_ge) ||
 	   tok_is(tokn_ne) || tok_is(tokn_eq)) {
 		emit_noindent("<cond> ");
-		next_le();
+		next_token();
 		expression();
 	}
 }
@@ -685,7 +685,7 @@ void line(void) {
 		if(tok_is(tokn_const))
 			emit("CONST ");
 
-		next_le();
+		next_token();
 
 		expect(tokn_label);
 
@@ -716,7 +716,7 @@ void toplevel_line(void) {
 
 int parse (int fd) {
 
-	next_le();
+	next_token();
 	while(1) {
 		toplevel_line();
 	}
