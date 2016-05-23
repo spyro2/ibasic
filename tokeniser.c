@@ -592,7 +592,6 @@ static struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int
 
 	le = tokenise(tok_tree, buf);
 
-	/* FIXME: for goto - check if first token is a label? add to label database? or should parser do this? Probably the parser. */
 
 	return le;
 }
@@ -600,11 +599,6 @@ static struct line_entry *attempt_to_get_le(struct tok_tree_entry *tok_tree, int
 struct line_entry *get_next_le(int fd, struct line_entry *jump) {
 	static struct line_entry *next_le = NULL;
 	struct line_entry *le;
-
-	/* FIXME: for goto / procedure calls
-	if(jump)
-		le = jump_to(jump);
-	*/
 
 	if(next_le)
 		le = next_le;
