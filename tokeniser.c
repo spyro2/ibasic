@@ -537,15 +537,18 @@ void tok_print_line(struct token *t) {
 
 }
 
+#define MAX_LINE_READ (2*1024)
+
 static char *get_one_line(int fd) {
-	static char *buf;
-	static char line[32*1024];
+	static char buf[MAX_LINE_READ];
+	static char line[MAX_LINE_READ];
 	static int end;
+	static int init;
 	char *n;
 
-	if(!buf) {
-		buf = malloc(32*1024); //FIXME: return code
-		end = read(fd, buf, 32*1024); //FIXME: can be merged with later code
+	if(!init) {
+		end = read(fd, buf, MAX_LINE_READ);
+		init++;
 	}
 
 	n = buf;
@@ -558,15 +561,21 @@ static char *get_one_line(int fd) {
 	}
 
 	if ( n < buf+end ) {
-		int r;
-		memcpy(line, buf, (n-buf)+1);
-		line[n-buf+1] = 0;
-		memmove(buf, n+1, 32*1024-(n-buf)+1);
-		r = read(fd, n+1, (n-buf)+1);
+		int r, len = (int)(n-buf)+1;
+
+		memcpy(line, buf, len);
+		line[len] = 0;
+
+		memmove(buf, n+1, end-len);
+		end -= len;
+
+		r = read(fd, &buf[end], MAX_LINE_READ-end);
+
 		if ( r != -1)
 			end += r;
 		if ( r == 0 )
 			buf[end] = 0;
+
 		return line;
 	}
 
