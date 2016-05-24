@@ -20,7 +20,6 @@ static struct token *tok_alloc(int len) {
  */
 static struct token *tokfn_string(struct symbol *s, char **ps) {
 	char *r = *ps;
-	char *dest;
 	int len;
 	struct token *t = NULL;
 
@@ -34,9 +33,8 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = t->data.s;
-	memcpy(dest, *ps, len);
-	dest[len] = 0;
+	memcpy(t->data.s, *ps, len);
+	t->data.s[len] = 0;
 
 	t->sym = s;
 
@@ -53,7 +51,6 @@ static void print_string(struct token *t) {
 /* FIXME: Terrible hack to allow at least single line comments */
 static struct token *tokfn_comment(struct symbol *s, char **ps) {
 	char *r = *ps;
-	char *dest;
 	int len;
 	struct token *t = NULL;
 
@@ -69,9 +66,8 @@ static struct token *tokfn_comment(struct symbol *s, char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = t->data.s;
-	memcpy(dest, *ps, len);
-	dest[len] = 0;
+	memcpy(t->data.s, *ps, len);
+	t->data.s[len] = 0;
 
 	t->sym = s;
 
@@ -366,7 +362,6 @@ static struct token *extract_label(char **ps) {
 	char *r = *ps;
 	struct token *t = NULL;
 	int len;
-	char *dest;
 
 	while(*r && IS_LABEL(*r)) {
 		r++;
@@ -418,9 +413,8 @@ static struct token *extract_label(char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	dest = t->data.s;
-	memcpy(dest, *ps, len);
-	dest[len] = 0;
+	memcpy(t->data.s, *ps, len);
+	t->data.s[len] = 0;
 
 	t->sym = &sym_label;
 
