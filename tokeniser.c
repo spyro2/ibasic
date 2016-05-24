@@ -7,7 +7,7 @@
 #include "tokeniser.h"
 
 static struct token *tok_alloc(int len) {
-	struct token *t = malloc(sizeof(*t)+len);
+	struct token *t = calloc(1, sizeof(*t)+len);
 
 	if(len)
 		t->data.v = t+1;
