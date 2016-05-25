@@ -145,7 +145,7 @@ struct token *peek(struct stack *s) {
 	return NULL;
 }
 
-int get_prec(struct token *a) {
+int get_precedence(struct token *a) {
 	int t;
 
 	if(!a)
@@ -170,7 +170,7 @@ out:
 }
 
 int preceeds(struct token *a, struct token *b) {
-	int pa = get_prec(a), pb = get_prec(b);
+	int pa = get_precedence(a), pb = get_precedence(b);
 
 	return pa > pb;
 }
