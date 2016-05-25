@@ -16,23 +16,23 @@ void print_current_token(char *s) {
         printf(ANSI_RESET);
 }
 
+int tok_is(enum tokid id) {
+	return tok->sym->id == id ? 1 : 0;
+}
+
 void next_token(void) {
 	/* Skip comments - This may have implications for writing a
 	 * pretty-printer.
 	 */
 	do {
 		tok = get_next_token(fd);
-	} while (tok->sym->id == tokn_comment);
+	} while (tok_is(tokn_comment));
 
 #if 0
 	printf(ANSI_GREEN);
 	tok_print_one(tok);
 	printf(ANSI_RESET);
 #endif
-}
-
-int tok_is(enum tokid id) {
-	return tok->sym->id == id ? 1 : 0;
 }
 
 int accept(enum tokid id) {
