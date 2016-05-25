@@ -153,7 +153,7 @@ static struct token *extract_label(char **ps) {
 		goto out;
 	}
 
-	/* Anything not an immediate integer constant is a label */
+	/* Anything not an immediate constant is a label */
 	/* Labels may not contain . */
 	if(strchr(*ps, '.'))
 		goto out;
