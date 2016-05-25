@@ -155,6 +155,11 @@ static struct token *extract_label(char **ps) {
 
 	/* Anything not an immediate constant is a label */
 	/* Labels may not contain . */
+	if(*r == '%' || *r == '$') {
+		r++;
+		len++;
+	}
+
 	if(strchr(*ps, '.'))
 		goto out;
 
@@ -165,6 +170,11 @@ static struct token *extract_label(char **ps) {
 
 	t->sym = &sym_label;
 	t->val.flags |= VAL_READONLY;
+	switch(t->val.data.s[len-1]) {
+		case '$': t->val.type = type_string; break;
+		case '%': t->val.type = type_int; break;
+		default: t->val.type = type_unspec; break;
+	}
 
 	*ps = r;
 
