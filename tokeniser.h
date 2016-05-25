@@ -22,6 +22,8 @@ enum tokid {
 	 * for the use of the parser only.
 	 */
 	tokn_uminus, tokn_uplus,
+	/* Special tokens used in the AST */
+	ast_block, ast_proc, ast_fn, ast_in_param,
 };
 
 union storage {
