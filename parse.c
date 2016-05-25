@@ -210,7 +210,7 @@ void factor(struct stack *output, struct stack *operator){
 		exit(1);
 	}
 
-	if(tok_is(tokn_label) || tok_is(tokn_int) || tok_is(tokn_float)) {
+	if(tok_is(tokn_label) || tok_is(tokn_value)) {
 		push(output, tok);
 
 		next_token();
@@ -250,7 +250,7 @@ void factor(struct stack *output, struct stack *operator){
 			pop(operator); /* pop the open parentesis */
 		}
 
-		t->data.i = n_params;
+		t->val.data.i = n_params;
 
 		push(output, t);
 	}
@@ -301,11 +301,13 @@ int eval(struct stack *o) {
 
 	if(i == tokn_label)
 		return 0;
-	else if(i == tokn_int) {
-		return t->data.i;
-	}
-	else if(i == tokn_float) {
-		return (int)t->data.d;
+	else if(i == tokn_value) {
+		switch(t->val.type) {
+			case type_int:   return t->val.data.i;
+			case type_float: return (int)t->val.data.d;
+			case type_string: printf(" \"%s\"", t->val.data.s); return 0;
+			default: printf("Unhandled type!\n"); exit(0);
+		}
 	}
 	else if(i == tokn_uplus) {
 		return eval(o);
@@ -329,7 +331,7 @@ int eval(struct stack *o) {
 		return b/a;
 	}
 	else if(i == tokn_fn) {
-		int n = t->data.i;
+		int n = t->val.data.i;
 		int r = 0;
 
 		while(n) {
@@ -633,12 +635,9 @@ void statement(void) {
 			emit_noindent(" {\n");
 			indent_l++;
 			do {
-				if(accept(tokn_string))
-					emit("{string}");
-				else {
-					indent;
-					expression();
-				}
+				indent;
+				expression();
+
 				emit_noindent("\n");
 			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
 			emit_o("}");
@@ -674,7 +673,7 @@ void line(void) {
 	}
 	else if(accept(tokn_library)) {
 		emit("LIBRARY ");
-		expect(tokn_string);
+		expect(tokn_value);
 		emit_noindent("<filename>");
 	}
 	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {

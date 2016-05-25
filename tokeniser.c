@@ -10,10 +10,27 @@ static struct token *tok_alloc(int len) {
 	struct token *t = calloc(1, sizeof(*t)+len);
 
 	if(len)
-		t->data.v = t+1;
+		t->val.data.v = t+1;
 
 	return t;
 }
+
+static void print_label(struct token *t) {
+	if(t->val.data.s)
+		printf("%s ", t->val.data.s);
+}
+
+static void print_value(struct token *t) {
+	switch(t->val.type) {
+		case type_int:    printf("%d ", t->val.data.i); break;
+		case type_float:  printf("%f ", t->val.data.d); break;
+		case type_string: printf("%s ", t->val.data.s); break;
+		default: printf(" {unknown type}");
+	}
+}
+
+static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
+static struct symbol sym_value = {tokn_value, "<float>", NULL, print_value};
 
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
@@ -31,10 +48,12 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 
 	len = r-*ps;
 
-	t = tok_alloc(len+1); // FIXME: Check failure
+	t = tok_alloc(len + 1); // FIXME: Check failure
 
-	memcpy(t->data.s, *ps, len);
-	t->data.s[len] = 0;
+	memcpy(t->val.data.s, *ps, len);
+	t->val.data.s[len] = 0;
+	t->val.type = type_string;
+	t->val.flags = VAL_READONLY;
 
 	t->sym = s;
 
@@ -44,8 +63,8 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 }
 
 static void print_string(struct token *t) {
-	if(t->data.s)
-		printf("\"%s\"", t->data.s);
+	if(t->val.data.s)
+		printf("\"%s\"", t->val.data.s);
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
@@ -66,13 +85,95 @@ static struct token *tokfn_comment(struct symbol *s, char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	memcpy(t->data.s, *ps, len);
-	t->data.s[len] = 0;
+	memcpy(t->val.data.s, *ps, len);
+	t->val.data.s[len] = 0;
+	t->val.type = type_string;
+	t->val.flags = VAL_READONLY;
 
 	t->sym = s;
 
 	*ps = ++r;
 
+	return t;
+}
+
+#define IS_WS(c) ((c)==' ' || (c)=='\t')
+#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
+#define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
+#define IS_LABEL(c) (IS_DIGIT(c) || IS_ALPHA(c) || ((c) == '_') || ((c) == '.'))
+
+static struct token *extract_label(char **ps) {
+	char *r = *ps;
+	struct token *t = NULL;
+	int len;
+
+	while(*r && IS_LABEL(*r)) {
+		r++;
+	}
+
+	/* We cannot handle zero length labels. */
+	if ( r == *ps )
+		goto out;
+
+	len = r-*ps;
+
+	/* Immediate constants, numeric */
+	if ( IS_DIGIT(**ps) ) {
+		char *sc = *ps;
+		char n = len>1?sc[1]:0;
+
+		t = tok_alloc(0);
+		t->sym = &sym_value;
+		t->val.flags |= VAL_READONLY;
+
+		if(*sc == '0') {
+			if (n == 'x') { /* hex */
+				if(len < 3)
+					goto out_free;
+				t->val.type = type_int;
+				t->val.data.i = strtoul(*ps, ps, 0);
+				goto out;
+			}
+			else if(IS_DIGIT(n)) { /* octal */
+				t->val.type = type_int;
+				t->val.data.i = strtoul(*ps, ps, 0);
+				goto out;
+			}
+		}
+		else if(strchr(*ps, '.')) { /* decimal */
+			t->val.type = type_float;
+			t->val.data.d = strtod(*ps, ps);
+			goto out;
+		}
+
+		/* ordinary integer */
+		t->val.type = type_int;
+		t->val.data.i = strtoul(*ps, ps, 10);
+
+		goto out;
+	}
+
+	/* Anything not an immediate integer constant is a label */
+	/* Labels may not contain . */
+	if(strchr(*ps, '.'))
+		goto out;
+
+	t = tok_alloc(len+1); // FIXME: Check failure
+
+	memcpy(t->val.data.s, *ps, len);
+	t->val.data.s[len] = 0;
+
+	t->sym = &sym_label;
+	t->val.flags |= VAL_READONLY;
+
+	*ps = r;
+
+	return t;
+
+out_free:
+	free(t);
+	t = NULL;
+out:
 	return t;
 }
 
@@ -179,7 +280,7 @@ static struct symbol symbol_list[] = {
 	{tokn_comma, ",",},
 
 	/* Types */
-	{tokn_string, "\"", tokfn_string, print_string},
+	{tokn_value, "\"", tokfn_string, print_string},
 
 	/* IO statements */
 	{tokn_print, "PRINT",},
@@ -334,99 +435,6 @@ static int sym_add(struct sym_tree_entry **pste, struct symbol *s, char *c) {
 	}
 
 	return 1; /* Shut compiler up */
-}
-
-#define IS_WS(c) ((c)==' ' || (c)=='\t')
-#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
-#define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
-#define IS_LABEL(c) (IS_DIGIT(c) || IS_ALPHA(c) || ((c) == '_') || ((c) == '.'))
-
-static void print_label(struct token *t) {
-	if(t->data.s)
-		printf("%s ", t->data.s);
-}
-
-static void print_int(struct token *t) {
-	printf("%d ", t->data.i);
-}
-
-static void print_float(struct token *t) {
-	printf("%f ", t->data.d);
-}
-
-static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
-static struct symbol sym_int   = {tokn_int,   "<int>", NULL, print_int};
-static struct symbol sym_float = {tokn_float, "<float>", NULL, print_float};
-
-static struct token *extract_label(char **ps) {
-	char *r = *ps;
-	struct token *t = NULL;
-	int len;
-
-	while(*r && IS_LABEL(*r)) {
-		r++;
-	}
-
-	/* We cannot handle zero length labels. */
-	if ( r == *ps )
-		goto out;
-
-	len = r-*ps;
-
-	/* Numbers */
-	if ( IS_DIGIT(**ps) ) {
-		char *sc = *ps;
-		char n = len>1?sc[1]:0;
-
-		t = tok_alloc(0);
-
-		if(*sc == '0') {
-			if (n == 'x') { /* hex */
-				if(len < 3)
-					goto out_free;
-				t->sym = &sym_int;
-				t->data.i = strtoul(*ps, ps, 0);
-				goto out;
-			}
-			else if(IS_DIGIT(n)) { /* octal */
-				t->sym = &sym_int;
-				t->data.i = strtoul(*ps, ps, 0);
-				goto out;
-			}
-		}
-		else if(strchr(*ps, '.')) { /* decimal */
-			t->sym = &sym_float;
-			t->data.d = strtod(*ps, ps);
-			goto out;
-		}
-
-		/* ordinary integer */
-		t->sym = &sym_int;
-		t->data.i = strtoul(*ps, ps, 10);
-
-		goto out;
-	}
-
-	/* Labels may not contain . */
-	if(strchr(*ps, '.'))
-		goto out;
-
-	t = tok_alloc(len+1); // FIXME: Check failure
-
-	memcpy(t->data.s, *ps, len);
-	t->data.s[len] = 0;
-
-	t->sym = &sym_label;
-
-	*ps = r;
-
-	return t;
-
-out_free:
-	free(t);
-	t = NULL;
-out:
-	return t;
 }
 
 /*
