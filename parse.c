@@ -60,6 +60,7 @@ int expect(enum tokid id) {
 
 static int indent_l = 0;
 
+#ifdef PRETTYPRINT
 #define emit_noindent(a) printf((a))
 
 #define indent \
@@ -68,6 +69,10 @@ static int indent_l = 0;
 		for(i = 0 ; i < indent_l ; i++) \
 			printf("\t"); \
 	} while(0)
+#else
+#define emit_noindent(a)
+#define indent
+#endif
 
 #define emit(a) \
 	do { \
@@ -262,7 +267,9 @@ void expression() {
 	do_expression(&output, &operator);
 
 	/* Display evaluated expression */
+#ifdef PRETTYPRINT
 	print_expression(&output);
+#endif
 }
 
 void condition(void) {
