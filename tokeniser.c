@@ -169,11 +169,13 @@ static struct token *extract_label(char **ps) {
 	t->val.data.s[len] = 0;
 
 	t->sym = &sym_label;
-	t->val.flags |= VAL_READONLY;
 	switch(t->val.data.s[len-1]) {
 		case '$': t->val.type = type_string; break;
 		case '%': t->val.type = type_int; break;
-		default: t->val.type = type_unspec; break;
+		default:
+			t->val.type = type_unspec;
+			t->val.flags |= VAL_READONLY;
+			break;
 	}
 
 	*ps = r;
