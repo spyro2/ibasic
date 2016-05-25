@@ -5,6 +5,7 @@
 #include <fcntl.h>
 
 #include "tokeniser.h"
+#include "stack.h"
 #include "colours.h"
 
 static int fd;
@@ -84,66 +85,6 @@ static int indent_l = 0;
 	indent_l--; \
 	emit((a)); \
 	} while(0)
-
-#define MAX_EXPR_STACK 64
-
-struct stack {
-	struct token *t[MAX_EXPR_STACK];
-	int sp;
-};
-
-#define tokid(a) (a)->sym->id
-
-//#define DEBUG_EXPR_STACK
-
-void push(struct stack *s, struct token *t) {
-#ifdef DEBUG_EXPR_STACK
-	printf("push(%08x) %d: ", s, s->sp);
-	tok_print_one(t);
-	printf("\n");
-#endif
-
-	s->t[s->sp++] = t;
-	if (s->sp >= MAX_EXPR_STACK) {
-		printf("expression stack overflow\n");
-		exit(1);
-	}
-}
-
-struct token *pop(struct stack *s) {
-
-	if(--s->sp < 0) {
-		printf("expression stack underflow\n");
-		exit(1);
-	}
-
-#ifdef DEBUG_EXPR_STACK
-	do {
-	struct token *t;
-	t = s->t[s->sp];
-	printf("pop (%08x) %d: ", s, s->sp);
-	tok_print_one(t);
-	printf("\n");
-	} while (0);
-#endif
-
-	return s->t[s->sp];
-}
-
-struct token *pop_nocheck(struct stack *s) {
-
-	if(--s->sp >= 0)
-		return s->t[s->sp];
-
-	return NULL;
-}
-
-struct token *peek(struct stack *s) {
-	if(s->sp > 0)
-		return s->t[s->sp-1];
-
-	return NULL;
-}
 
 int get_precedence(struct token *a) {
 	int t;
