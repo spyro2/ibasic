@@ -311,7 +311,7 @@ void val_free(struct value *v) {
 }
 
 void expression() {
-	struct stack output = {0}, operator = {0};
+	struct stack output = {{0}}, operator = {{0}};
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
