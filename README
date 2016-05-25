@@ -7,7 +7,7 @@ following criteria:
 * Reject some of BASIC's worst syntax.
 * Attempt to regularise the types available to allow easier integration with C.
 * Aim for acceptable performance.
-* Retain as much of BASIC's simplistic charm.
+* Retain as much of BASIC's simplistic charm as possible.
 * Try to incorporate some modern language features, eg. structures and types.
 
 It is loosely based around BBC BASIC, which I used whilst I was growing up
