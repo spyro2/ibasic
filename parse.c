@@ -76,20 +76,20 @@ static int indent_l = 0;
 
 #define emit(a) \
 	do { \
-	indent; \
-	emit_noindent((a)); \
+		indent; \
+		emit_noindent((a)); \
 	} while(0)
 
 #define emit_i(a) \
 	do { \
-	emit((a)); \
-	indent_l++; \
+		emit((a)); \
+		indent_l++; \
 	} while(0)
 
 #define emit_o(a) \
 	do { \
-	indent_l--; \
-	emit((a)); \
+		indent_l--; \
+		emit((a)); \
 	} while(0)
 
 int get_precedence(struct token *a) {
