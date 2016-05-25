@@ -323,7 +323,12 @@ void expression() {
 }
 
 void condition(void) {
+	/* Assume conditions are full X=Y form ones for ast purposes for now */
+
+	ast_emit(tok->sym->id);
+
 	expression();
+	ast_emit_leaf(tokn_value);
 
 	if(tok_is(tokn_lt) || tok_is(tokn_gt) ||
 	   tok_is(tokn_le) || tok_is(tokn_ge) ||
@@ -331,11 +336,15 @@ void condition(void) {
 		emit_noindent("<cond> ");
 		next_token();
 		expression();
+		ast_emit_leaf(tokn_value);
 	}
+
+	ast_close();printf("----");
 }
 
 void assign(void) {
 	expect(tokn_eq); /* FIXME: assignment operator*/
+	ast_emit(tokn_eq);
 }
 
 
@@ -357,12 +366,15 @@ void statement_list(void) {
 void expr_list(void) {
 	do {
 		expression();
+		ast_emit_leaf(tokn_value);
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
 	} while(accept(tokn_comma));
 }
 
-void input_param_list(void) {
+int input_param_list(void) {
+	int p = 0;
+
 	do {
 		if(accept(tokn_return))
 			emit_noindent("RETURN ");
@@ -371,29 +383,41 @@ void input_param_list(void) {
 
 		emit_noindent("<label>");
 
+		ast_emit_leaf(ast_in_param);
+
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
 
+		p++;
 	} while(accept(tokn_comma));
+
+	return p;
 }
 
 void definition(void) {
+//	struct ast_entry *a;
+//	int i;
+
 	emit_i("DEF ");
 	if(accept(tokn_proc)) {
-
 		emit_noindent("PROC");
 
 		expect(tokn_label);
+
+		/*a = */ast_emit(ast_proc);
+		ast_index(a, "proclabel");
 
 		emit_noindent("<label>");
 
 		if(accept(tokn_oparen)) {
 			emit_noindent(" ( ");
-			input_param_list();
+			/*i = */input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" ) ");
 		}
+//		a->data = i;
 
+		ast_emit(ast_block);
 		emit_noindent(" {\n");
 
 		if(accept(tokn_colon)) {
@@ -407,6 +431,8 @@ void definition(void) {
 			line();
 
 		emit_o("} ENDPROC\n");
+		ast_close();
+		ast_close();
 
 	}
 	else if(accept(tokn_fn)) {
@@ -415,15 +441,20 @@ void definition(void) {
 
 		expect(tokn_label);
 
+		/*a = */ast_emit(ast_fn);
+		ast_index(a, "fnlabel");
+
 		emit_noindent("<label>");
 
 		if(accept(tokn_oparen)) {
 			emit_noindent(" ( ");
-			input_param_list();
+			/*i = */input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
 		}
+//		a->data = i;
 
+		ast_emit(ast_block);
 		emit_noindent(" {\n");
 
 		if(accept(tokn_colon)) {
@@ -439,9 +470,12 @@ void definition(void) {
 		emit("RETURN ");
 
 		expression();
+		ast_emit_leaf(tokn_value);
 
 		emit_noindent("\n");
 		emit_o("} ENDFN\n");
+		ast_close();
+		ast_close();
 	}
 
 	expect(tokn_eol);
@@ -450,21 +484,25 @@ void definition(void) {
 void statement(void) {
 	if(accept(tokn_if)) {
 		emit("IF (");
+		ast_emit(tokn_if);
 
 		condition();
 
 		emit_noindent(") {\n");
 		indent_l++;
 
+		ast_emit(ast_block);
 		if(accept(tokn_then) && accept(tokn_eol)) {
 			while(!tok_is(tokn_endif)) {
 
 				line();
 
 				if(accept(tokn_else)) {
+					ast_close();
 					emit_o("}\n");
 					emit_i("ELSE {\n");
 
+					ast_emit(ast_block);
 					if(tok_is(tokn_if))
 						line();
 					else
@@ -477,14 +515,17 @@ void statement(void) {
 			}
 
 			expect(tokn_endif);
+			ast_close();
 		}
 		else {
 			statement_list();
 
 			if (accept(tokn_else)) {
+				ast_close();
 				emit_noindent("\n");
 				emit_o("}\n");
 				emit_i("ELSE {\n");
+				ast_emit(ast_block);
 
 				statement_list();
 			}
@@ -493,19 +534,25 @@ void statement(void) {
 
 			accept(tokn_endif);
 
+			ast_close();
 		}
 		emit_o("} ENDIF");
+		ast_close(); /* Close AST for IF */
 	}
 	else if(accept(tokn_case)) {
 		emit_i("CASE ");
 
+		ast_emit(tokn_case);
+
 		expression();
+		ast_emit_leaf(tokn_value);
 		expect(tokn_of);
 		emit_noindent("OF {\n");
 		expect(tokn_eol);
 
 		while(!tok_is(tokn_endcase)) {
 			if(accept(tokn_when)) {
+				ast_emit(tokn_when);
 				emit_i("WHEN ");
 				expr_list();
 				emit_noindent(" {\n");
@@ -514,6 +561,8 @@ void statement(void) {
 				expect(tokn_otherwise);
 				emit_i("OTHERWISE {\n");
 			}
+
+			ast_emit(ast_block);
 
 			if(accept(tokn_eol)) {
 				while(!(tok_is(tokn_when) ||
@@ -528,26 +577,33 @@ void statement(void) {
 				expect(tokn_eol);
 				emit_noindent("\n");
 			}
+			ast_close();
 			emit_o("}\n");
+			ast_close();
 		}
 		expect(tokn_endcase);
 		emit_o("} ENDCASE");
-
+		ast_close();
 	}
 	else if (accept(tokn_proc)) {
 		emit("PROC");
+		ast_emit(tokn_proc);
 		expect(tokn_label);
 		emit_noindent("<label>");
+		ast_emit_leaf(-1); /* label of PROC to call */
 		if(accept(tokn_oparen)) {
 			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
 			emit_noindent(")");
 		}
+		ast_close();
 	}
 	else if (accept(tokn_fn)) {
 		emit("FN");
+		ast_emit(tokn_fn);
 		expect(tokn_label);
+		ast_emit_leaf(-1); /* label of FN to call */
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
 			emit_noindent(" ( ");
@@ -555,9 +611,12 @@ void statement(void) {
 			expect(tokn_cparen);
 			emit_noindent(" )");
 		}
+		ast_close();
 	}
 	else if (accept(tokn_repeat)) {
 		emit_i("REPEAT {\n");
+		ast_emit(tokn_repeat);
+		ast_emit(ast_block);
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -569,16 +628,25 @@ void statement(void) {
 
 		emit_o("} UNTIL ( ");
 
+		ast_close();
+
 		condition();
 
 		emit_noindent(")");
+
+		ast_close();
 	}
 	else if (accept(tokn_while)) {
 		emit_i("WHILE ( ");
 
+		emit(tokn_while);
+		ast_emit(tokn_while);
+
 		condition();
 
 		emit_noindent(") {\n");
+
+		ast_emit(ast_block);
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -588,50 +656,78 @@ void statement(void) {
 		while(!accept(tokn_endwhile))
 			line();
 
+		ast_close();
+
 		emit_o("} ENDWHILE");
+
+		ast_close();
 	}
 	else if (accept(tokn_goto)) {
 		emit("GOTO ");
+
+		ast_emit(tokn_goto);
+
 		expect(tokn_label);
+
+		ast_emit_leaf(tokn_label);
+
 		emit_noindent("<label>");
+
+		ast_close();
 	}
 	else if(accept(tokn_print)) {
 		emit("PRINT");
+
+		ast_emit(tokn_print);
+
 		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
 			emit_noindent(" {\n");
 			indent_l++;
 			do {
 				indent;
 				expression();
+				ast_emit_leaf(tokn_value);
 
 				emit_noindent("\n");
 			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
 			emit_o("}");
 		}
+		ast_close();
 	}
 	else if(accept(tokn_label)) {
 		emit("l-value = ");
 		assign();
+		ast_emit_leaf(tokn_label);
 		expression();
+		ast_emit_leaf(tokn_value);
+		ast_close();
 	}
 	else if (accept(tokn_end)) {
+		ast_emit_leaf(tokn_end);
 		emit("END");
 	}
 }
 
 void line(void) {
+//	struct ast_entry *a;
+
 	if(tok_is(tokn_eol))
 		goto out; /* Empty line */
 
 	if(accept(tokn_label)) {
 		if(accept(tokn_colon)) {
 			emit("<label>:");
+			/*a = */ast_emit_leaf(tokn_label);
+			ast_index(a, "label");
 			goto out; /* Labels must be on their own on a line? */
 		}
 		else {
 			emit("l-value = ");
 			assign();
+			ast_emit_leaf(tokn_label);
 			expression();
+			ast_emit_leaf(tokn_value);
+			ast_close();
 		}
 	}
 	else if(accept(tokn_colon)) {
@@ -681,10 +777,13 @@ void toplevel_line(void) {
 
 int parse (int fd) {
 
+	ast_emit(ast_block);
+
 	next_token();
 	while(1) {
 		toplevel_line();
 	}
+	ast_close();
 
 	return 0;
 }
