@@ -6,6 +6,7 @@
 
 #include "tokeniser.h"
 #include "stack.h"
+#include "expression.h"
 #include "colours.h"
 
 static int fd;
@@ -236,54 +237,22 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
-int eval(struct stack *o) {
-	struct token *t = pop(o);
-	int i = tokid(t);
+struct value *val_alloc() {
+	struct value *v = calloc(1, sizeof(*v));
 
-	if(i == tokn_label)
-		return 0;
-	else if(i == tokn_value) {
-		switch(t->val.type) {
-			case type_int:   return t->val.data.i;
-			case type_float: return (int)t->val.data.d;
-			case type_string: printf(" \"%s\"", t->val.data.s); return 0;
-			default: printf("Unhandled type!\n"); exit(0);
-		}
-	}
-	else if(i == tokn_uplus) {
-		return eval(o);
-	}
-	else if(i == tokn_uminus) {
-		return -eval(o);
-	}
-	else if(i == tokn_plus) {
-		return eval(o) + eval(o);
-	}
-	else if(i == tokn_minus) {
-		int a = eval(o), b = eval(o);
-		return b-a;
-	}
-	else if(i == tokn_asterisk) {
-		int a = eval(o), b = eval(o);
-		return b*a;
-	}
-	else if(i == tokn_slash) {
-		int a = eval(o), b = eval(o);
-		return b/a;
-	}
-	else if(i == tokn_fn) {
-		int n = t->val.data.i;
-		int r = 0;
+	if(!v)
+		exit(1);
 
-		while(n) {
-			r += eval(o); // Temporarily, lets just sum the params
-			n--;
-		}
-		return r;
-	}
+	v->flags = VAL_ALLOC;
 
-	printf("Error: unknown operator\n");
-	exit(1);
+	return v;
+}
+
+void val_free(struct value *v) {
+
+	if(v->flags & VAL_ALLOC) {
+		free(v);
+	}
 }
 
 void expression() {
@@ -293,8 +262,7 @@ void expression() {
 	do_expression(&output, &operator);
 
 	/* Display evaluated expression */
-	if(peek(&output))
-		printf("%d ", eval(&output));
+	print_expression(&output);
 }
 
 void condition(void) {

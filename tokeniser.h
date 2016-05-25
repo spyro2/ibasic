@@ -36,6 +36,7 @@ enum typeid {
 };
 
 #define VAL_READONLY (1<<0)
+#define VAL_ALLOC    (1<<1)
 
 struct value {
 	enum typeid type;
@@ -57,6 +58,8 @@ struct symbol {
         struct token *(*tok_func)(struct symbol *s, char **ps);
         void (*print)(struct token *t);
 };
+
+#define tokid(a) (a)->sym->id
 
 int tokeniser_init (void);
 struct token *get_next_token(int fd);
