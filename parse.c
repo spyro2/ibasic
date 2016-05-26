@@ -339,7 +339,7 @@ void condition(void) {
 		ast_emit_leaf(tokn_value);
 	}
 
-	ast_close();printf("----");
+	ast_close();
 }
 
 void assign(void) {
