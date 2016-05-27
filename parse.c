@@ -11,6 +11,9 @@
 
 #include "colours.h"
 
+//#define PRINT_NEXT_TOKEN
+//#define PRETTYPRINT
+
 static int fd;
 struct token *tok;
 
@@ -32,7 +35,7 @@ void next_token(void) {
 		tok = get_next_token(fd);
 	} while (tok_is(tokn_comment));
 
-#if 0
+#if PRINT_NEXT_TOKEN
 	printf(ANSI_GREEN);
 	tok_print_one(tok);
 	printf(ANSI_RESET);
