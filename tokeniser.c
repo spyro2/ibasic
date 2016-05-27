@@ -30,7 +30,7 @@ static void print_value(struct token *t) {
 }
 
 static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
-static struct symbol sym_value = {tokn_value, "<float>", NULL, print_value};
+static struct symbol sym_value = {tokn_value, "<value>", NULL, print_value};
 
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
