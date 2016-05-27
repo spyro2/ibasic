@@ -294,24 +294,6 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
-struct value *val_alloc() {
-	struct value *v = calloc(1, sizeof(*v));
-
-	if(!v)
-		exit(1);
-
-	v->flags = VAL_ALLOC;
-
-	return v;
-}
-
-void val_free(struct value *v) {
-
-	if(v->flags & VAL_ALLOC) {
-		free(v);
-	}
-}
-
 void expression() {
 	struct stack output = {{0}}, operator = {{0}};
 
