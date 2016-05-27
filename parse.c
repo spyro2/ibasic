@@ -131,7 +131,7 @@ int preceeds(struct token *a, struct token *b) {
 }
 
 void do_expression(struct stack *output, struct stack *operator);
-void expression(void);
+struct ast_entry *expression(void);
 void expr_list(void);
 
 /* Special case, replacement tokens for unary + and -
@@ -250,7 +250,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
-void expression() {
+struct ast_entry *expression() {
 	struct stack output = {{0}}, operator = {{0}};
 
 	/* Build RPN form of an expression */
@@ -260,31 +260,52 @@ void expression() {
 #ifdef PRETTYPRINT
 	print_expression(&output);
 #endif
+	return NULL; /* For now */
 }
 
 void condition(void) {
+	struct ast_entry *a, *b;
 	/* Assume conditions are full X=Y form ones for ast purposes for now */
 
-	ast_emit(tok->sym->id);
-
-	expression();
-	ast_emit_leaf(tokn_value);
+	a = expression();
 
 	if(tok_is(tokn_lt) || tok_is(tokn_gt) ||
 	   tok_is(tokn_le) || tok_is(tokn_ge) ||
 	   tok_is(tokn_ne) || tok_is(tokn_eq)) {
 		emit_noindent("<cond> ");
-		next_token();
-		expression();
-		ast_emit_leaf(tokn_value);
-	}
 
-	ast_close();
+		ast_emit(tok);
+
+		next_token();
+
+		b = expression();
+
+		ast_append(a);
+		ast_append(b);
+
+		ast_close();
+	}
+	else {
+		ast_append(a);
+	}
 }
 
-void assign(void) {
-	expect(tokn_eq); /* FIXME: assignment operator*/
-	ast_emit(tokn_eq);
+int assign(void) {
+	struct token *t = tok;
+
+	if(accept(tokn_label) && tok_is(tokn_eq)) {
+		ast_emit(tok);
+		ast_emit_leaf(t);
+
+		next_token();
+
+		ast_append(expression());
+		ast_close();
+
+		return 1;
+	}
+
+	return 0;
 }
 
 
@@ -305,59 +326,64 @@ void statement_list(void) {
 
 void expr_list(void) {
 	do {
-		expression();
-		ast_emit_leaf(tokn_value);
+		ast_append(expression());
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
 	} while(accept(tokn_comma));
 }
 
-int input_param_list(void) {
-	int p = 0;
-
+void input_param_list(void) {
 	do {
+		struct token *t;
+
 		if(accept(tokn_return))
 			emit_noindent("RETURN ");
 
+		t = tok;
 		expect(tokn_label);
 
 		emit_noindent("<label>");
 
-		ast_emit_leaf(ast_in_param);
+		ast_emit_leaf(t);
 
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
 
-		p++;
 	} while(accept(tokn_comma));
-
-	return p;
 }
 
 void definition(void) {
-//	struct ast_entry *a;
-//	int i;
+	struct ast_entry *a;
+	struct token *t = tok;
 
 	emit_i("DEF ");
 	if(accept(tokn_proc)) {
 		emit_noindent("PROC");
 
+		ast_emit(t);
+		t = tok;
+
 		expect(tokn_label);
 
-		/*a = */ast_emit(ast_proc);
+		a = ast_emit_leaf(t);
 		ast_index(a, "proclabel");
 
 		emit_noindent("<label>");
 
+		t = tok;
+
 		if(accept(tokn_oparen)) {
+			ast_emit(t);
+
 			emit_noindent(" ( ");
-			/*i = */input_param_list();
+			input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" ) ");
-		}
-//		a->data = i;
 
-		ast_emit(ast_block);
+			ast_close();
+		}
+
+		ast_emit_block();
 		emit_noindent(" {\n");
 
 		if(accept(tokn_colon)) {
@@ -379,22 +405,30 @@ void definition(void) {
 
 		emit_noindent("FN");
 
+		ast_emit(t);
+		t = tok;
+
 		expect(tokn_label);
 
-		/*a = */ast_emit(ast_fn);
+		a = ast_emit_leaf(t);
 		ast_index(a, "fnlabel");
 
 		emit_noindent("<label>");
 
+		t = tok;
+
 		if(accept(tokn_oparen)) {
+			ast_emit(t);
+
 			emit_noindent(" ( ");
-			/*i = */input_param_list();
+			input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
-		}
-//		a->data = i;
 
-		ast_emit(ast_block);
+			ast_close();
+		}
+
+		ast_emit_block();
 		emit_noindent(" {\n");
 
 		if(accept(tokn_colon)) {
@@ -409,8 +443,7 @@ void definition(void) {
 
 		emit("RETURN ");
 
-		expression();
-		ast_emit_leaf(tokn_value);
+		ast_append(expression());
 
 		emit_noindent("\n");
 		emit_o("} ENDFN\n");
@@ -422,16 +455,18 @@ void definition(void) {
 }
 
 void statement(void) {
+	struct token *t = tok;
+
 	if(accept(tokn_if)) {
 		emit("IF (");
-		ast_emit(tokn_if);
+		ast_emit(t);
 
 		condition();
 
 		emit_noindent(") {\n");
 		indent_l++;
 
-		ast_emit(ast_block);
+		ast_emit_block();
 		if(accept(tokn_then) && accept(tokn_eol)) {
 			while(!tok_is(tokn_endif)) {
 
@@ -442,7 +477,7 @@ void statement(void) {
 					emit_o("}\n");
 					emit_i("ELSE {\n");
 
-					ast_emit(ast_block);
+					ast_emit_block();
 					if(tok_is(tokn_if))
 						line();
 					else
@@ -465,7 +500,7 @@ void statement(void) {
 				emit_noindent("\n");
 				emit_o("}\n");
 				emit_i("ELSE {\n");
-				ast_emit(ast_block);
+				ast_emit_block();
 
 				statement_list();
 			}
@@ -482,27 +517,29 @@ void statement(void) {
 	else if(accept(tokn_case)) {
 		emit_i("CASE ");
 
-		ast_emit(tokn_case);
+		ast_emit(t);
 
-		expression();
-		ast_emit_leaf(tokn_value);
+		ast_append(expression());
+
 		expect(tokn_of);
 		emit_noindent("OF {\n");
 		expect(tokn_eol);
 
 		while(!tok_is(tokn_endcase)) {
+			t = tok;
 			if(accept(tokn_when)) {
-				ast_emit(tokn_when);
+				ast_emit(t);
 				emit_i("WHEN ");
 				expr_list();
 				emit_noindent(" {\n");
 			}
 			else {
 				expect(tokn_otherwise);
+				ast_emit(t);
 				emit_i("OTHERWISE {\n");
 			}
 
-			ast_emit(ast_block);
+			ast_emit_block();
 
 			if(accept(tokn_eol)) {
 				while(!(tok_is(tokn_when) ||
@@ -527,36 +564,44 @@ void statement(void) {
 	}
 	else if (accept(tokn_proc)) {
 		emit("PROC");
-		ast_emit(tokn_proc);
+		ast_emit(t);
+		t = tok;
 		expect(tokn_label);
 		emit_noindent("<label>");
-		ast_emit_leaf(-1); /* label of PROC to call */
+		ast_emit_leaf(t); /* label of PROC to call */
+		t = tok;
 		if(accept(tokn_oparen)) {
+			ast_emit(t);
 			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
+			ast_close();
 			emit_noindent(")");
 		}
 		ast_close();
 	}
 	else if (accept(tokn_fn)) {
 		emit("FN");
-		ast_emit(tokn_fn);
+		ast_emit(t);
+		t = tok;
 		expect(tokn_label);
-		ast_emit_leaf(-1); /* label of FN to call */
+		ast_emit_leaf(t); /* label of FN to call */
+		t = tok;
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
+			ast_emit(t);
 			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
+			ast_close();
 		}
 		ast_close();
 	}
 	else if (accept(tokn_repeat)) {
 		emit_i("REPEAT {\n");
-		ast_emit(tokn_repeat);
-		ast_emit(ast_block);
+		ast_emit(t);
+		ast_emit_block();
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -580,13 +625,13 @@ void statement(void) {
 		emit_i("WHILE ( ");
 
 		emit(tokn_while);
-		ast_emit(tokn_while);
+		ast_emit(t);
 
 		condition();
 
 		emit_noindent(") {\n");
 
-		ast_emit(ast_block);
+		ast_emit_block();
 
 		if(accept(tokn_colon))
 			statement_list();
@@ -605,11 +650,12 @@ void statement(void) {
 	else if (accept(tokn_goto)) {
 		emit("GOTO ");
 
-		ast_emit(tokn_goto);
+		ast_emit(t);
 
+		t = tok;
 		expect(tokn_label);
 
-		ast_emit_leaf(tokn_label);
+		ast_emit_leaf(t);
 
 		emit_noindent("<label>");
 
@@ -618,15 +664,14 @@ void statement(void) {
 	else if(accept(tokn_print)) {
 		emit("PRINT");
 
-		ast_emit(tokn_print);
+		ast_emit(t);
 
 		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
 			emit_noindent(" {\n");
 			indent_l++;
 			do {
 				indent;
-				expression();
-				ast_emit_leaf(tokn_value);
+				ast_append(expression());
 
 				emit_noindent("\n");
 			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
@@ -634,40 +679,30 @@ void statement(void) {
 		}
 		ast_close();
 	}
-	else if(accept(tokn_label)) {
-		emit("l-value = ");
-		assign();
-		ast_emit_leaf(tokn_label);
-		expression();
-		ast_emit_leaf(tokn_value);
-		ast_close();
-	}
 	else if (accept(tokn_end)) {
-		ast_emit_leaf(tokn_end);
+		ast_emit_leaf(t);
 		emit("END");
+	}
+	else {
+		assign();
 	}
 }
 
 void line(void) {
-//	struct ast_entry *a;
+	struct ast_entry *a;
+	struct token *t = tok;
 
 	if(tok_is(tokn_eol))
 		goto out; /* Empty line */
 
-	if(accept(tokn_label)) {
-		if(accept(tokn_colon)) {
-			emit("<label>:");
-			/*a = */ast_emit_leaf(tokn_label);
-			ast_index(a, "label");
-			goto out; /* Labels must be on their own on a line? */
-		}
-		else {
-			emit("l-value = ");
-			assign();
-			ast_emit_leaf(tokn_label);
-			expression();
-			ast_emit_leaf(tokn_value);
-			ast_close();
+	if(tok_is(tokn_label)) {
+		if(!assign()) {
+			if(expect(tokn_colon)) {
+				emit("<label>:");
+				a = ast_emit_leaf(t);
+				ast_index(a, "label");
+				goto out; /* Labels must be on their own at the start of a line? */
+			}
 		}
 	}
 	else if(accept(tokn_colon)) {
@@ -717,7 +752,7 @@ void toplevel_line(void) {
 
 int parse (int fd) {
 
-	ast_emit(ast_block);
+	ast_emit_block();
 
 	next_token();
 	while(1) {
