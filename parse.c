@@ -143,24 +143,26 @@ int ast_ind = 0;
 #define ast_index(a,b);
 
 int get_precedence(struct token *a) {
-	int t;
 
 	if(!a)
 		goto out;
 
-	t = tokid(a);
-
-	if(t == tokn_uminus || t == tokn_uplus)
-		return 3;
-	if(t == tokn_asterisk || t == tokn_slash)
-		return 2;
-	if(t == tokn_minus || t == tokn_plus)
-		return 1;
-	if(t == tokn_oparen)
-		return -1;
-
-	printf("Unknown Operator!\n");
-	exit(1);
+	switch (tokid(a)) {
+		case tokn_uminus:
+		case tokn_uplus:
+			return 3;
+		case tokn_asterisk:
+		case tokn_slash:
+			return 2;
+		case tokn_minus:
+		case tokn_plus:
+			return 1;
+		case tokn_oparen:
+			return -1;
+		default:
+			printf("Unknown Operator!\n");
+			exit(1);
+	}
 
 out:
 	return 0;
