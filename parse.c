@@ -755,9 +755,11 @@ int parse (int fd) {
 	ast_emit_block();
 
 	next_token();
+
 	while(1) {
 		toplevel_line();
 	}
+
 	ast_close();
 
 	return 0;
