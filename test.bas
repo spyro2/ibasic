@@ -105,8 +105,11 @@ A = B
 	WHILE D
 		PRINT E
 		IF A THEN PROCbar ELSE PROCbaz(0, 8)
+		IF cats=cool GOTO herelabel
 	ENDWHILE
-UNTIL C
+UNTIL C = 9
+
+herelabel:
 
 REPEAT:PRINT fun:UNTIL 2=h:PRINT bags
 WHILE boo=argh: PRINT wheee:ENDWHILE:GOTO label
