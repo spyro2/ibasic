@@ -15,7 +15,7 @@
 //#define PRETTYPRINT
 
 static int fd;
-struct token *tok;
+struct token *tok = NULL;
 
 void print_current_token(char *s) {
 	printf("%s", s);
@@ -28,12 +28,24 @@ int tok_is(enum tokid id) {
 }
 
 void next_token(void) {
-	/* Skip comments - This may have implications for writing a
-	 * pretty-printer.
-	 */
+	int skip;
+
+	if(tok)
+		tok_put(tok);
+
 	do {
 		tok = get_next_token(fd);
-	} while (tok_is(tokn_comment));
+
+		tok_get(tok);
+
+		/* Skip comments - This may have implications for writing a
+		 * pretty-printer.
+		 */
+
+		if((skip = tok_is(tokn_comment)))
+			tok_put(tok);
+
+	} while (skip);
 
 #ifdef PRINT_NEXT_TOKEN
 	printf(ANSI_GREEN);
@@ -145,6 +157,7 @@ void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
 	if(tok_is(tokn_plus) || tok_is(tokn_minus)) {
+		tok_get(tok);
 
 		/* Promote token to a unary one */
 		if(tok_is(tokn_plus))
@@ -166,11 +179,13 @@ void factor(struct stack *output, struct stack *operator){
 	}
 
 	if(tok_is(tokn_label) || tok_is(tokn_value)) {
+		tok_get(tok);
 		push(output, tok);
 
 		next_token();
 	}
 	else if(tok_is(tokn_oparen)) {
+		tok_get(tok);
 		push(operator, tok);
 
 		next_token();
@@ -179,10 +194,10 @@ void factor(struct stack *output, struct stack *operator){
 
 		expect(tokn_cparen);
 
-		pop(operator); /* pop the open parentesis */
+		tok_put(pop(operator)); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
-		struct token *t = tok;
+		struct token *t = tok_get(tok);
 		int n_params = 0;
 
 		next_token();
@@ -190,7 +205,7 @@ void factor(struct stack *output, struct stack *operator){
 		expect(tokn_label);
 
 		if(tok_is(tokn_oparen)) {
-
+			tok_get(tok);
 			push(operator, tok);
 
 			next_token();
@@ -202,12 +217,13 @@ void factor(struct stack *output, struct stack *operator){
 
 			expect(tokn_cparen);
 
-			pop(operator); /* pop the open parentesis */
+			tok_put(pop(operator)); /* pop the open parentesis */
 		}
 
 		t->val->data.i = n_params;
 
 		push(output, t);
+
 	}
 }
 
@@ -216,6 +232,7 @@ void term(struct stack *output, struct stack *operator) {
 	factor(output, operator);
 
 	while(tok_is(tokn_asterisk) || tok_is(tokn_slash)) {
+		tok_get(tok);
 
 		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
@@ -234,6 +251,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 	term(output, operator);
 
 	while(tok_is(tokn_plus) || tok_is(tokn_minus)) {
+		tok_get(tok);
 
 		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
@@ -241,6 +259,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 		push(operator, tok);
 
 		next_token();
+
 		term(output, operator);
 	}
 
@@ -252,6 +271,7 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 struct ast_entry *expression() {
 	struct stack output = {{0}}, operator = {{0}};
+	struct token *t;
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
@@ -260,6 +280,12 @@ struct ast_entry *expression() {
 #ifdef PRETTYPRINT
 	print_expression(&output);
 #endif
+
+	/* Free tokens from expression */
+	while((t = peek(&output))) {
+		tok_put(pop_nocheck(&output));
+	}
+
 	return NULL; /* For now */
 }
 
@@ -291,11 +317,12 @@ void condition(void) {
 }
 
 int assign(void) {
-	struct token *t = tok;
+	struct token *t = tok_get(tok);
 
 	if(accept(tokn_label) && tok_is(tokn_eq)) {
 		ast_emit(tok);
 		ast_emit_leaf(t);
+		tok_put(t);
 
 		next_token();
 
@@ -304,6 +331,8 @@ int assign(void) {
 
 		return 1;
 	}
+
+	tok_put(t);
 
 	return 0;
 }
@@ -339,12 +368,13 @@ void input_param_list(void) {
 		if(accept(tokn_return))
 			emit_noindent("RETURN ");
 
-		t = tok;
+		t = tok_get(tok);
 		expect(tokn_label);
 
 		emit_noindent("<label>");
 
 		ast_emit_leaf(t);
+		tok_put(t);
 
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
@@ -354,23 +384,25 @@ void input_param_list(void) {
 
 void definition(void) {
 	struct ast_entry *a;
-	struct token *t = tok;
+	struct token *t = tok_get(tok);
 
 	emit_i("DEF ");
 	if(accept(tokn_proc)) {
 		emit_noindent("PROC");
 
 		ast_emit(t);
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 
 		expect(tokn_label);
 
 		a = ast_emit_leaf(t);
+		tok_put(t);
 		ast_index(a, "proclabel");
 
 		emit_noindent("<label>");
 
-		t = tok;
+		t = tok_get(tok);
 
 		if(accept(tokn_oparen)) {
 			ast_emit(t);
@@ -382,6 +414,7 @@ void definition(void) {
 
 			ast_close();
 		}
+		tok_put(t);
 
 		ast_emit_block();
 		emit_noindent(" {\n");
@@ -406,16 +439,18 @@ void definition(void) {
 		emit_noindent("FN");
 
 		ast_emit(t);
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 
 		expect(tokn_label);
 
 		a = ast_emit_leaf(t);
+		tok_put(t);
 		ast_index(a, "fnlabel");
 
 		emit_noindent("<label>");
 
-		t = tok;
+		t = tok_get(tok);
 
 		if(accept(tokn_oparen)) {
 			ast_emit(t);
@@ -427,6 +462,7 @@ void definition(void) {
 
 			ast_close();
 		}
+		tok_put(t);
 
 		ast_emit_block();
 		emit_noindent(" {\n");
@@ -450,16 +486,22 @@ void definition(void) {
 		ast_close();
 		ast_close();
 	}
+	else {
+		tok_put(t);
+		printf("Unknown def type\n");
+		exit(1);
+	}
 
 	expect(tokn_eol);
 }
 
 void statement(void) {
-	struct token *t = tok;
+	struct token *t = tok_get(tok);
 
 	if(accept(tokn_if)) {
 		emit("IF (");
 		ast_emit(t);
+		tok_put(t);
 
 		condition();
 
@@ -518,6 +560,7 @@ void statement(void) {
 		emit_i("CASE ");
 
 		ast_emit(t);
+		tok_put(t);
 
 		ast_append(expression());
 
@@ -526,7 +569,7 @@ void statement(void) {
 		expect(tokn_eol);
 
 		while(!tok_is(tokn_endcase)) {
-			t = tok;
+			t = tok_get(tok);
 			if(accept(tokn_when)) {
 				ast_emit(t);
 				emit_i("WHEN ");
@@ -538,6 +581,8 @@ void statement(void) {
 				ast_emit(t);
 				emit_i("OTHERWISE {\n");
 			}
+
+			tok_put(t);
 
 			ast_emit_block();
 
@@ -565,11 +610,13 @@ void statement(void) {
 	else if (accept(tokn_proc)) {
 		emit("PROC");
 		ast_emit(t);
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 		expect(tokn_label);
 		emit_noindent("<label>");
 		ast_emit_leaf(t); /* label of PROC to call */
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 		if(accept(tokn_oparen)) {
 			ast_emit(t);
 			emit_noindent(" ( ");
@@ -578,15 +625,18 @@ void statement(void) {
 			ast_close();
 			emit_noindent(")");
 		}
+		tok_put(t);
 		ast_close();
 	}
 	else if (accept(tokn_fn)) {
 		emit("FN");
 		ast_emit(t);
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 		expect(tokn_label);
 		ast_emit_leaf(t); /* label of FN to call */
-		t = tok;
+		tok_put(t);
+		t = tok_get(tok);
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
 			ast_emit(t);
@@ -596,11 +646,13 @@ void statement(void) {
 			emit_noindent(" )");
 			ast_close();
 		}
+		tok_put(t);
 		ast_close();
 	}
 	else if (accept(tokn_repeat)) {
 		emit_i("REPEAT {\n");
 		ast_emit(t);
+		tok_put(t);
 		ast_emit_block();
 
 		if(accept(tokn_colon))
@@ -626,6 +678,7 @@ void statement(void) {
 
 		emit(tokn_while);
 		ast_emit(t);
+		tok_put(t);
 
 		condition();
 
@@ -651,11 +704,13 @@ void statement(void) {
 		emit("GOTO ");
 
 		ast_emit(t);
+		tok_put(t);
 
-		t = tok;
+		t = tok_get(tok);
 		expect(tokn_label);
 
 		ast_emit_leaf(t);
+		tok_put(t);
 
 		emit_noindent("<label>");
 
@@ -665,6 +720,7 @@ void statement(void) {
 		emit("PRINT");
 
 		ast_emit(t);
+		tok_put(t);
 
 		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
 			emit_noindent(" {\n");
@@ -681,29 +737,33 @@ void statement(void) {
 	}
 	else if (accept(tokn_end)) {
 		ast_emit_leaf(t);
+		tok_put(t);
 		emit("END");
 	}
 	else {
+		tok_put(t);
 		assign();
 	}
 }
 
 void line(void) {
 	struct ast_entry *a;
-	struct token *t = tok;
 
 	if(tok_is(tokn_eol))
 		goto out; /* Empty line */
 
 	if(tok_is(tokn_label)) {
+		struct token *t = tok_get(tok);
 		if(!assign()) {
 			if(expect(tokn_colon)) {
 				emit("<label>:");
 				a = ast_emit_leaf(t);
 				ast_index(a, "label");
+				tok_put(t);
 				goto out; /* Labels must be on their own at the start of a line? */
 			}
 		}
+		tok_put(t);
 	}
 	else if(accept(tokn_colon)) {
 		; /* Skip leading : at beginning of lines */
