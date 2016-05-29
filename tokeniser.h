@@ -1,3 +1,4 @@
+#include <assert.h>
 
 enum tokid {
 	tokn_if, tokn_then, tokn_else, tokn_endif, tokn_case,
@@ -52,6 +53,7 @@ struct token {
         struct symbol *sym;
         struct token *next;
 	struct value *val;
+	int ref;
 };
 
 struct symbol {
@@ -68,4 +70,21 @@ struct token *get_next_token(int fd);
 void tok_print_one(struct token *t);
 void tok_print_line(struct token *t);
 struct symbol *sym_from_id(enum tokid id);
+
+static inline struct token *tok_get(struct token *t) {
+	t->ref++;
+
+	return t;
+}
+
+static inline void tok_put(struct token *t) {
+	t->ref--;
+
+	assert(t->ref >= 0);
+
+	if(t->ref == 0) {
+		free(t->val);
+		free(t);
+	}
+}
 
