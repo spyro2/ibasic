@@ -4,6 +4,8 @@
 #include "tokeniser.h"
 #include "stack.h"
 
+//#define DEBUG_EXPR_STACK
+
 void push(struct stack *s, struct token *t) {
 #ifdef DEBUG_EXPR_STACK
 	printf("push(%08x) %d: ", s, s->sp);
