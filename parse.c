@@ -35,7 +35,7 @@ void next_token(void) {
 		tok = get_next_token(fd);
 	} while (tok_is(tokn_comment));
 
-#if PRINT_NEXT_TOKEN
+#ifdef PRINT_NEXT_TOKEN
 	printf(ANSI_GREEN);
 	tok_print_one(tok);
 	printf(ANSI_RESET);
