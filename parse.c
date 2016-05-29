@@ -205,7 +205,7 @@ void factor(struct stack *output, struct stack *operator){
 			pop(operator); /* pop the open parentesis */
 		}
 
-		t->val.data.i = n_params;
+		t->val->data.i = n_params;
 
 		push(output, t);
 	}

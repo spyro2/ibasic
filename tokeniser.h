@@ -51,7 +51,7 @@ struct value {
 struct token {
         struct symbol *sym;
         struct token *next;
-	struct value val;
+	struct value *val;
 };
 
 struct symbol {

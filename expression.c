@@ -44,7 +44,7 @@ struct value *eval(struct stack *o) {
 		return a;
 	}
 	else if(i == tokn_value) {
-		return &t->val;
+		return t->val;
 	}
 	else if(i == tokn_uplus) {
 		a = eval(o);
@@ -246,7 +246,7 @@ struct value *eval(struct stack *o) {
 		return c;
 	}
 	else if(i == tokn_fn) {
-		int n = t->val.data.i;
+		int n = t->val->data.i;
 
 		b = val_alloc();
 		b->type = type_float;

@@ -7,24 +7,25 @@
 #include "tokeniser.h"
 
 static struct token *tok_alloc(int len) {
-	struct token *t = calloc(1, sizeof(*t)+len);
+	struct token *t = calloc(1, sizeof(*t));
 
+	t->val = calloc(1, sizeof(*t->val)+len);
 	if(len)
-		t->val.data.v = t+1;
+		t->val->data.v = (void *)&t->val[1];
 
 	return t;
 }
 
 static void print_label(struct token *t) {
-	if(t->val.data.s)
-		printf("%s ", t->val.data.s);
+	if(t->val->data.s)
+		printf("%s ", t->val->data.s);
 }
 
 static void print_value(struct token *t) {
-	switch(t->val.type) {
-		case type_int:    printf("%d ", t->val.data.i); break;
-		case type_float:  printf("%f ", t->val.data.d); break;
-		case type_string: printf("%s ", t->val.data.s); break;
+	switch(t->val->type) {
+		case type_int:    printf("%d ", t->val->data.i); break;
+		case type_float:  printf("%f ", t->val->data.d); break;
+		case type_string: printf("%s ", t->val->data.s); break;
 		default: printf(" {unknown type}");
 	}
 }
@@ -50,10 +51,10 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 
 	t = tok_alloc(len + 1); // FIXME: Check failure
 
-	memcpy(t->val.data.s, *ps, len);
-	t->val.data.s[len] = 0;
-	t->val.type = type_string;
-	t->val.flags = VAL_READONLY;
+	memcpy(t->val->data.s, *ps, len);
+	t->val->data.s[len] = 0;
+	t->val->type = type_string;
+	t->val->flags = VAL_READONLY;
 
 	t->sym = s;
 
@@ -63,8 +64,8 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 }
 
 static void print_string(struct token *t) {
-	if(t->val.data.s)
-		printf("\"%s\"", t->val.data.s);
+	if(t->val->data.s)
+		printf("\"%s\"", t->val->data.s);
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
@@ -85,10 +86,10 @@ static struct token *tokfn_comment(struct symbol *s, char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	memcpy(t->val.data.s, *ps, len);
-	t->val.data.s[len] = 0;
-	t->val.type = type_string;
-	t->val.flags = VAL_READONLY;
+	memcpy(t->val->data.s, *ps, len);
+	t->val->data.s[len] = 0;
+	t->val->type = type_string;
+	t->val->flags = VAL_READONLY;
 
 	t->sym = s;
 
@@ -124,31 +125,31 @@ static struct token *extract_label(char **ps) {
 
 		t = tok_alloc(0);
 		t->sym = &sym_value;
-		t->val.flags |= VAL_READONLY;
+		t->val->flags |= VAL_READONLY;
 
 		if(*sc == '0') {
 			if (n == 'x') { /* hex */
 				if(len < 3)
 					goto out_free;
-				t->val.type = type_int;
-				t->val.data.i = strtoul(*ps, ps, 0);
+				t->val->type = type_int;
+				t->val->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 			else if(IS_DIGIT(n)) { /* octal */
-				t->val.type = type_int;
-				t->val.data.i = strtoul(*ps, ps, 0);
+				t->val->type = type_int;
+				t->val->data.i = strtoul(*ps, ps, 0);
 				goto out;
 			}
 		}
 		else if(strchr(*ps, '.')) { /* decimal */
-			t->val.type = type_float;
-			t->val.data.d = strtod(*ps, ps);
+			t->val->type = type_float;
+			t->val->data.d = strtod(*ps, ps);
 			goto out;
 		}
 
 		/* ordinary integer */
-		t->val.type = type_int;
-		t->val.data.i = strtoul(*ps, ps, 10);
+		t->val->type = type_int;
+		t->val->data.i = strtoul(*ps, ps, 10);
 
 		goto out;
 	}
@@ -165,16 +166,16 @@ static struct token *extract_label(char **ps) {
 
 	t = tok_alloc(len+1); // FIXME: Check failure
 
-	memcpy(t->val.data.s, *ps, len);
-	t->val.data.s[len] = 0;
+	memcpy(t->val->data.s, *ps, len);
+	t->val->data.s[len] = 0;
 
 	t->sym = &sym_label;
-	switch(t->val.data.s[len-1]) {
-		case '$': t->val.type = type_string; break;
-		case '%': t->val.type = type_int; break;
+	switch(t->val->data.s[len-1]) {
+		case '$': t->val->type = type_string; break;
+		case '%': t->val->type = type_int; break;
 		default:
-			t->val.type = type_unspec;
-			t->val.flags |= VAL_READONLY;
+			t->val->type = type_unspec;
+			t->val->flags |= VAL_READONLY;
 			break;
 	}
 
@@ -630,6 +631,8 @@ struct token *get_next_token(int fd) {
 
 	if(t)
 		next_tok = t->next;
+
+	t->next = NULL;
 
 	return t;
 }
