@@ -735,7 +735,6 @@ static void statement(void) {
 		ast_emit_leaf(t);
 		tok_put(t);
 		emit("END");
-		ast_print_tree(ast_get_context());
 	}
 	else {
 		tok_put(t);
@@ -814,11 +813,15 @@ int parse (int fd_i) {
 
 	next_token();
 
-	while(1) {
+	do {
 		toplevel_line();
-	}
+	} while (!tok_is(tokn_eof));
 
 	ast_close();
+
+	printf("Done parsing file\n");
+
+	ast_print_tree(ast_get_context());
 
 	return 0;
 }
