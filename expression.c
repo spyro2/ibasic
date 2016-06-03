@@ -3,6 +3,7 @@
 
 #include "tokeniser.h"
 #include "stack.h"
+#include "ast.h"
 #include "colours.h"
 
 static struct value *val_alloc() {
@@ -27,6 +28,67 @@ static void val_free(struct value *v) {
 #define IS_INT(a) ((a)->type == type_int)
 #define IS_FLOAT(a) ((a)->type == type_float)
 #define IS_NUM(a) (IS_INT(a) || IS_FLOAT(a))
+
+void do_basic_eval(struct stack *o) {
+	struct token *t = pop(o);
+	int i = tokid(t);
+
+	if(i == tokn_label || i == tokn_value) {
+		ast_emit_leaf(t);
+	}
+	else if(i == tokn_uplus || i == tokn_uminus) {
+		ast_emit(t);
+
+		do_basic_eval(o);
+
+		ast_close();
+	}
+	else if (i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
+	         i == tokn_slash) {
+		ast_emit(t);
+
+		do_basic_eval(o);
+		do_basic_eval(o);
+
+		ast_close();
+	}
+	else if(i == tokn_fn) {
+		int n = t->val->data.i;
+
+		ast_emit(t);
+
+		tok_put(pop(o)); /* FN Name */
+
+		while(n) {
+			do_basic_eval(o);
+
+			n--;
+		}
+
+		ast_close();
+	}
+	else {
+		printf("Unknown operator!\n");
+		exit(1);
+	}
+
+	tok_put(t);
+}
+
+struct ast_entry *basic_eval(struct stack *o) {
+	if(peek(o)) {
+		struct ast_entry *last = ast_get_context();
+		struct ast_entry *a = ast_new_context(ast_expression);
+
+		do_basic_eval(o);
+
+		ast_set_context(last);
+
+		return a;
+	}
+
+	return NULL;
+}
 
 struct value *eval(struct stack *o) {
 	struct token *t = pop(o);
