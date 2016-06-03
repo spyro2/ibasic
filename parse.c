@@ -273,7 +273,6 @@ void do_expression(struct stack *output, struct stack *operator) {
 
 struct ast_entry *expression() {
 	struct stack output = {{0}}, operator = {{0}};
-	struct token *t;
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
@@ -283,12 +282,7 @@ struct ast_entry *expression() {
 	print_expression(&output);
 #endif
 
-	/* Free tokens from expression */
-	while((t = peek(&output))) {
-		tok_put(pop_nocheck(&output));
-	}
-
-	return NULL; /* For now */
+	return basic_eval(&output);
 }
 
 void condition(void) {
