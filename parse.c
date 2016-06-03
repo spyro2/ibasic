@@ -735,6 +735,7 @@ void statement(void) {
 		ast_emit_leaf(t);
 		tok_put(t);
 		emit("END");
+		ast_print_tree(ast_get_context());
 	}
 	else {
 		tok_put(t);
