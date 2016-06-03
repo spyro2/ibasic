@@ -85,7 +85,9 @@ static inline void tok_put(struct token *t) {
 	assert(t->ref >= 0);
 
 	if(t->ref == 0) {
-		free(t->val);
+		/* We need to refcount values and free them here if the
+		 * AST code doesnt claim them FIXME
+		 */
 		free(t);
 	}
 }
