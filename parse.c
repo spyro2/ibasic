@@ -819,6 +819,8 @@ int parse (int fd_i) {
 
 	ast_close();
 
+	tok_put(tok);
+
 	printf("Done parsing file\n");
 
 	ast_print_tree(ast_get_context());
