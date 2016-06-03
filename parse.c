@@ -197,11 +197,12 @@ void factor(struct stack *output, struct stack *operator){
 		tok_put(pop(operator)); /* pop the open parentesis */
 	}
 	else if(tok_is(tokn_fn)) {
-		struct token *t = tok_get(tok);
+		struct token *t = tok_get(tok), *tn;
 		int n_params = 0;
 
 		next_token();
 
+		tn = tok_get(tok);
 		expect(tokn_label);
 
 		if(tok_is(tokn_oparen)) {
@@ -222,6 +223,7 @@ void factor(struct stack *output, struct stack *operator){
 
 		t->val->data.i = n_params;
 
+		push(output, tn); /* Push the function name */
 		push(output, t);
 
 	}

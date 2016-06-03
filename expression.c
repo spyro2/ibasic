@@ -248,6 +248,8 @@ struct value *eval(struct stack *o) {
 	else if(i == tokn_fn) {
 		int n = t->val->data.i;
 
+		pop(o); /* FN Name */
+
 		b = val_alloc();
 		b->type = type_float;
 		b->flags |= VAL_READONLY;
