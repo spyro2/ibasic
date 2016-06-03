@@ -57,7 +57,7 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 	t->val->type = type_string;
 	t->val->flags = VAL_READONLY;
 
-	t->sym = s;
+	t->sym = &sym_value;
 
 	*ps = ++r;
 
@@ -169,8 +169,8 @@ static struct token *extract_label(char **ps) {
 
 	memcpy(t->val->data.s, *ps, len);
 	t->val->data.s[len] = 0;
-
 	t->sym = &sym_label;
+
 	switch(t->val->data.s[len-1]) {
 		case '$': t->val->type = type_string; break;
 		case '%': t->val->type = type_int; break;
@@ -294,6 +294,7 @@ static struct symbol symbol_list[] = {
 	{tokn_comma, ",",},
 
 	/* Types */
+	/* strings produce tokn_value when they are evaluated */
 	{tokn_value, "\"", tokfn_string, print_string},
 
 	/* IO statements */
