@@ -128,7 +128,6 @@ static char *ast_name(enum tokid id) {
 		case ast_proc: return "ast_proc";
 		case ast_fn: return "ast_fn";
 		case ast_expression: return "ast_expression";
-		case tokn_label: return "<label>";
 		default: return "ast_unknown";
 	}
 }
@@ -141,9 +140,11 @@ static void ast_print_one(struct ast_entry *a, int l) {
 
 	if(!c) {
 		a_ind(l);
-		if(s && s->id == tokn_value)
+		if(a->id == tokn_value)
 			ast_print_value(a);
-		else if(s && s->id == tokn_oparen)
+		else if(a->id == tokn_label)
+			printf("<label> %s\n", a->val->data.s);
+		else if(a->id == tokn_oparen)
 			printf("empty_group\n");
 		else if(s && s->name)
 			printf("%s\n", s->name);
@@ -152,7 +153,7 @@ static void ast_print_one(struct ast_entry *a, int l) {
 	}
 	else {
 		a_ind(l);
-		if(s && s->id == tokn_oparen)
+		if(a->id == tokn_oparen)
 			printf("group (\n");
 		else if(s && s->name)
 			printf("%s[%d] (\n", s->name, a->children);
