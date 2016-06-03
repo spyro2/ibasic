@@ -32,6 +32,7 @@ static void print_value(struct token *t) {
 
 static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
 static struct symbol sym_value = {tokn_value, "<value>", NULL, print_value};
+static struct symbol sym_eof = {tokn_eof, "<eof>", NULL, NULL};
 
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
@@ -576,7 +577,7 @@ static char *get_one_line(int fd) {
 	while (n < buf+end && *n != '\n' ) {
 		if(*n == 0) {
 			printf("End of program\n");
-			exit(0);
+			return NULL;
 		}
 		n++;
 	}
@@ -603,7 +604,6 @@ static char *get_one_line(int fd) {
 	return NULL;
 }
 
-
 static struct token *get_more_tokens(struct sym_tree_entry *sym_tree, int fd) {
 	char *buf;
 	struct token *t;
@@ -611,11 +611,11 @@ static struct token *get_more_tokens(struct sym_tree_entry *sym_tree, int fd) {
 	buf = get_one_line(fd); // FIXME: for now, guarantee newline  terminated or die.
 
 	if(!buf) {
-		printf("Line way too long\n");
-		exit(1);
+		printf("Line way too long or EOF\n");
+		t = default_tokfn(&sym_eof, NULL);
 	}
-
-	t = tokenise(sym_tree, buf);
+	else
+		t = tokenise(sym_tree, buf);
 
 	return t;
 }
