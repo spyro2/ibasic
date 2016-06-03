@@ -833,6 +833,8 @@ int main(void) {
 
 	tokeniser_init();
 
+	ast_new_context(ast_program);
+
 	fd = open("test.bas", O_RDONLY);
 	if(fd == -1) {
 		printf("Couldnt open file\n");
