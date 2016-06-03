@@ -1,3 +1,5 @@
+#include "tokeniser.h"
+
 struct ast_entry *ast_get_context(void);
 struct ast_entry *ast_new_context(int id);
 void ast_set_context(struct ast_entry *a);

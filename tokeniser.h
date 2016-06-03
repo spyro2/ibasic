@@ -1,3 +1,5 @@
+#ifndef TOKENISER_H_INCLUDED
+
 #include <assert.h>
 
 enum tokid {
@@ -87,4 +89,7 @@ static inline void tok_put(struct token *t) {
 		free(t);
 	}
 }
+
+#define TOKENISER_H_INCLUDED
+#endif
 

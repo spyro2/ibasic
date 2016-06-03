@@ -1,0 +1,2 @@
+int parse (int fd);
+
