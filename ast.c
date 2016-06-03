@@ -110,6 +110,29 @@ static inline void a_ind(int l) {
 		printf("\t");
 }
 
+static void ast_print_value(struct ast_entry *a) {
+	struct value *v = a->val;
+
+	switch (v->type) {
+		case type_int: printf("<int> %d\n", v->data.i); break;
+		case type_float: printf("<float> %f\n", v->data.d); break;
+		case type_string: printf("<string> \"%s\"\n", v->data.s); break;
+		default: printf("<unknown value>\n");break;
+	}
+}
+
+static char *ast_name(enum tokid id) {
+	switch(id) {
+		case ast_program: return "ast_program";
+		case ast_block: return "ast_block";
+		case ast_proc: return "ast_proc";
+		case ast_fn: return "ast_fn";
+		case ast_expression: return "ast_expression";
+		case tokn_label: return "<label>";
+		default: return "ast_unknown";
+	}
+}
+
 static void ast_print_one(struct ast_entry *a, int l) {
 	struct ast_entry *c = a->child;
 	struct symbol *s;
@@ -118,17 +141,23 @@ static void ast_print_one(struct ast_entry *a, int l) {
 
 	if(!c) {
 		a_ind(l);
-		if(s && s->name)
-			printf("%s \n", s->name);
+		if(s && s->id == tokn_value)
+			ast_print_value(a);
+		else if(s && s->id == tokn_oparen)
+			printf("empty_group\n");
+		else if(s && s->name)
+			printf("%s\n", s->name);
 		else
-			printf("%d \n", a->id);
+			printf("%s\n", ast_name(a->id));
 	}
 	else {
 		a_ind(l);
-		if(s && s->name)
-			printf("%s[%d] ( \n", s->name, a->children);
+		if(s && s->id == tokn_oparen)
+			printf("group (\n");
+		else if(s && s->name)
+			printf("%s[%d] (\n", s->name, a->children);
 		else
-			printf("%d[%d] ( \n", a->id, a->children);
+			printf("%s[%d] (\n", ast_name(a->id), a->children);
 
 		while(c) {
 			struct ast_entry *n = c->next;
