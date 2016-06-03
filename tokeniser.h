@@ -26,7 +26,7 @@ enum tokid {
 	 */
 	tokn_uminus, tokn_uplus,
 	/* Special tokens used in the AST */
-	ast_program, ast_block, ast_proc, ast_fn, ast_in_param, ast_expression,
+	ast_program, ast_block, ast_proc, ast_fn, ast_expression,
 };
 
 union storage {
