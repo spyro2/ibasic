@@ -9,18 +9,23 @@
 #include "parse.h"
 #include "tokeniser.h"
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	int fd;
+
+	if (argc < 2) {
+		fprintf(stderr, "No input file!\n");
+		exit(1);
+	}
+
+	fd = open(argv[1], O_RDONLY);
+	if(fd == -1) {
+		printf("Couldnt open file %s\n", argv[1]);
+		exit(1);
+	}
 
 	tokeniser_init();
 
 	ast_new_context(ast_program);
-
-	fd = open("test.bas", O_RDONLY);
-	if(fd == -1) {
-		printf("Couldnt open file\n");
-		exit(1);
-	}
 
 	parse(fd);
 
