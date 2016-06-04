@@ -116,9 +116,7 @@ static inline void a_ind(int l) {
 		printf("\t");
 }
 
-static void ast_print_value(struct ast_entry *a) {
-	struct value *v = a->val;
-
+static void ast_print_value(struct value *v) {
 	switch (v->type) {
 		case type_int: printf("<int> %d\n", v->data.i); break;
 		case type_float: printf("<float> %f\n", v->data.d); break;
@@ -140,16 +138,15 @@ static char *ast_name(enum tokid id) {
 
 static void ast_print_one(struct ast_entry *a, int l) {
 	struct ast_entry *c = a->child;
-	struct symbol *s;
-
-	s = sym_from_id(a->id);
+	struct symbol *s = sym_from_id(a->id);
+	struct value *v = a->val;
 
 	if(!c) {
 		a_ind(l);
 		if(a->id == tokn_value)
-			ast_print_value(a);
+			ast_print_value(v);
 		else if(a->id == tokn_label)
-			printf("<label> %s\n", a->val->data.s);
+			printf("<label> %s\n", v->data.s);
 		else if(a->id == tokn_oparen)
 			printf("empty_group\n");
 		else if(s && s->name)
