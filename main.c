@@ -8,6 +8,7 @@
 #include "ast.h"
 #include "parse.h"
 #include "tokeniser.h"
+#include "interpretter.h"
 
 int main(int argc, char *argv[]) {
 	struct ast_entry *program;
@@ -31,6 +32,9 @@ int main(int argc, char *argv[]) {
 	parse(fd);
 
 	ast_print_tree(program);
+
+	interpret(program);
+
 	ast_free_tree(program);
 
 	tokeniser_exit();
