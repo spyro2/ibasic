@@ -54,7 +54,10 @@ struct ast_entry *ast_emit(struct token *t) {
 	//FIXME: alloc failure
 
 	a->id = s->id;
-	a->val = t->val;
+	if(t->val) {
+		val_get(t->val);
+		a->val = t->val;
+	}
 	ast_this = a;
 
 	return a;
@@ -66,7 +69,10 @@ struct ast_entry *ast_emit_leaf(struct token *t) {
 	//FIXME: alloc failure
 
 	a->id = s->id;
-	a->val = t->val;
+	if(t->val) {
+		val_get(t->val);
+		a->val = t->val;
+	}
 
 	return a;
 }
@@ -171,6 +177,9 @@ static void ast_print_one(struct ast_entry *a, int l) {
 		a_ind(l);
 		printf(")\n");
 	}
+	if(v)
+		val_put(v);
+	free(a);
 }
 
 void ast_print_tree(struct ast_entry *a) {

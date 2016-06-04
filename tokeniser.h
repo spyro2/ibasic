@@ -50,6 +50,7 @@ struct value {
 	union storage data;
 	struct label *next;
 	char *name;
+	int ref;
 };
 
 struct token {
@@ -75,8 +76,27 @@ void tok_print_one(struct token *t);
 void tok_print_line(struct token *t);
 struct symbol *sym_from_id(enum tokid id);
 
+
+static inline struct value *val_get(struct value *v) {
+	v->ref++;
+
+	return v;
+}
+
+static inline void val_put(struct value *v) {
+	v->ref--;
+
+	assert(v->ref >= 0);
+
+	if(v->ref == 0)
+		free(v);
+}
+
 static inline struct token *tok_get(struct token *t) {
 	t->ref++;
+
+	if(t->val)
+		val_get(t->val);
 
 	return t;
 }
@@ -86,12 +106,10 @@ static inline void tok_put(struct token *t) {
 
 	assert(t->ref >= 0);
 
-	if(t->ref == 0) {
-		/* We need to refcount values and free them here if the
-		 * AST code doesnt claim them FIXME
-		 */
+	val_put(t->val);
+
+	if(t->ref == 0)
 		free(t);
-	}
 }
 
 #define TOKENISER_H_INCLUDED
