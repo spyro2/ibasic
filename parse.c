@@ -825,8 +825,6 @@ int parse (int fd_i) {
 
 	printf("Done parsing file\n");
 
-	ast_print_tree(ast_get_context());
-
 	return 0;
 }
 

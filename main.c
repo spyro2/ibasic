@@ -10,6 +10,7 @@
 #include "tokeniser.h"
 
 int main(int argc, char *argv[]) {
+	struct ast_entry *program;
 	int fd;
 
 	if (argc < 2) {
@@ -25,10 +26,11 @@ int main(int argc, char *argv[]) {
 
 	tokeniser_init();
 
-	ast_new_context(ast_program);
+	program = ast_new_context(ast_program);
 
 	parse(fd);
 
+	ast_print_tree(program);
 	tokeniser_exit();
 
 	return 0;
