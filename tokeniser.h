@@ -1,5 +1,6 @@
 #ifndef TOKENISER_H_INCLUDED
 
+#include <stdlib.h>
 #include <assert.h>
 
 enum tokid {
