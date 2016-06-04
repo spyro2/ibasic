@@ -54,16 +54,21 @@ void do_basic_eval(struct stack *o) {
 	}
 	else if(i == tokn_fn) {
 		int n = t->val->data.i;
+		struct token *tn;
 
 		ast_emit(t);
 
-		tok_put(pop(o)); /* FN Name */
+		/* FN name */
+		tn = pop(o);
 
 		while(n) {
 			do_basic_eval(o);
 
 			n--;
 		}
+
+		ast_emit_leaf(tn);
+		tok_put(tn);
 
 		ast_close();
 	}
