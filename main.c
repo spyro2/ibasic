@@ -31,6 +31,8 @@ int main(int argc, char *argv[]) {
 	parse(fd);
 
 	ast_print_tree(program);
+	ast_free_tree(program);
+
 	tokeniser_exit();
 
 	return 0;

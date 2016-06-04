@@ -174,11 +174,27 @@ static void ast_print_one(struct ast_entry *a, int l) {
 		a_ind(l);
 		printf(")\n");
 	}
-	if(v)
-		val_put(v);
-	free(a);
 }
 
 void ast_print_tree(struct ast_entry *a) {
 	ast_print_one(a, 0);
+}
+
+static void do_ast_free_tree(struct ast_entry *a) {
+	struct ast_entry *c = a->child;
+
+	while(c) {
+		struct ast_entry *n = c->next;
+		do_ast_free_tree(c);
+		c = n;
+	}
+
+	if(a->val)
+		val_put(a->val);
+	free(a);
+}
+
+
+void ast_free_tree(struct ast_entry *a) {
+	do_ast_free_tree(a);
 }
