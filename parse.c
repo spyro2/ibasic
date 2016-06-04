@@ -400,19 +400,12 @@ static void definition(void) {
 
 		emit_noindent("<label>");
 
-		t = tok_get(tok);
-
 		if(accept(tokn_oparen)) {
-			ast_emit(t);
-
 			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" ) ");
-
-			ast_close();
 		}
-		tok_put(t);
 
 		ast_emit_block();
 		emit_noindent(" {\n");
@@ -448,19 +441,12 @@ static void definition(void) {
 
 		emit_noindent("<label>");
 
-		t = tok_get(tok);
-
 		if(accept(tokn_oparen)) {
-			ast_emit(t);
-
 			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
-
-			ast_close();
 		}
-		tok_put(t);
 
 		ast_emit_block();
 		emit_noindent(" {\n");
