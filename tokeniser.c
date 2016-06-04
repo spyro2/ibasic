@@ -6,10 +6,12 @@
 
 #include "tokeniser.h"
 
+
 static struct token *tok_alloc(int len) {
 	struct token *t = calloc(1, sizeof(*t));
 
 	t->val = calloc(1, sizeof(*t->val)+len);
+
 	if(len)
 		t->val->data.v = (void *)&t->val[1];
 
