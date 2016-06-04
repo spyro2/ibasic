@@ -181,5 +181,4 @@ static void ast_print_one(struct ast_entry *a, int l) {
 
 void ast_print_tree(struct ast_entry *a) {
 	ast_print_one(a, 0);
-	exit(0);
 }
