@@ -380,6 +380,9 @@ static void input_param_list(void) {
 	} while(accept(tokn_comma));
 }
 
+static struct symbol sym_ast_proc = {ast_proc, "DEFPROC",};
+static struct symbol sym_ast_fn   = {ast_fn,   "DEFPROC",};
+
 static void definition(void) {
 	struct ast_entry *a;
 	struct token *t = tok_get(tok);
@@ -388,6 +391,7 @@ static void definition(void) {
 	if(accept(tokn_proc)) {
 		emit_noindent("PROC");
 
+		t->sym = &sym_ast_proc;
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
@@ -429,6 +433,7 @@ static void definition(void) {
 
 		emit_noindent("FN");
 
+		t->sym = &sym_ast_fn;
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
