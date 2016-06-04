@@ -153,7 +153,9 @@ static void ast_print_one(struct ast_entry *a, int l) {
 	}
 	else {
 		a_ind(l);
-		if(a->id == tokn_oparen)
+		if(a->id == tokn_assign)
+			printf("assign[%d] (\n", a->children);
+		else if(a->id == tokn_oparen)
 			printf("group[%d] (\n", a->children);
 		else if(s && s->name)
 			printf("%s[%d] (\n", s->name, a->children);
