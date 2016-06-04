@@ -24,7 +24,7 @@ enum tokid {
 	/* These tokens will never be emitted by the tokeniser and are
 	 * for the use of the parser only.
 	 */
-	tokn_uminus, tokn_uplus,
+	tokn_uminus, tokn_uplus, tokn_assign,
 	/* Special tokens used in the AST */
 	ast_program, ast_block, ast_proc, ast_fn, ast_expression,
 };
