@@ -652,6 +652,35 @@ struct symbol *sym_from_id(enum tokid id) {
 	return NULL;
 }
 
+void do_tokeniser_exit(struct sym_tree_entry *s) {
+	struct sym_tree_entry *c;
+
+	if(!s)
+		return;
+
+	c = s->children;
+
+	while(c) {
+		struct sym_tree_entry *n;
+		n = c->next;
+		do_tokeniser_exit(c);
+		c = n;
+	}
+
+	free(s);
+}
+
+void tokeniser_exit(void) {
+	struct sym_tree_entry *c = sym_tree;
+
+	while(c) {
+		struct sym_tree_entry *n;
+		n = c->next;
+		do_tokeniser_exit(c);
+		c = n;
+	}
+}
+
 /*
  * TODO: Add code to make a "flattened" tree, which can be parsed more quickly
  * As an optimisation, store "tree row length" and keep entries in alpha order,
