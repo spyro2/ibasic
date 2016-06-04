@@ -147,8 +147,6 @@ static void ast_print_one(struct ast_entry *a, int l) {
 			ast_print_value(v);
 		else if(a->id == tokn_label)
 			printf("<label> %s\n", v->data.s);
-		else if(a->id == tokn_oparen)
-			printf("empty_group\n");
 		else if(s && s->name)
 			printf("%s\n", s->name);
 		else
@@ -158,8 +156,6 @@ static void ast_print_one(struct ast_entry *a, int l) {
 		a_ind(l);
 		if(a->id == tokn_assign)
 			printf("assign[%d] (\n", a->children);
-		else if(a->id == tokn_oparen)
-			printf("group[%d] (\n", a->children);
 		else if(s && s->name)
 			printf("%s[%d] (\n", s->name, a->children);
 		else
