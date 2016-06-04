@@ -152,6 +152,7 @@ static void expr_list(void);
  */
 static struct symbol sym_uplus  = {tokn_uplus, "u+"};
 static struct symbol sym_uminus = {tokn_uminus, "u-"};
+static struct symbol sym_assign = {tokn_assign, "a="};
 
 static void factor(struct stack *output, struct stack *operator){
 
@@ -316,6 +317,7 @@ static int assign(void) {
 	struct token *t = tok_get(tok);
 
 	if(accept(tokn_label) && tok_is(tokn_eq)) {
+		tok->sym = &sym_assign;
 		ast_emit(tok);
 		ast_emit_leaf(t);
 		tok_put(t);
