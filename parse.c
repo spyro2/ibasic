@@ -272,13 +272,75 @@ static void do_expression(struct stack *output, struct stack *operator) {
 
 }
 
+static void expr_emit_ast(struct stack *o) {
+	struct token *t = pop(o);
+	int i = tokid(t);
+
+	if(i == tokn_label || i == tokn_value) {
+		ast_emit_leaf(t);
+	}
+	else if(i == tokn_uplus || i == tokn_uminus) {
+		ast_emit(t);
+
+		expr_emit_ast(o);
+
+		ast_close();
+	}
+	else if (i == tokn_plus || i == tokn_minus || i == tokn_asterisk ||
+	         i == tokn_slash) {
+		ast_emit(t);
+
+		expr_emit_ast(o);
+		expr_emit_ast(o);
+
+		ast_close();
+	}
+	else if(i == tokn_fn) {
+		int n = t->val->data.i;
+		struct token *tn;
+
+		ast_emit(t);
+
+		/* FN name */
+		tn = pop(o);
+
+		while(n) {
+			expr_emit_ast(o);
+
+			n--;
+		}
+
+		ast_emit_leaf(tn);
+		tok_put(tn);
+
+		ast_close();
+	}
+	else {
+		printf("Unknown operator!\n");
+		exit(1);
+	}
+
+	tok_put(t);
+}
+
 static struct ast_entry *expression() {
 	struct stack output = {{0}}, operator = {{0}};
 
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
 
-	return basic_eval(&output);
+	if(peek(&output)) {
+		struct ast_entry *last = ast_get_context();
+		struct ast_entry *a = ast_new_context(ast_expression);
+
+		expr_emit_ast(&output);
+
+		ast_set_context(last);
+
+		return a;
+	}
+
+	return NULL;
 }
 
 static void condition(void) {
