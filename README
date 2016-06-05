@@ -1,7 +1,7 @@
 iBASIC
 ======
 
-iBASIC is an attempt to build a BASIC interpretter that meets the
+iBASIC is an attempt to build a BASIC interpreter that meets the
 following criteria:
 
 * Reject some of BASIC's worst syntax.

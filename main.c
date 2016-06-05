@@ -8,7 +8,7 @@
 #include "ast.h"
 #include "parse.h"
 #include "tokeniser.h"
-#include "interpretter.h"
+#include "interpreter.h"
 
 int main(int argc, char *argv[]) {
 	struct ast_entry *program;

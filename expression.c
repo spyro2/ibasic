@@ -4,7 +4,7 @@
 #include "tokeniser.h"
 #include "stack.h"
 #include "ast.h"
-#include "interpretter.h"
+#include "interpreter.h"
 #include "colours.h"
 
 struct value *val_alloc(void) {
