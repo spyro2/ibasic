@@ -1,10 +1,53 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "tokeniser.h"
 #include "ast.h"
 
+struct ast_table {
+	char *name;
+	struct ast_entry *a;
 };
+
+static struct ast_table *ast[10];
+
+void ast_index(struct ast_entry *a, char *name) {
+	int i;
+
+	for(i = 0 ; i < 10 ; i++) {
+		if(!ast[i])
+			break;
+
+		if(!strcmp(ast[i]->name, name)) {
+			printf("ast_entry duplicate\n");
+			exit(1);
+		}
+	}
+
+	if(i < 10) {
+		ast[i] = malloc(sizeof(*ast[i]));
+		ast[i]->name = malloc(strlen(name)+1);
+		strcpy(ast[i]->name, name);
+		ast[i]->a = a;
+	}
+	else {
+		printf("ast_index full\n");
+		exit(1);
+	}
+}
+
+struct ast_entry *ast_lookup(char *name){
+	int i;
+
+	for(i = 0 ; i < 10 ; i++) {
+		if(ast[i] && !strcmp(ast[i]->name, name))
+			return ast[i]->a;
+	}
+
+	return NULL;
+}
+
 
 static struct ast_entry *ast_this;
 
@@ -72,10 +115,6 @@ struct ast_entry *ast_emit_leaf(struct token *t) {
 
 void ast_close(void) {
 	ast_this = ast_this->parent;
-}
-
-void ast_index(struct ast_entry *a, char *b) {
-	printf("index(%s)\n", b);
 }
 
 void ast_emit_block(void) {
