@@ -145,6 +145,9 @@ static int interpret_statement(struct ast_entry *e) {
 			break;
 		case tokn_end:
 			exit(0);
+		case ast_expression: //FIXME: this is a bit iffy.
+				val_push(eval(n)); //FIXME: null return?
+			break;
 		default:
 			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 			exit(1);
