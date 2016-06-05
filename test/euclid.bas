@@ -5,17 +5,17 @@
 A%=252
 B%=105
 
-PRINT "Greatest common divisor of "; A%; " and "; B%; " is:"; FNeuclid(A%, B%)
+PRINT "Greatest common divisor of "; A%; " and "; B%; " is: "; FNeuclid(A%, B%)
 
 END
 
-DEF FNeuclid(A%, B%)
-	WHILE B% <> 0
-		IF A% > B% THEN
-			A% = A% - B%
+DEF FNeuclid(C%, D%)
+	WHILE D% <> 0
+		IF C% > D% THEN
+			C% = C% - D%
 		ELSE
-			B% = B% - A%
+			D% = D% - C%
 		ENDIF
 	ENDWHILE
-=A%
+=C%
 
