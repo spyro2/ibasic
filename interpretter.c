@@ -109,6 +109,12 @@ static int interpret_statement(struct ast_entry *e) {
 					return r;
 			}
 			break;
+		case tokn_if:
+			if(interpret_condition(n))
+				interpret_block(n->next);
+			else
+				interpret_block(n->next->next);
+			break;
 		case tokn_assign:
 			interpret_assign(n);
 			break;
