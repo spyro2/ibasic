@@ -2,15 +2,8 @@
 #include <stdlib.h>
 
 #include "tokeniser.h"
+#include "ast.h"
 
-struct ast_entry {
-	struct ast_entry *next;
-	struct ast_entry *child;
-	struct ast_entry *last_child;
-	struct ast_entry *parent;
-	int children;
-	enum tokid id;
-	struct value *val;
 };
 
 static struct ast_entry *ast_this;
