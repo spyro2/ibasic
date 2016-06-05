@@ -387,15 +387,15 @@ static void definition(void) {
 		emit_noindent("PROC");
 
 		t->sym = &sym_ast_proc;
-		ast_emit(t);
+		a = ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
 
 		expect(tokn_label);
 
-		a = ast_emit_leaf(t);
+		ast_emit_leaf(t);
+		ast_index(a, t->val->data.s);
 		tok_put(t);
-		ast_index(a, "proclabel");
 
 		emit_noindent("<label>");
 
@@ -429,15 +429,15 @@ static void definition(void) {
 		emit_noindent("FN");
 
 		t->sym = &sym_ast_fn;
-		ast_emit(t);
+		a = ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
 
 		expect(tokn_label);
 
-		a = ast_emit_leaf(t);
+		ast_emit_leaf(t);
+		ast_index(a, t->val->data.s);
 		tok_put(t);
-		ast_index(a, "fnlabel");
 
 		emit_noindent("<label>");
 
