@@ -143,6 +143,8 @@ static int interpret_statement(struct ast_entry *e) {
 		case tokn_assign:
 			interpret_assign(n);
 			break;
+		case tokn_end:
+			exit(0);
 		default:
 			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 			exit(1);
