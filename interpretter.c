@@ -110,6 +110,30 @@ static int interpret_condition(struct ast_entry *e) {
 	return 0;
 }
 
+struct value *interpret_function(struct ast_entry *e) {
+	struct ast_entry *n = e->child;
+	int nr = e->children - 2;
+	struct value *v, *l;
+
+	n = n->next; // Skip FN name
+
+	while(nr) {
+		l = lookup_var(n->val->data.s);
+		v = val_pop();
+		l->data.i = v->data.i;
+		val_put(v);
+		n = n->next;
+		nr--;
+	}
+
+	interpret_block(n);
+
+	v = val_pop();
+
+	return v;
+
+}
+
 static int interpret_statement(struct ast_entry *e) {
 	struct ast_entry *n = e->child;
 	int r;
