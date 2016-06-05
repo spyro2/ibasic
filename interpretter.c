@@ -34,6 +34,21 @@ struct value *lookup_var(char *name) {
 
 static int interpret_block(struct ast_entry *e);
 
+static int interpret_assign(struct ast_entry *e) {
+	struct value *v;
+	struct value *l;
+
+	/* lookup_var */
+	l = lookup_var(e->val->data.s);
+
+	v = eval(e->next->child);
+
+	l->data.i = v->data.i;
+	val_put(v);
+
+	return 0;
+}
+
 static int interpret_statement(struct ast_entry *e) {
 	struct ast_entry *n = e->child;
 	int r;
@@ -41,6 +56,9 @@ static int interpret_statement(struct ast_entry *e) {
 //	printf("AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 
 	switch (e->id) {
+		case tokn_assign:
+			interpret_assign(n);
+			break;
 		default:
 			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 			exit(1);
