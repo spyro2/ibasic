@@ -49,6 +49,28 @@ static int interpret_assign(struct ast_entry *e) {
 	return 0;
 }
 
+static int interpret_print(struct ast_entry *n) {
+
+	do {
+		if(n->id == ast_expression) {
+			struct value *v = eval(n->child);
+			switch(v->type) {
+				case type_int:    printf("%d", v->data.i);break;
+				case type_float:  printf("%f", v->data.d);break;
+				case type_string: printf("%s", v->data.s);break;
+				default:
+					printf("Unknown type!\n");
+					exit(1);
+			}
+		}
+		n = n->next;
+	} while(n);
+
+	printf("\n");
+
+	return 0;
+}
+
 static int interpret_condition(struct ast_entry *e) {
 	struct value *a, *b;
 
@@ -114,6 +136,9 @@ static int interpret_statement(struct ast_entry *e) {
 				interpret_block(n->next);
 			else
 				interpret_block(n->next->next);
+			break;
+		case tokn_print:
+			interpret_print(n);
 			break;
 		case tokn_assign:
 			interpret_assign(n);
