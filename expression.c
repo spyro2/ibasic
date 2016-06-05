@@ -6,7 +6,7 @@
 #include "ast.h"
 #include "colours.h"
 
-static struct value *val_alloc() {
+struct value *val_alloc(void) {
 	struct value *v = calloc(1, sizeof(*v));
 
 	if(!v)
