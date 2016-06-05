@@ -278,11 +278,6 @@ static struct ast_entry *expression() {
 	/* Build RPN form of an expression */
 	do_expression(&output, &operator);
 
-	/* Display evaluated expression */
-#ifdef PRETTYPRINT
-	print_expression(&output);
-#endif
-
 	return basic_eval(&output);
 }
 

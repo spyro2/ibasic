@@ -340,20 +340,3 @@ struct value *eval(struct stack *o) {
 	exit(1);
 }
 
-void print_expression(struct stack *output) {
-	struct value *v;
-
-	/* Display evaluated expression */
-	if(peek(output)) {
-		v = eval(output);
-
-		switch(v->type) {
-			case type_int:    printf("%d ", v->data.i); break;
-			case type_float:  printf("%f ", v->data.d); break;
-			case type_string: printf("\"%s\" ", v->data.s); break;
-			default: printf("<Unknown type>\n"); break;
-		}
-
-		val_free(v);
-	}
-}
