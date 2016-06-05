@@ -95,6 +95,20 @@ static int interpret_statement(struct ast_entry *e) {
 //	printf("AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 
 	switch (e->id) {
+		case tokn_repeat:
+			do {
+				r = interpret_block(n);
+				if(r)
+					return r;
+			} while (!interpret_condition(n->next));
+			break;
+		case tokn_while:
+			while (interpret_condition(n)) {
+				r = interpret_block(n->next);
+				if(r)
+					return r;
+			}
+			break;
 		case tokn_assign:
 			interpret_assign(n);
 			break;
