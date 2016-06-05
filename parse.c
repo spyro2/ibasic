@@ -381,7 +381,7 @@ static void input_param_list(void) {
 }
 
 static struct symbol sym_ast_proc = {ast_proc, "DEFPROC",};
-static struct symbol sym_ast_fn   = {ast_fn,   "DEFPROC",};
+static struct symbol sym_ast_fn   = {ast_fn,   "DEFFN",};
 
 static void definition(void) {
 	struct ast_entry *a;
