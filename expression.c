@@ -17,13 +17,6 @@ struct value *val_alloc(void) {
 	return v;
 }
 
-static void val_free(struct value *v) {
-
-	if(v->flags & VAL_ALLOC) {
-		free(v);
-	}
-}
-
 #define IS_STRING(a) ((a)->type == type_string)
 #define IS_INT(a) ((a)->type == type_int)
 #define IS_FLOAT(a) ((a)->type == type_float)
