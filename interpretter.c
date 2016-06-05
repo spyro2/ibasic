@@ -1,8 +1,9 @@
 #include <stdio.h>
 
 #include "ast.h"
+#include "expression.h"
 
-void interpret(struct ast_entry *p) {
+
 static struct value *var[10];
 
 static struct value *call_stack[10];
@@ -31,4 +32,50 @@ struct value *lookup_var(char *name) {
 	return var[i];
 }
 
+static int interpret_block(struct ast_entry *e);
+
+static int interpret_statement(struct ast_entry *e) {
+	struct ast_entry *n = e->child;
+	int r;
+
+//	printf("AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
+
+	switch (e->id) {
+		default:
+			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
+			exit(1);
+	}
+
+	return 0;
+}
+
+static int interpret_block(struct ast_entry *e) {
+	struct ast_entry *n = e->child;
+	int r;
+
+	do {
+		r = interpret_statement(n);
+
+		if(r)
+			return r;
+
+		n = n->next;
+	} while(n);
+
+	return 0;
+}
+
+void interpret(struct ast_entry *e) {
+	struct ast_entry *n = e->child;
+
+	do {
+		if(n->id == ast_block)
+			interpret_block(n);
+		else {
+			printf("invalid AST entry\n");
+			exit(1);
+		}
+
+		n=n->next;
+	} while (n);
 }
