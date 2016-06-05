@@ -341,6 +341,8 @@ struct value *eval(struct ast_entry *o) {
 				exit(1);
 			}
 
+			b = interpret_function(a);
+
 			val_get(b);
 
 			return b;
