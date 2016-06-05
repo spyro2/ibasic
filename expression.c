@@ -329,7 +329,6 @@ struct value *eval(struct ast_entry *o) {
 
 			while(n) {
 				struct value *v = eval(a);
-				val_get(v);
 				val_push(v);
 				a = a->next;
 				n--;
@@ -342,8 +341,6 @@ struct value *eval(struct ast_entry *o) {
 			}
 
 			b = interpret_function(a);
-
-			val_get(b);
 
 			return b;
 			}

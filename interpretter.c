@@ -25,9 +25,8 @@ struct value *lookup_var(char *name) {
 	if(!var[i]) {
 		var[i] = val_alloc();
 		var[i]->type = type_int;
+		val_get(var[i]);
 	}
-
-	val_get(var[i]);
 
 	return var[i];
 }
@@ -44,6 +43,7 @@ static int interpret_assign(struct ast_entry *e) {
 	v = eval(e->next->child);
 
 	l->data.i = v->data.i;
+
 	val_put(v);
 
 	return 0;
@@ -54,6 +54,7 @@ static int interpret_print(struct ast_entry *n) {
 	do {
 		if(n->id == ast_expression) {
 			struct value *v = eval(n->child);
+
 			switch(v->type) {
 				case type_int:    printf("%d", v->data.i);break;
 				case type_float:  printf("%f", v->data.d);break;
@@ -62,6 +63,8 @@ static int interpret_print(struct ast_entry *n) {
 					printf("Unknown type!\n");
 					exit(1);
 			}
+
+			val_put(v);
 		}
 		n = n->next;
 	} while(n);
@@ -79,35 +82,32 @@ static int interpret_condition(struct ast_entry *e) {
 
 	switch (e->id) {
 	case tokn_eq:
-		if(a->data.i == b->data.i)
-			return 1;
-		break;
+		if(a->data.i == b->data.i) goto out_true; break;
 	case tokn_ne:
-		if(a->data.i != b->data.i)
-			return 1;
-		break;
+		if(a->data.i != b->data.i) goto out_true; break;
 	case tokn_gt:
-		if(a->data.i > b->data.i)
-			return 1;
-		break;
+		if(a->data.i > b->data.i) goto out_true; break;
 	case tokn_lt:
-		if(a->data.i < b->data.i)
-			return 1;
-		break;
+		if(a->data.i < b->data.i) goto out_true; break;
 	case tokn_ge:
-		if(a->data.i >= b->data.i)
-			return 1;
-		break;
+		if(a->data.i >= b->data.i) goto out_true; break;
 	case tokn_le:
-		if(a->data.i <= b->data.i)
-			return 1;
-		break;
+		if(a->data.i <= b->data.i) goto out_true; break;
 	default:
 		printf("Unsupported condition code\n");
 		exit(1);
 	}
 
+	val_put(a);
+	val_put(b);
+
 	return 0;
+
+out_true:
+	val_put(a);
+	val_put(b);
+
+	return 1;
 }
 
 struct value *interpret_function(struct ast_entry *e) {
@@ -128,7 +128,7 @@ struct value *interpret_function(struct ast_entry *e) {
 
 	interpret_block(n);
 
-	v = val_pop();
+	v = val_pop();  /* Callers responsibility to val_put() */
 
 	return v;
 
