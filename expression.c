@@ -7,17 +7,6 @@
 #include "interpreter.h"
 #include "colours.h"
 
-struct value *val_alloc(void) {
-	struct value *v = calloc(1, sizeof(*v));
-
-	if(!v)
-		exit(1);
-
-	v->flags = VAL_ALLOC;
-
-	return v;
-}
-
 #define IS_STRING(a) ((a)->type == type_string)
 #define IS_INT(a) ((a)->type == type_int)
 #define IS_FLOAT(a) ((a)->type == type_float)

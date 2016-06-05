@@ -9,6 +9,17 @@ static struct value *var[10];
 static struct value *call_stack[10];
 static struct value **call_stack_p = &call_stack[0];
 
+struct value *val_alloc(void) {
+	struct value *v = calloc(1, sizeof(*v));
+
+	if(!v)
+		exit(1);
+
+	v->flags = VAL_ALLOC;
+
+	return v;
+}
+
 void val_push(struct value *v) {
 	*call_stack_p = v;
 	call_stack_p++;
