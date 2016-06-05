@@ -49,6 +49,45 @@ static int interpret_assign(struct ast_entry *e) {
 	return 0;
 }
 
+static int interpret_condition(struct ast_entry *e) {
+	struct value *a, *b;
+
+	a = eval(e->child->child);
+	b = eval(e->child->next->child);
+
+	switch (e->id) {
+	case tokn_eq:
+		if(a->data.i == b->data.i)
+			return 1;
+		break;
+	case tokn_ne:
+		if(a->data.i != b->data.i)
+			return 1;
+		break;
+	case tokn_gt:
+		if(a->data.i > b->data.i)
+			return 1;
+		break;
+	case tokn_lt:
+		if(a->data.i < b->data.i)
+			return 1;
+		break;
+	case tokn_ge:
+		if(a->data.i >= b->data.i)
+			return 1;
+		break;
+	case tokn_le:
+		if(a->data.i <= b->data.i)
+			return 1;
+		break;
+	default:
+		printf("Unsupported condition code\n");
+		exit(1);
+	}
+
+	return 0;
+}
+
 static int interpret_statement(struct ast_entry *e) {
 	struct ast_entry *n = e->child;
 	int r;
