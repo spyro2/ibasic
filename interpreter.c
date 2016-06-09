@@ -169,7 +169,8 @@ static int interpret_statement(struct ast_entry *e, struct value *ret) {
 			if(interpret_condition(n))
 				interpret_block(n->next, NULL);
 			else
-				interpret_block(n->next->next, NULL);
+				if(n->next->next)
+					r = interpret_block(n->next->next, NULL);
 			break;
 		case tokn_print:
 			interpret_print(n);
