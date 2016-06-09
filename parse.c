@@ -417,9 +417,10 @@ static void expr_list(void) {
 }
 
 static void input_param_list(void) {
-	do {
-		struct token *t;
+	struct stack output = {{0}};
+	struct token *t;
 
+	do {
 		if(accept(tokn_return))
 			emit_noindent("RETURN ");
 
@@ -428,13 +429,18 @@ static void input_param_list(void) {
 
 		emit_noindent("<label>");
 
-		ast_emit_leaf(t);
-		tok_put(t);
+		push(&output, t);
 
 		if(tok_is(tokn_comma))
 			emit_noindent(", ");
 
 	} while(accept(tokn_comma));
+
+	while (peek(&output)) {
+		t = pop(&output);
+		ast_emit_leaf(t);
+		tok_put(t);
+	}
 }
 
 static struct symbol sym_ast_proc = {ast_proc, "DEFPROC",};
