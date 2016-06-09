@@ -36,6 +36,8 @@ struct value *eval(struct ast_entry *o) {
 			return o->val;
 
 		case tokn_uplus:
+			r = val_alloc(NULL);
+
 			a = eval(o->child);
 
 			if(!a)
@@ -45,8 +47,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Unary + requires a number\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL);
 
 			r->type = a->type;
 			r->flags |= VAL_READONLY;
@@ -56,11 +56,12 @@ struct value *eval(struct ast_entry *o) {
 			else if(a->type == type_float)
 				r->data.d = a->data.d;
 
-			return a;
+			return NULL;
 
 		case tokn_uminus:
-			a = eval(o->child);
+			r = val_alloc(NULL);
 
+			a = eval(o->child);
 			if(!a)
 				a = val_pop();
 
@@ -68,8 +69,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Unary + requires a number\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL);
 
 			r->type = a->type;
 			r->flags |= VAL_READONLY;
@@ -82,6 +81,8 @@ struct value *eval(struct ast_entry *o) {
 			return NULL;
 
 		case tokn_plus:
+			r = val_alloc(NULL);
+
 			a = eval(o->child);
 			if(!a)
 				a = val_pop();
@@ -94,7 +95,6 @@ struct value *eval(struct ast_entry *o) {
 				exit(1);
 			}
 
-			r = val_alloc(NULL);
 
 			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
@@ -130,6 +130,8 @@ struct value *eval(struct ast_entry *o) {
 			return NULL;
 
 		case tokn_minus:
+			r = val_alloc(NULL);
+
 			a = eval(o->child);
 			if(!a)
 				a = val_pop();
@@ -141,8 +143,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL);
 
 			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
@@ -178,6 +178,8 @@ struct value *eval(struct ast_entry *o) {
 			return NULL;
 
 		case tokn_asterisk:
+			r = val_alloc(NULL);
+
 			a = eval(o->child);
 			if(!a)
 				a = val_pop();
@@ -189,8 +191,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL);
 
 			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
@@ -226,6 +226,8 @@ struct value *eval(struct ast_entry *o) {
 			return NULL;
 
 		case tokn_slash:
+			r = val_alloc(NULL);
+
 			a = eval(o->child);
 			if(!a)
 				a = val_pop();
@@ -237,8 +239,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL);
 
 			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
@@ -279,6 +279,8 @@ struct value *eval(struct ast_entry *o) {
 			struct ast_entry *f = ast_lookup(a->val->data.s);
 			struct ast_entry *b = f->child;
 
+			r = val_alloc(NULL); // return value
+
 			if(!f) {
 				printf("Could not find function\n");
 				exit(1);
@@ -288,8 +290,6 @@ struct value *eval(struct ast_entry *o) {
 				printf("Argument count mismatch!\n");
 				exit(1);
 			}
-
-			r = val_alloc(NULL); // return value
 
 			a = a->next;
 			b = b->next;
