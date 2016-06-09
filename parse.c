@@ -636,6 +636,36 @@ static void statement(void) {
 
 		ast_close();
 	}
+	else if (accept(tokn_for)) {
+		ast_emit(t);
+		tok_put(t);
+
+		if(!assign()) {
+			printf("Expected assignment\n");
+			exit(1);
+		}
+
+		expect(tokn_to);
+
+		ast_append(expression());
+
+		if(accept(tokn_step))
+			ast_append(expression());
+
+		ast_emit_block();
+
+		if(accept(tokn_colon))
+			statement_list();
+		else
+			expect(tokn_eol);
+
+		while(!accept(tokn_next))
+			line();
+
+		ast_close();
+
+		ast_close();
+	}
 	else if (accept(tokn_goto)) {
 		ast_emit(t);
 		tok_put(t);
