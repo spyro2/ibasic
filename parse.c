@@ -9,7 +9,6 @@
 #include "colours.h"
 
 //#define PRINT_NEXT_TOKEN
-//#define PRETTYPRINT
 
 static struct token *tok = NULL;
 static int fd;
@@ -73,42 +72,6 @@ static int expect(enum tokid id) {
 
 	return 0;
 }
-
-static int indent_l = 0;
-
-#ifdef PRETTYPRINT
-
-#define emit_noindent(a) printf((a))
-
-#define indent \
-	do { \
-		int i; \
-		for(i = 0 ; i < indent_l ; i++) \
-			printf("\t"); \
-	} while(0)
-#else
-#define emit_noindent(a)
-#define indent
-#endif
-
-#define emit(a) \
-	do { \
-		indent; \
-		emit_noindent((a)); \
-	} while(0)
-
-#define emit_i(a) \
-	do { \
-		emit((a)); \
-		indent_l++; \
-	} while(0)
-
-#define emit_o(a) \
-	do { \
-		indent_l--; \
-		emit((a)); \
-	} while(0)
-
 
 static int get_precedence(struct token *a) {
 
@@ -352,7 +315,6 @@ static void condition(void) {
 	if(tok_is(tokn_lt) || tok_is(tokn_gt) ||
 	   tok_is(tokn_le) || tok_is(tokn_ge) ||
 	   tok_is(tokn_ne) || tok_is(tokn_eq)) {
-		emit_noindent("<cond> ");
 
 		ast_emit(tok);
 
@@ -400,19 +362,13 @@ static void statement_list(void) {
 	int d = 0;
 
 	do {
-		if(d && !tok_is(tokn_eol))
-			emit_noindent("\n");
-
 		statement();
-
 	} while((d = accept(tokn_colon)));
 }
 
 static void expr_list(void) {
 	do {
 		ast_append(expression());
-		if(tok_is(tokn_comma))
-			emit_noindent(", ");
 	} while(accept(tokn_comma));
 }
 
@@ -422,17 +378,12 @@ static void input_param_list(void) {
 
 	do {
 		if(accept(tokn_return))
-			emit_noindent("RETURN ");
+			; // FIXME
 
 		t = tok_get(tok);
 		expect(tokn_label);
 
-		emit_noindent("<label>");
-
 		push(&output, t);
-
-		if(tok_is(tokn_comma))
-			emit_noindent(", ");
 
 	} while(accept(tokn_comma));
 
@@ -450,9 +401,7 @@ static void definition(void) {
 	struct ast_entry *a;
 	struct token *t = tok_get(tok);
 
-	emit_i("DEF ");
 	if(accept(tokn_proc)) {
-		emit_noindent("PROC");
 
 		t->sym = &sym_ast_proc;
 		a = ast_emit(t);
@@ -465,36 +414,26 @@ static void definition(void) {
 		ast_index(a, t->val->data.s);
 		tok_put(t);
 
-		emit_noindent("<label>");
-
 		if(accept(tokn_oparen)) {
-			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
-			emit_noindent(" ) ");
 		}
 
 		ast_emit_block();
-		emit_noindent(" {\n");
 
-		if(accept(tokn_colon)) {
+		if(accept(tokn_colon))
 			statement_list(); /* What about IF and ENDPROC? */
-			emit_noindent("\n");
-		}
 
 		expect(tokn_eol);
 
 		while(!accept(tokn_endproc))
 			line();
 
-		emit_o("} ENDPROC\n");
 		ast_close();
 		ast_close();
 
 	}
 	else if(accept(tokn_fn)) {
-
-		emit_noindent("FN");
 
 		t->sym = &sym_ast_fn;
 		a = ast_emit(t);
@@ -507,34 +446,23 @@ static void definition(void) {
 		ast_index(a, t->val->data.s);
 		tok_put(t);
 
-		emit_noindent("<label>");
-
 		if(accept(tokn_oparen)) {
-			emit_noindent(" ( ");
 			input_param_list();
 			expect(tokn_cparen);
-			emit_noindent(" )");
 		}
 
 		ast_emit_block();
-		emit_noindent(" {\n");
 
-		if(accept(tokn_colon)) {
+		if(accept(tokn_colon))
 			statement_list(); /* What about IF and = ? */
-			emit_noindent("\n");
-		}
 
 		expect(tokn_eol);
 
 		while (!accept(tokn_eq))
 			line(); /* What about IF and = ? */
 
-		emit("RETURN ");
-
 		ast_append(expression());
 
-		emit_noindent("\n");
-		emit_o("} ENDFN\n");
 		ast_close();
 		ast_close();
 	}
@@ -551,14 +479,10 @@ static void statement(void) {
 	struct token *t = tok_get(tok);
 
 	if(accept(tokn_if)) {
-		emit("IF (");
 		ast_emit(t);
 		tok_put(t);
 
 		condition();
-
-		emit_noindent(") {\n");
-		indent_l++;
 
 		ast_emit_block();
 		if(accept(tokn_then) && accept(tokn_eol)) {
@@ -568,8 +492,6 @@ static void statement(void) {
 
 				if(accept(tokn_else)) {
 					ast_close();
-					emit_o("}\n");
-					emit_i("ELSE {\n");
 
 					ast_emit_block();
 					if(tok_is(tokn_if))
@@ -591,25 +513,18 @@ static void statement(void) {
 
 			if (accept(tokn_else)) {
 				ast_close();
-				emit_noindent("\n");
-				emit_o("}\n");
-				emit_i("ELSE {\n");
 				ast_emit_block();
 
 				statement_list();
 			}
 
-			emit_noindent("\n");
-
 			accept(tokn_endif);
 
 			ast_close();
 		}
-		emit_o("} ENDIF");
 		ast_close(); /* Close AST for IF */
 	}
 	else if(accept(tokn_case)) {
-		emit_i("CASE ");
 
 		ast_emit(t);
 		tok_put(t);
@@ -617,21 +532,17 @@ static void statement(void) {
 		ast_append(expression());
 
 		expect(tokn_of);
-		emit_noindent("OF {\n");
 		expect(tokn_eol);
 
 		while(!tok_is(tokn_endcase)) {
 			t = tok_get(tok);
 			if(accept(tokn_when)) {
 				ast_emit(t);
-				emit_i("WHEN ");
 				expr_list();
-				emit_noindent(" {\n");
 			}
 			else {
 				expect(tokn_otherwise);
 				ast_emit(t);
-				emit_i("OTHERWISE {\n");
 			}
 
 			tok_put(t);
@@ -649,37 +560,29 @@ static void statement(void) {
 				expect(tokn_colon);
 				statement_list();
 				expect(tokn_eol);
-				emit_noindent("\n");
 			}
 			ast_close();
-			emit_o("}\n");
 			ast_close();
 		}
 		expect(tokn_endcase);
-		emit_o("} ENDCASE");
 		ast_close();
 	}
 	else if (accept(tokn_proc)) {
-		emit("PROC");
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
 		expect(tokn_label);
-		emit_noindent("<label>");
 		ast_emit_leaf(t); /* label of PROC to call */
 		tok_put(t);
 		t = tok_get(tok);
 		if(accept(tokn_oparen)) {
-			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
-			emit_noindent(")");
 		}
 		tok_put(t);
 		ast_close();
 	}
 	else if (accept(tokn_fn)) {
-		emit("FN");
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
@@ -687,18 +590,14 @@ static void statement(void) {
 		ast_emit_leaf(t); /* label of FN to call */
 		tok_put(t);
 		t = tok_get(tok);
-		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
-			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
-			emit_noindent(" )");
 		}
 		tok_put(t);
 		ast_close();
 	}
 	else if (accept(tokn_repeat)) {
-		emit_i("REPEAT {\n");
 		ast_emit(t);
 		tok_put(t);
 		ast_emit_block();
@@ -711,26 +610,17 @@ static void statement(void) {
 		while(!accept(tokn_until))
 			line();
 
-		emit_o("} UNTIL ( ");
-
 		ast_close();
 
 		condition();
-
-		emit_noindent(")");
 
 		ast_close();
 	}
 	else if (accept(tokn_while)) {
-		emit_i("WHILE ( ");
-
-		emit(tokn_while);
 		ast_emit(t);
 		tok_put(t);
 
 		condition();
-
-		emit_noindent(") {\n");
 
 		ast_emit_block();
 
@@ -744,13 +634,9 @@ static void statement(void) {
 
 		ast_close();
 
-		emit_o("} ENDWHILE");
-
 		ast_close();
 	}
 	else if (accept(tokn_goto)) {
-		emit("GOTO ");
-
 		ast_emit(t);
 		tok_put(t);
 
@@ -760,33 +646,24 @@ static void statement(void) {
 		ast_emit_leaf(t);
 		tok_put(t);
 
-		emit_noindent("<label>");
-
 		ast_close();
 	}
 	else if(accept(tokn_print)) {
-		emit("PRINT");
-
 		ast_emit(t);
 		tok_put(t);
 
 		if(!tok_is(tokn_eol) && !tok_is(tokn_colon)) {
-			emit_noindent(" {\n");
-			indent_l++;
 			do {
-				indent;
 				ast_append(expression());
 
-				emit_noindent("\n");
-			} while(accept(tokn_semicolon) && !tok_is(tokn_eol) && !tok_is(tokn_colon));
-			emit_o("}");
+			} while(accept(tokn_semicolon) &&
+			        !tok_is(tokn_eol) && !tok_is(tokn_colon));
 		}
 		ast_close();
 	}
 	else if (accept(tokn_end)) {
 		ast_emit_leaf(t);
 		tok_put(t);
-		emit("END");
 	}
 	else {
 		tok_put(t);
@@ -804,7 +681,6 @@ static void line(void) {
 		struct token *t = tok_get(tok);
 		if(!assign()) {
 			if(expect(tokn_colon)) {
-				emit("<label>:");
 				a = ast_emit_leaf(t);
 				ast_index(a, "label");
 				tok_put(t);
@@ -817,45 +693,37 @@ static void line(void) {
 		; /* Skip leading : at beginning of lines */
 	}
 	else if(accept(tokn_library)) {
-		emit("LIBRARY ");
 		expect(tokn_value);
-		emit_noindent("<filename>");
 	}
 	else if(tok_is(tokn_static) || tok_is(tokn_global) || tok_is(tokn_const)) {
 		if(tok_is(tokn_static))
-			emit("STATIC ");
+			;
 		if(tok_is(tokn_global))
-			emit("GLOBAL ");
+			;
 		if(tok_is(tokn_const))
-			emit("CONST ");
+			;
 
 		next_token();
 
 		expect(tokn_label);
 
-		emit_noindent("<label>");
-
-		if(accept(tokn_eq)) {
-			emit_noindent(" = ");
+		if(accept(tokn_eq))
 			expression();
-		}
 	}
 
 	statement_list();
 
 out:
-	emit_noindent("\n");
 	expect(tokn_eol);
 }
 
 static void toplevel_line(void) {
 
-	if (accept(tokn_def)) {
+	if (accept(tokn_def))
 		definition();
-	}
-	else {
+	else
 		line();
-	}
+
 }
 
 int parse (int fd_i) {
