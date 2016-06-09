@@ -666,6 +666,10 @@ static void statement(void) {
 
 		ast_close();
 	}
+	else if (accept(tokn_break) || accept(tokn_continue)) {
+		ast_emit_leaf(t);
+		tok_put(t);
+	}
 	else if (accept(tokn_goto)) {
 		ast_emit(t);
 		tok_put(t);
