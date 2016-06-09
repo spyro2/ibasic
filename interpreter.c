@@ -68,7 +68,7 @@ struct value *lookup_var(char *name) {
 		v = val_pop(); \
 	} while(0)
 
-static int interpret_assign(struct ast_entry *e) {
+static struct value *interpret_assign(struct ast_entry *e) {
 	struct value *v;
 	struct value *l;
 
@@ -83,7 +83,7 @@ static int interpret_assign(struct ast_entry *e) {
 	l->type = v->type;
 	l->data.i = v->data.i;
 
-	return 0;
+	return l;
 }
 
 static int interpret_print(struct ast_entry *n) {
@@ -174,6 +174,36 @@ static int interpret_statement(struct ast_entry *e, struct value *ret) {
 			break;
 		case tokn_assign:
 			interpret_assign(n);
+			break;
+		case tokn_for:
+			{
+				struct value *l, *e;
+				int t, s = 1;
+
+				l = interpret_assign(n->child);
+
+				n = n->next;
+				call_eval(e, n->child);
+
+				t = e->data.i;
+
+				n = n->next;
+				if(n->id == ast_expression) {
+					call_eval(e, n->child);
+					s = e->data.i;
+
+					n = n->next;
+				}
+
+				if(s > 0) {
+					for(; l->data.i <= t; l->data.i += s)
+						interpret_block(n, NULL);
+				}
+				else {
+					for(; l->data.i >= t; l->data.i += s)
+						interpret_block(n, NULL);
+				}
+			}
 			break;
 		case tokn_end:
 			exit(0);
