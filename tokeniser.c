@@ -221,7 +221,7 @@ static struct symbol symbol_list[] = {
 	{tokn_proc, "PROC",},
 	{tokn_fn, "FN",},
 	{tokn_endproc, "ENDPROC",},
-	{tokn_return, "RETURN",}, /* Call by reference */
+/*	{tokn_return, "RETURN",}, Call by reference */
 	{tokn_end, "END",},
 
 	/* Threading! */
@@ -244,9 +244,10 @@ static struct symbol symbol_list[] = {
 	/* Evil awkkward cases */
 	{tokn_break, "BREAK",},
 	{tokn_continue, "CONTINUE",},
-	{tokn_goto, "GOTO",},
+/*	{tokn_goto, "GOTO",}, */
 
 	/* Scoping */
+#if 0
 	{tokn_static, "STATIC",},
 	{tokn_global, "GLOBAL",},
 	{tokn_const, "CONST",},
@@ -258,6 +259,7 @@ static struct symbol symbol_list[] = {
 	{tokn_xor, "XOR",},
 	{tokn_true, "TRUE",},  /* Handle these as special labels in future */
 	{tokn_false, "FALSE",},
+#endif
 
 	/* Define functions / procedures / structures / types */
 	{tokn_def, "DEF",},
@@ -288,8 +290,9 @@ static struct symbol symbol_list[] = {
 	/* SIZEOF */
 
 	/* Allow loading of additional libraries at runtime */
+#if 0
 	{tokn_library, "LIBRARY",},
-
+#endif
 	/* Seperators and EOL */
 	{tokn_eol, "\r\n", NULL, print_eol},
 	{tokn_eol, "\n", NULL, print_eol},
@@ -301,7 +304,7 @@ static struct symbol symbol_list[] = {
 
 	/* IO statements */
 	{tokn_print, "PRINT",},
-	{tokn_input, "INPUT",},
+//	{tokn_input, "INPUT",},
 
 	/* String operators */
 	{tokn_semicolon, ";",},
@@ -327,6 +330,7 @@ static struct symbol symbol_list[] = {
 	/* Brackets */
 	{tokn_oparen, "(",},
 	{tokn_cparen, ")",},
+#if 0
 	{tokn_obrace, "{",},
 	{tokn_cbrace, "}",},
 
@@ -337,12 +341,15 @@ static struct symbol symbol_list[] = {
 	{tokn_abs, "ABS",},
 	{tokn_mod, "MOD",},
 	{tokn_div, "DIV",},
+#endif
 	{tokn_asterisk, "*",},
 	{tokn_slash, "/",},
 	{tokn_plus, "+",},
 	{tokn_minus, "-",}, /* negation / subtraction */
+#if 0
 	{tokn_lshift, "<<",},
 	{tokn_rshift, ">>",}, /* Consider a >>> for non-twos complement shift */
+#endif
 
 	/* BASIC's sigil types are horrible and limiting - perhaps we
 	 * should remove/simplify them?
@@ -357,7 +364,7 @@ static struct symbol symbol_list[] = {
 	{tokn_colon, ":",},
 /*	{ "~",}, */
 /*	{ "&",}, */
-	{tokn_at, "@",}, /* prefix: system variables */
+/*	{tokn_at, "@",}, prefix: system variables */
 
 	/* Comments */
 	{tokn_comment, "/*", tokfn_comment},
