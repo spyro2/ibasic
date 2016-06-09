@@ -303,6 +303,8 @@ static void expr_emit_ast(struct stack *o) {
 
 		/* FN name */
 		tn = pop(o);
+		ast_emit_leaf(tn);
+		tok_put(tn);
 
 		while(n) {
 			expr_emit_ast(o);
@@ -310,8 +312,6 @@ static void expr_emit_ast(struct stack *o) {
 			n--;
 		}
 
-		ast_emit_leaf(tn);
-		tok_put(tn);
 
 		ast_close();
 	}
@@ -670,11 +670,9 @@ static void statement(void) {
 		tok_put(t);
 		t = tok_get(tok);
 		if(accept(tokn_oparen)) {
-			ast_emit(t);
 			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
-			ast_close();
 			emit_noindent(")");
 		}
 		tok_put(t);
@@ -691,12 +689,10 @@ static void statement(void) {
 		t = tok_get(tok);
 		emit_noindent("<label>");
 		if(accept(tokn_oparen)) {
-			ast_emit(t);
 			emit_noindent(" ( ");
 			expr_list();
 			expect(tokn_cparen);
 			emit_noindent(" )");
-			ast_close();
 		}
 		tok_put(t);
 		ast_close();
