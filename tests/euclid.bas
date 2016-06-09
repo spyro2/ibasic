@@ -9,13 +9,13 @@ PRINT "Greatest common divisor of "; A%; " and "; B%; " is: "; FNeuclid(A%, B%)
 
 END
 
-DEF FNeuclid(C%, D%)
-	WHILE D% <> 0
-		IF C% > D% THEN
-			C% = C% - D%
+DEF FNeuclid(A%, B%)
+	WHILE B% <> 0
+		IF A% > B% THEN
+			A% = A% - B%
 		ELSE
-			D% = D% - C%
+			B% = B% - A%
 		ENDIF
 	ENDWHILE
-=C%
+=A%
 
