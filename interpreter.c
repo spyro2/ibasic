@@ -144,9 +144,13 @@ out_true:
 	return 1;
 }
 
+#define RET_OK 0
+#define RET_BREAK 1
+#define RET_CONTINUE 2
+
 static int interpret_statement(struct ast_entry *e, struct value *ret) {
 	struct ast_entry *n = e->child;
-	int r;
+	int r = RET_OK;
 
 //	printf("AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 
@@ -154,20 +158,20 @@ static int interpret_statement(struct ast_entry *e, struct value *ret) {
 		case tokn_repeat:
 			do {
 				r = interpret_block(n, NULL);
-				if(r)
-					return r;
+				if(r == RET_BREAK)
+					break;
 			} while (!interpret_condition(n->next));
-			break;
+			return RET_OK;
 		case tokn_while:
 			while (interpret_condition(n)) {
 				r = interpret_block(n->next, NULL);
-				if(r)
-					return r;
+				if(r == RET_BREAK)
+					break;
 			}
-			break;
+			return RET_OK;
 		case tokn_if:
 			if(interpret_condition(n))
-				interpret_block(n->next, NULL);
+				r = interpret_block(n->next, NULL);
 			else
 				if(n->next->next)
 					r = interpret_block(n->next->next, NULL);
@@ -199,15 +203,21 @@ static int interpret_statement(struct ast_entry *e, struct value *ret) {
 				}
 
 				if(s > 0) {
-					for(; l->data.i <= t; l->data.i += s)
-						interpret_block(n, NULL);
+					for(; l->data.i <= t; l->data.i += s) {
+						r = interpret_block(n, NULL);
+						if(r == RET_BREAK)
+							break;
+					}
 				}
 				else {
-					for(; l->data.i >= t; l->data.i += s)
-						interpret_block(n, NULL);
+					for(; l->data.i >= t; l->data.i += s) {
+						r = interpret_block(n, NULL);
+						if(r == RET_BREAK)
+							break;
+					}
 				}
 			}
-			break;
+			return RET_OK;
 		case tokn_end:
 			exit(0);
 		case ast_expression: //FIXME: this is a bit iffy.
@@ -219,12 +229,16 @@ static int interpret_statement(struct ast_entry *e, struct value *ret) {
 				ret->data.i = e->data.i;
 			}
 			break;
+		case tokn_break:
+			return RET_BREAK;
+		case tokn_continue:
+			return RET_CONTINUE;
 		default:
 			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
 			exit(1);
 	}
 
-	return 0;
+	return r;
 }
 
 int interpret_block(struct ast_entry *e, struct value *ret) {
