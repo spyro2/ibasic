@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "tokeniser.h"
 #include "stack.h"
@@ -13,7 +14,7 @@
 #define IS_NUM(a) (IS_INT(a) || IS_FLOAT(a))
 
 struct value *eval(struct ast_entry *o) {
-	struct value *a, *b, *c;
+	struct value *a, *b, *r = NULL; // FIXME: for testing
 
 	if(!o) {
 		printf("NULL element in expression\n");
@@ -23,249 +24,300 @@ struct value *eval(struct ast_entry *o) {
 	switch (o->id) {
 		case tokn_label:
 			a = lookup_var(o->val->data.s);
-			val_get(a);
+
+			if(!a) {
+				printf("No such variable!\n");
+				exit(1);
+			}
 
 			return a;
 
 		case tokn_value:
-			val_get(o->val);
-
 			return o->val;
 
 		case tokn_uplus:
 			a = eval(o->child);
+
+			if(!a)
+				a = val_pop();
 
 			if(!IS_NUM(a)) {
 				printf("Unary + requires a number\n");
 				exit(1);
 			}
 
-			val_get(a);
+			r = val_alloc(NULL);
+
+			r->type = a->type;
+			r->flags |= VAL_READONLY;
+
+			if(a->type == type_int)
+				r->data.i = a->data.i;
+			else if(a->type == type_float)
+				r->data.d = a->data.d;
 
 			return a;
 
 		case tokn_uminus:
 			a = eval(o->child);
 
+			if(!a)
+				a = val_pop();
+
 			if(!IS_NUM(a)) {
 				printf("Unary + requires a number\n");
 				exit(1);
 			}
 
-			b = val_alloc();
-			b->type = a->type;
-			b->flags |= VAL_READONLY;
+			r = val_alloc(NULL);
+
+			r->type = a->type;
+			r->flags |= VAL_READONLY;
 
 			if(a->type == type_int)
-				b->data.i = -a->data.i;
+				r->data.i = -a->data.i;
 			else if(a->type == type_float)
-				b->data.d = -b->data.d;
+				r->data.d = -a->data.d;
 		
-			val_get(b);
-
-			val_put(a);
-
-			return b;
+			return NULL;
 
 		case tokn_plus:
-			a = eval(o->child); b = eval(o->child->next);
+			a = eval(o->child);
+			if(!a)
+				a = val_pop();
+			b = eval(o->child->next);
+			if(!b)
+				b = val_pop();
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
 
-			c = val_alloc();
-			c->flags |= VAL_READONLY;
+			r = val_alloc(NULL);
+
+			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
-				c->type = type_float;
+				r->type = type_float;
+			else
+				r->type = type_int;
 
 			if(IS_FLOAT(b)) {
-				if(IS_FLOAT(c))
-					c->data.d = b->data.d;
+				if(IS_FLOAT(r))
+					r->data.d = b->data.d;
 				else
-					c->data.i = (int)b->data.d;
+					r->data.i = (int)b->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d = (double)b->data.i;
+				if(IS_FLOAT(r))
+					r->data.d = (double)b->data.i;
 				else
-					c->data.i = b->data.i;
+					r->data.i = b->data.i;
 			}
 			if(IS_FLOAT(a)) {
-				if(IS_FLOAT(c))
-					c->data.d += a->data.d;
+				if(IS_FLOAT(r))
+					r->data.d += a->data.d;
 				else
-					c->data.i += (int)a->data.d;
+					r->data.i += (int)a->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d += (double)a->data.i;
+				if(IS_FLOAT(r))
+					r->data.d += (double)a->data.i;
 				else
-					c->data.i += a->data.i;
+					r->data.i += a->data.i;
 			}
 
-			val_get(c);
-			val_put(a);
-			val_put(b);
-
-			return c;
+			return NULL;
 
 		case tokn_minus:
-			a = eval(o->child); b = eval(o->child->next);
+			a = eval(o->child);
+			if(!a)
+				a = val_pop();
+			b = eval(o->child->next);
+			if(!b)
+				b = val_pop();
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
 
-			c = val_alloc();
-			c->flags |= VAL_READONLY;
+			r = val_alloc(NULL);
+
+			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
-				c->type = type_float;
+				r->type = type_float;
+			else
+				r->type = type_int;
 
 			if(IS_FLOAT(b)) {
-				if(IS_FLOAT(c))
-					c->data.d = b->data.d;
+				if(IS_FLOAT(r))
+					r->data.d = b->data.d;
 				else
-					c->data.i = (int)b->data.d;
+					r->data.i = (int)b->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d = (double)b->data.i;
+				if(IS_FLOAT(r))
+					r->data.d = (double)b->data.i;
 				else
-					c->data.i = b->data.i;
+					r->data.i = b->data.i;
 			}
 			if(IS_FLOAT(a)) {
-				if(IS_FLOAT(c))
-					c->data.d -= a->data.d;
+				if(IS_FLOAT(r))
+					r->data.d -= a->data.d;
 				else
-					c->data.i -= (int)a->data.d;
+					r->data.i -= (int)a->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d -= (double)a->data.i;
+				if(IS_FLOAT(r))
+					r->data.d -= (double)a->data.i;
 				else
-					c->data.i -= a->data.i;
+					r->data.i -= a->data.i;
 			}
 
-			val_get(c);
-
-			val_put(a);
-			val_put(b);
-
-			return c;
+			return NULL;
 
 		case tokn_asterisk:
-			a = eval(o->child); b = eval(o->child->next);
+			a = eval(o->child);
+			if(!a)
+				a = val_pop();
+			b = eval(o->child->next);
+			if(!b)
+				b = val_pop();
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
 
-			c = val_alloc();
-			c->flags |= VAL_READONLY;
+			r = val_alloc(NULL);
+
+			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
-				c->type = type_float;
+				r->type = type_float;
+			else
+				r->type = type_int;
 
 			if(IS_FLOAT(b)) {
-				if(IS_FLOAT(c))
-					c->data.d = b->data.d;
+				if(IS_FLOAT(r))
+					r->data.d = b->data.d;
 				else
-					c->data.i = (int)b->data.d;
+					r->data.i = (int)b->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d = (double)b->data.i;
+				if(IS_FLOAT(r))
+					r->data.d = (double)b->data.i;
 				else
-					c->data.i = b->data.i;
+					r->data.i = b->data.i;
 			}
 			if(IS_FLOAT(a)) {
-				if(IS_FLOAT(c))
-					c->data.d *= a->data.d;
+				if(IS_FLOAT(r))
+					r->data.d *= a->data.d;
 				else
-					c->data.i *= (int)a->data.d;
+					r->data.i *= (int)a->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d *= (double)a->data.i;
+				if(IS_FLOAT(r))
+					r->data.d *= (double)a->data.i;
 				else
-					c->data.i *= a->data.i;
+					r->data.i *= a->data.i;
 			}
 
-			val_get(c);
-
-			val_put(a);
-			val_put(b);
-
-			return c;
+			return NULL;
 
 		case tokn_slash:
-			a = eval(o->child); b = eval(o->child->next);
+			a = eval(o->child);
+			if(!a)
+				a = val_pop();
+			b = eval(o->child->next);
+			if(!b)
+				b = val_pop();
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
 
-			c = val_alloc();
-			c->flags |= VAL_READONLY;
+			r = val_alloc(NULL);
+
+			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
-				c->type = type_float;
+				r->type = type_float;
+			else
+				r->type = type_int;
 
 			if(IS_FLOAT(b)) {
-				if(IS_FLOAT(c))
-					c->data.d = b->data.d;
+				if(IS_FLOAT(r))
+					r->data.d = b->data.d;
 				else
-					c->data.i = (int)b->data.d;
+					r->data.i = (int)b->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d = (double)b->data.i;
+				if(IS_FLOAT(r))
+					r->data.d = (double)b->data.i;
 				else
-					c->data.i = b->data.i;
+					r->data.i = b->data.i;
 			}
 			if(IS_FLOAT(a)) {
-				if(IS_FLOAT(c))
-					c->data.d /= a->data.d;
+				if(IS_FLOAT(r))
+					r->data.d /= a->data.d;
 				else
-					c->data.i /= (int)a->data.d;
+					r->data.i /= (int)a->data.d;
 			}
 			else {
-				if(IS_FLOAT(c))
-					c->data.d /= (double)a->data.i;
+				if(IS_FLOAT(r))
+					r->data.d /= (double)a->data.i;
 				else
-					c->data.i /= a->data.i;
+					r->data.i /= a->data.i;
 			}
 
-			val_get(c);
-			val_put(a);
-			val_put(b);
-
-			return c;
+			return NULL;
 
 		case tokn_fn:
 			{
 			struct ast_entry *a = o->child;
-			int n = o->children - 1;
+			struct ast_entry *f = ast_lookup(a->val->data.s);
+			struct ast_entry *b = f->child;
 
-			while(n) {
-				struct value *v = eval(a);
-				val_push(v);
-				a = a->next;
-				n--;
-			}
-
-			a = ast_lookup(a->val->data.s);
-			if(!a) {
+			if(!f) {
 				printf("Could not find function\n");
 				exit(1);
 			}
 
-			b = interpret_function(a);
+			if(o->children != f->children - 1) {
+				printf("Argument count mismatch!\n");
+				exit(1);
+			}
 
-			return b;
+			r = val_alloc(NULL); // return value
+
+			a = a->next;
+			b = b->next;
+
+			for (int n = o->children - 1 ; n ; n--) {
+				struct value *v = eval(a);
+				struct value *p = val_alloc(b->val->data.s);
+
+				if(!v)
+					v = val_pop();
+
+				p->type = v->type;
+				p->data.i = v->data.i;
+
+				a = a->next;
+				b = b->next;
+			}
+
+			interpret_block(b, r);
+
+			b = f->child->next;
+
+			for (int n = o->children - 1 ; n ; n--) {
+				val_pop();
+				b = b->next;
+			}
+
+			return NULL;
 			}
 
 		default:

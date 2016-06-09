@@ -1,48 +1,72 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "ast.h"
 #include "expression.h"
+#include "interpreter.h"
 
 
-static struct value *var[10];
+#define IBASIC_STACK_SIZE 128
 
-static struct value *call_stack[10];
-static struct value **call_stack_p = &call_stack[0];
+static struct value ibasic_stack[IBASIC_STACK_SIZE];
+struct value *ibasic_stack_p = &ibasic_stack[0];
 
-struct value *val_alloc(void) {
-	struct value *v = calloc(1, sizeof(*v));
+/* Allocate storage for variables */
+struct value *val_alloc(char *name) {
+	struct value *v;
 
-	if(!v)
+	if(ibasic_stack_p - &ibasic_stack[0] == IBASIC_STACK_SIZE) {
+		printf("Stack overflow!\n");
 		exit(1);
+		return NULL;
+	}
 
-	v->flags = VAL_ALLOC;
+	v = ibasic_stack_p++;
+	if(name) {
+		v->name = malloc(strlen(name)+1);
+		strcpy(v->name, name);
+	}
 
 	return v;
 }
 
-void val_push(struct value *v) {
-	*call_stack_p = v;
-	call_stack_p++;
+//static inline void val_push(struct value *v) {
+//	memcpy(ibasic_stack_p, v, sizeof(*v));
+//	ibasic_stack_p++;
+//}
+
+/* Remove a variable / value from the stack. */
+struct value *val_pop(void) {
+	struct value *v = --ibasic_stack_p;
+
+	if(v->name)
+		free(v->name);
+
+	return v;
 }
 
-struct value *val_pop(void) {
-	call_stack_p--;
-	return *call_stack_p;
-}
+/* Descend the stack, looking for a variable with a matching name. */
+/* Caching might help in future */
 
 struct value *lookup_var(char *name) {
-	int i = *name-'A';
+	struct value *var = ibasic_stack_p-1;
 
-	if(!var[i]) {
-		var[i] = val_alloc();
-		var[i]->type = type_int;
-		val_get(var[i]);
+	while(var >= &ibasic_stack[0]) {
+		if(var->name && !strcmp(var->name, name))
+			return var;
+		var--;
 	}
 
-	return var[i];
+	return NULL;
 }
 
-static int interpret_block(struct ast_entry *e);
+
+#define call_eval(v, e) \
+	do { \
+	v = eval(e); \
+	if(!v) \
+		v = val_pop(); \
+	} while(0)
 
 static int interpret_assign(struct ast_entry *e) {
 	struct value *v;
@@ -51,11 +75,13 @@ static int interpret_assign(struct ast_entry *e) {
 	/* lookup_var */
 	l = lookup_var(e->val->data.s);
 
-	v = eval(e->next->child);
+	if(!l)
+		l = val_alloc(e->val->data.s);
 
+	call_eval(v, e->next->child);
+
+	l->type = v->type;
 	l->data.i = v->data.i;
-
-	val_put(v);
 
 	return 0;
 }
@@ -64,7 +90,9 @@ static int interpret_print(struct ast_entry *n) {
 
 	do {
 		if(n->id == ast_expression) {
-			struct value *v = eval(n->child);
+			struct value *v;
+
+			call_eval(v, n->child);
 
 			switch(v->type) {
 				case type_int:    printf("%d", v->data.i);break;
@@ -75,7 +103,6 @@ static int interpret_print(struct ast_entry *n) {
 					exit(1);
 			}
 
-			val_put(v);
 		}
 		n = n->next;
 	} while(n);
@@ -88,8 +115,8 @@ static int interpret_print(struct ast_entry *n) {
 static int interpret_condition(struct ast_entry *e) {
 	struct value *a, *b;
 
-	a = eval(e->child->child);
-	b = eval(e->child->next->child);
+	call_eval(a, e->child->child);
+	call_eval(b, e->child->next->child);
 
 	switch (e->id) {
 	case tokn_eq:
@@ -109,43 +136,13 @@ static int interpret_condition(struct ast_entry *e) {
 		exit(1);
 	}
 
-	val_put(a);
-	val_put(b);
-
 	return 0;
 
 out_true:
-	val_put(a);
-	val_put(b);
-
 	return 1;
 }
 
-struct value *interpret_function(struct ast_entry *e) {
-	struct ast_entry *n = e->child;
-	int nr = e->children - 2;
-	struct value *v, *l;
-
-	n = n->next; // Skip FN name
-
-	while(nr) {
-		l = lookup_var(n->val->data.s);
-		v = val_pop();
-		l->data.i = v->data.i;
-		val_put(v);
-		n = n->next;
-		nr--;
-	}
-
-	interpret_block(n);
-
-	v = val_pop();  /* Callers responsibility to val_put() */
-
-	return v;
-
-}
-
-static int interpret_statement(struct ast_entry *e) {
+static int interpret_statement(struct ast_entry *e, struct value *ret) {
 	struct ast_entry *n = e->child;
 	int r;
 
@@ -154,23 +151,23 @@ static int interpret_statement(struct ast_entry *e) {
 	switch (e->id) {
 		case tokn_repeat:
 			do {
-				r = interpret_block(n);
+				r = interpret_block(n, NULL);
 				if(r)
 					return r;
 			} while (!interpret_condition(n->next));
 			break;
 		case tokn_while:
 			while (interpret_condition(n)) {
-				r = interpret_block(n->next);
+				r = interpret_block(n->next, NULL);
 				if(r)
 					return r;
 			}
 			break;
 		case tokn_if:
 			if(interpret_condition(n))
-				interpret_block(n->next);
+				interpret_block(n->next, NULL);
 			else
-				interpret_block(n->next->next);
+				interpret_block(n->next->next, NULL);
 			break;
 		case tokn_print:
 			interpret_print(n);
@@ -181,7 +178,13 @@ static int interpret_statement(struct ast_entry *e) {
 		case tokn_end:
 			exit(0);
 		case ast_expression: //FIXME: this is a bit iffy.
-				val_push(eval(n)); //FIXME: null return?
+			{
+				struct value *e;
+				call_eval(e, n);
+
+				ret->type = e->type;
+				ret->data.i = e->data.i;
+			}
 			break;
 		default:
 			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
@@ -191,12 +194,12 @@ static int interpret_statement(struct ast_entry *e) {
 	return 0;
 }
 
-static int interpret_block(struct ast_entry *e) {
+int interpret_block(struct ast_entry *e, struct value *ret) {
 	struct ast_entry *n = e->child;
 	int r;
 
 	do {
-		r = interpret_statement(n);
+		r = interpret_statement(n, ret);
 
 		if(r)
 			return r;
@@ -212,7 +215,7 @@ void interpret(struct ast_entry *e) {
 
 	do {
 		if(n->id == ast_block)
-			interpret_block(n);
+			interpret_block(n, NULL);
 		else {
 			printf("invalid AST entry\n");
 			exit(1);

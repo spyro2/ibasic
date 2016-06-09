@@ -1,6 +1,8 @@
 void interpret(struct ast_entry *p);
-struct value *interpret_function(struct ast_entry *e);
+int interpret_block(struct ast_entry *e, struct value *r);
+
 struct value *lookup_var(char *name);
-void val_push(struct value *v);
-struct value *val_alloc(void);
+//void val_push(struct value *v);
+struct value *val_alloc(char *name);
+struct value *val_pop(void);
 
