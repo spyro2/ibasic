@@ -228,13 +228,13 @@ static struct symbol symbol_list[] = {
 /*	{tokn_fork, "FORK",}, */
 
 	/* Loops */
-#if 0
 	{tokn_for, "FOR",},
-	{tokn_each, "EACH",}, /* For lists */
-	{tokn_in, "IN",},
 	{tokn_to, "TO",},
 	{tokn_step, "STEP",},
 	{tokn_next, "NEXT",},
+#if 0
+	{tokn_each, "EACH",}, /* For lists */
+	{tokn_in, "IN",},
 #endif
 	{tokn_repeat, "REPEAT",},
 	{tokn_until, "UNTIL",},
