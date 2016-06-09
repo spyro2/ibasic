@@ -39,8 +39,10 @@ struct value *val_alloc(char *name) {
 struct value *val_pop(void) {
 	struct value *v = --ibasic_stack_p;
 
-	if(v->name)
+	if(v->name) {
 		free(v->name);
+		v->name = NULL;
+	}
 
 	return v;
 }
