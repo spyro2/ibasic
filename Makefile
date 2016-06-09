@@ -9,4 +9,4 @@ all:
 	gcc -g -Wall main.c tokeniser.o stack.o expression.o ast.o parse.o interpreter.o -o ibasic
 
 clean:
-	rm *.o ibasic
+	rm -f *.o ibasic
