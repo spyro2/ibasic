@@ -64,6 +64,9 @@ static struct value *do_eval(struct ast_entry *o) {
 		exit(1);
 	}
 
+	if(o->id == ast_expression)
+		o = o->child;
+
 	switch (o->id) {
 		case tokn_label:
 			a = lookup_var(o->val->data.s);
