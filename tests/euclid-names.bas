@@ -1,4 +1,5 @@
 /* An implementation of the Euclid's Algorithm       */
+/* Using multi character variable names */
 
 /* https://en.wikipedia.org/wiki/Euclidean_algorithm */
 
