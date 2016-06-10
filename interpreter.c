@@ -8,20 +8,26 @@
 
 #define IBASIC_STACK_SIZE 128
 
-static struct value ibasic_stack[IBASIC_STACK_SIZE];
-struct value *ibasic_stack_p = &ibasic_stack[0];
+struct ibasic_state {
+	struct value *stack;
+	struct value *stack_p;
+
+	struct ast_entry *next;
+};
+
+static struct ibasic_state state;
 
 /* Allocate storage for variables */
 struct value *val_alloc(char *name) {
 	struct value *v;
 
-	if(ibasic_stack_p - &ibasic_stack[0] == IBASIC_STACK_SIZE) {
+	if(state.stack_p - state.stack == IBASIC_STACK_SIZE) {
 		printf("Stack overflow!\n");
 		exit(1);
 		return NULL;
 	}
 
-	v = ibasic_stack_p++;
+	v = state.stack_p++;
 	if(name) {
 		v->name = malloc(strlen(name)+1);
 		strcpy(v->name, name);
@@ -37,7 +43,7 @@ struct value *val_alloc(char *name) {
 
 /* Remove a variable / value from the stack. */
 struct value *val_pop(void) {
-	struct value *v = --ibasic_stack_p;
+	struct value *v = --state.stack_p;
 
 	if(v->name) {
 		free(v->name);
@@ -51,9 +57,9 @@ struct value *val_pop(void) {
 /* Caching might help in future */
 
 struct value *lookup_var(char *name) {
-	struct value *var = ibasic_stack_p-1;
+	struct value *var = state.stack_p-1;
 
-	while(var >= &ibasic_stack[0]) {
+	while(var >= state.stack) {
 		if(var->name && !strcmp(var->name, name))
 			return var;
 		var--;
@@ -258,6 +264,8 @@ int interpret_block(struct ast_entry *e, struct value *ret) {
 }
 
 void interpret(struct ast_entry *e) {
+	state.stack = calloc(IBASIC_STACK_SIZE, sizeof(*state.stack));
+	state.stack_p = state.stack;
 	struct ast_entry *n = e->child;
 
 	do {
