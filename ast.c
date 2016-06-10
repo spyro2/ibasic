@@ -222,7 +222,17 @@ static void do_ast_free_tree(struct ast_entry *a) {
 	free(a);
 }
 
-
 void ast_free_tree(struct ast_entry *a) {
 	do_ast_free_tree(a);
+}
+
+void ast_exit(void) {
+	int i;
+
+	for(i = 0 ; i < 10 ; i++) {
+		if(!ast[i])
+			break;
+		free(ast[i]->name);
+		free(ast[i]);
+	}
 }

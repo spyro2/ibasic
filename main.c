@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
 
 	ast_free_tree(program);
 
+	ast_exit();
+
 	tokeniser_exit();
 
 	return 0;

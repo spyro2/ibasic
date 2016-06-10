@@ -28,5 +28,7 @@ void ast_append(struct ast_entry *a);
 void ast_print_tree(struct ast_entry *a);
 void ast_free_tree(struct ast_entry *a);
 
+void ast_exit(void);
+
 #define AST_H_INCLUDED
 #endif
