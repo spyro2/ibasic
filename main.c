@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
 	ast_print_tree(program);
 
-	interpret(program);
+	interpret(program->child);
 
 	ast_free_tree(program);
 

@@ -76,7 +76,8 @@ struct value *lookup_var(char *name) {
 		v = val_pop(); \
 	} while(0)
 
-static struct value *interpret_assign(struct ast_entry *e) {
+static inline struct value *interpret_assign(struct ast_entry *n) {
+	struct ast_entry *e = n->child;
 	struct value *v;
 	struct value *l;
 
@@ -86,7 +87,7 @@ static struct value *interpret_assign(struct ast_entry *e) {
 	if(!l)
 		l = val_alloc(e->val->data.s);
 
-	call_eval(v, e->next->child);
+	call_eval(v, e->next);
 
 	l->type = v->type;
 	l->data.i = v->data.i;
@@ -94,13 +95,14 @@ static struct value *interpret_assign(struct ast_entry *e) {
 	return l;
 }
 
-static int interpret_print(struct ast_entry *n) {
+static inline int interpret_print(struct ast_entry *n) {
+	struct ast_entry *e = n->child;
 
 	do {
-		if(n->id == ast_expression) {
+		if(e->id == ast_expression) {
 			struct value *v;
 
-			call_eval(v, n->child);
+			call_eval(v, e);
 
 			switch(v->type) {
 				case type_int:    printf("%d", v->data.i);break;
@@ -112,21 +114,22 @@ static int interpret_print(struct ast_entry *n) {
 			}
 
 		}
-		n = n->next;
-	} while(n);
+		e = e->next;
+	} while(e);
 
 	printf("\n");
 
 	return 0;
 }
 
-static int interpret_condition(struct ast_entry *e) {
+static inline int interpret_condition(struct ast_entry *n) {
+	struct ast_entry *e = n->child;
 	struct value *a, *b;
 
-	call_eval(a, e->child->child);
-	call_eval(b, e->child->next->child);
+	call_eval(a, e);
+	call_eval(b, e->next);
 
-	switch (e->id) {
+	switch (n->id) {
 	case tokn_eq:
 		if(a->data.i == b->data.i) goto out_true; break;
 	case tokn_ne:
@@ -153,129 +156,128 @@ out_true:
 #define RET_OK 0
 #define RET_BREAK 1
 #define RET_CONTINUE 2
+#define RET_END 4
 
-static int interpret_statement(struct ast_entry *e, struct value *ret) {
-	struct ast_entry *n = e->child;
+int interpret_block(struct ast_entry *b, struct value *ret) {
+	struct ast_entry *n = b->child;
 	int r = RET_OK;
 
-//	printf("AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
-
-	switch (e->id) {
-		case tokn_repeat:
-			do {
-				r = interpret_block(n, NULL);
-				if(r == RET_BREAK)
-					break;
-			} while (!interpret_condition(n->next));
-			return RET_OK;
-		case tokn_while:
-			while (interpret_condition(n)) {
-				r = interpret_block(n->next, NULL);
-				if(r == RET_BREAK)
-					break;
-			}
-			return RET_OK;
-		case tokn_if:
-			if(interpret_condition(n))
-				r = interpret_block(n->next, NULL);
-			else
-				if(n->next->next)
-					r = interpret_block(n->next->next, NULL);
-			break;
-		case tokn_print:
-			interpret_print(n);
-			break;
-		case tokn_assign:
-			interpret_assign(n);
-			break;
-		case tokn_for:
-			{
-				struct value *l, *e;
-				int t, s = 1;
-
-				l = interpret_assign(n->child);
-
-				n = n->next;
-				call_eval(e, n->child);
-
-				t = e->data.i;
-
-				n = n->next;
-				if(n->id == ast_expression) {
-					call_eval(e, n->child);
-					s = e->data.i;
-
-					n = n->next;
-				}
-
-				if(s > 0) {
-					for(; l->data.i <= t; l->data.i += s) {
-						r = interpret_block(n, NULL);
-						if(r == RET_BREAK)
-							break;
-					}
-				}
-				else {
-					for(; l->data.i >= t; l->data.i += s) {
-						r = interpret_block(n, NULL);
-						if(r == RET_BREAK)
-							break;
-					}
-				}
-			}
-			return RET_OK;
-		case tokn_end:
-			exit(0);
-		case ast_expression: //FIXME: this is a bit iffy.
-			{
-				struct value *e;
-				call_eval(e, n);
-
-				ret->type = e->type;
-				ret->data.i = e->data.i;
-			}
-			break;
-		case tokn_break:
-			return RET_BREAK;
-		case tokn_continue:
-			return RET_CONTINUE;
-		default:
-			printf("Unexpected AST entry %d (%s)\n", e->id, sym_from_id(e->id)?sym_from_id(e->id)->name:"");
-			exit(1);
-	}
-
-	return r;
-}
-
-int interpret_block(struct ast_entry *e, struct value *ret) {
-	struct ast_entry *n = e->child;
-	int r;
 
 	do {
-		r = interpret_statement(n, ret);
+		struct ast_entry *e = n->child;
+//		printf("AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
 
-		if(r)
-			return r;
+		switch (n->id) {
+			case tokn_repeat:
+				do {
+					r = interpret_block(e, NULL);
+					if(r == RET_BREAK)
+						break;
+				} while (!interpret_condition(e->next));
+
+				if(r == RET_BREAK || r == RET_CONTINUE)
+					r = RET_OK;
+
+				break;
+			case tokn_while:
+				while (interpret_condition(e)) {
+					r = interpret_block(e->next, NULL);
+					if(r == RET_BREAK)
+						break;
+				}
+
+				if(r == RET_BREAK || r == RET_CONTINUE)
+					r = RET_OK;
+
+				break;
+			case tokn_if:
+				if(interpret_condition(e))
+					r = interpret_block(e->next, NULL);
+				else
+					if(e->next->next)
+						r = interpret_block(e->next->next, NULL);
+				break;
+			case tokn_print:
+				interpret_print(n);
+				break;
+			case tokn_assign:
+				interpret_assign(n);
+				break;
+			case tokn_for:
+				{
+					struct value *l, *v;
+					int t, s = 1;
+
+					l = interpret_assign(e);
+
+					e = e->next;
+					call_eval(v, e);
+
+					t = v->data.i;
+
+					e = e->next;
+					if(e->id == ast_expression) {
+						call_eval(v, e);
+						s = v->data.i;
+
+						e = e->next;
+					}
+
+					if(s > 0) {
+						for(; l->data.i <= t; l->data.i += s) {
+							r = interpret_block(e, NULL);
+							if(r == RET_BREAK)
+								break;
+						}
+					}
+					else {
+						for(; l->data.i >= t; l->data.i += s) {
+							r = interpret_block(e, NULL);
+							if(r == RET_BREAK)
+								break;
+						}
+					}
+				}
+
+				if(r == RET_BREAK || r == RET_CONTINUE)
+					r = RET_OK;
+
+				break;
+			case tokn_end:
+				return RET_END;
+			case ast_expression: //FIXME: this is a bit iffy.
+				{
+					struct value *v;
+					call_eval(v, n);
+
+					ret->type = v->type;
+					ret->data.i = v->data.i;
+				}
+				break;
+			case tokn_break:
+				return RET_BREAK;
+			case tokn_continue:
+				return RET_CONTINUE;
+			default:
+				printf("Unexpected AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
+				exit(1);
+		}
 
 		n = n->next;
-	} while(n);
+	} while(!r && n);
 
-	return 0;
+	return r;
 }
 
 void interpret(struct ast_entry *e) {
 	state.stack = calloc(IBASIC_STACK_SIZE, sizeof(*state.stack));
 	state.stack_p = state.stack;
-	struct ast_entry *n = e->child;
 
-	do {
-		if(n->id == ast_block)
-			interpret_block(n, NULL);
-		else {
-			printf("invalid AST entry\n");
-			exit(1);
-		}
+	if(e->id == ast_block)
+		interpret_block(e, NULL);
+	else {
+		printf("invalid AST entry\n");
+		exit(1);
+	}
 
-		n=n->next;
-	} while (n);
 }

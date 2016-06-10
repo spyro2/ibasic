@@ -13,7 +13,7 @@
 #define IS_FLOAT(a) ((a)->type == type_float)
 #define IS_NUM(a) (IS_INT(a) || IS_FLOAT(a))
 
-struct value *eval(struct ast_entry *o) {
+static struct value *do_eval(struct ast_entry *o) {
 	struct value *a, *b, *r = NULL; // FIXME: for testing
 
 	if(!o) {
@@ -38,7 +38,7 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_uplus:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 
 			if(!a)
 				a = val_pop();
@@ -61,7 +61,7 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_uminus:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 			if(!a)
 				a = val_pop();
 
@@ -83,10 +83,10 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_plus:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 			if(!a)
 				a = val_pop();
-			b = eval(o->child->next);
+			b = do_eval(o->child->next);
 			if(!b)
 				b = val_pop();
 
@@ -132,10 +132,10 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_minus:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 			if(!a)
 				a = val_pop();
-			b = eval(o->child->next);
+			b = do_eval(o->child->next);
 			if(!b)
 				b = val_pop();
 
@@ -180,10 +180,10 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_asterisk:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 			if(!a)
 				a = val_pop();
-			b = eval(o->child->next);
+			b = do_eval(o->child->next);
 			if(!b)
 				b = val_pop();
 
@@ -228,10 +228,10 @@ struct value *eval(struct ast_entry *o) {
 		case tokn_slash:
 			r = val_alloc(NULL);
 
-			a = eval(o->child);
+			a = do_eval(o->child);
 			if(!a)
 				a = val_pop();
-			b = eval(o->child->next);
+			b = do_eval(o->child->next);
 			if(!b)
 				b = val_pop();
 
@@ -295,7 +295,7 @@ struct value *eval(struct ast_entry *o) {
 			b = b->next;
 
 			for (int n = o->children - 1 ; n ; n--) {
-				struct value *v = eval(a);
+				struct value *v = do_eval(a);
 				struct value *p = val_alloc(b->val->data.s);
 
 				if(!v)
@@ -327,3 +327,6 @@ struct value *eval(struct ast_entry *o) {
 	}
 }
 
+struct value *eval(struct ast_entry *p) {
+	return do_eval(p->child);
+}
