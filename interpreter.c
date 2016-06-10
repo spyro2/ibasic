@@ -274,15 +274,22 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 					r = RET_OK;
 
 				break;
+			case tokn_fn:
+			case tokn_proc:
+				call_proc_or_fn(n, NULL);
+				break;
 			case tokn_end:
 				return RET_END;
 			case ast_expression: //FIXME: this is a bit iffy.
 				{
 					struct value *v;
+
 					call_eval(v, n);
 
-					ret->type = v->type;
-					ret->data.i = v->data.i;
+					if(ret) {
+						ret->type = v->type;
+						ret->data.i = v->data.i;
+					}
 				}
 				break;
 			case tokn_break:
