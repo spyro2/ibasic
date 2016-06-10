@@ -280,4 +280,9 @@ void interpret(struct ast_entry *e) {
 		exit(1);
 	}
 
+	while(state.stack_p > state.stack)
+		val_pop();
+
+	free(state.stack);
+
 }
