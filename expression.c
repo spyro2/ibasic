@@ -13,6 +13,49 @@
 #define IS_FLOAT(a) ((a)->type == type_float)
 #define IS_NUM(a) (IS_INT(a) || IS_FLOAT(a))
 
+static struct value *do_eval(struct ast_entry *o);
+
+void call_proc_or_fn(struct ast_entry *o, struct value *r) {
+	struct ast_entry *a = o->child;
+	struct ast_entry *f = ast_lookup(a->val->data.s);
+	struct ast_entry *b;
+
+	if(!f) {
+		printf("Could not find %s%s)\n", o->id == tokn_fn?"function (FN":"procedure (PROC", a->val->data.s);
+		exit(1);
+	}
+
+	if(o->children != f->children - 1) {
+		printf("Argument count mismatch!\n");
+		exit(1);
+	}
+
+	b = f->child;
+
+	a = a->next;
+	b = b->next;
+
+	val_alloc_frame();
+
+	for (int n = o->children - 1 ; n ; n--) {
+		struct value *v = do_eval(a);
+		struct value *p = val_alloc(b->val->data.s);
+
+		if(!v)
+			v = val_pop();
+
+		p->type = v->type;
+		p->data.i = v->data.i;
+
+		a = a->next;
+		b = b->next;
+	}
+
+	interpret_block(b, r);
+
+	unwind_frame();
+}
+
 static struct value *do_eval(struct ast_entry *o) {
 	struct value *a, *b, *r = NULL; // FIXME: for testing
 
@@ -26,7 +69,7 @@ static struct value *do_eval(struct ast_entry *o) {
 			a = lookup_var(o->val->data.s);
 
 			if(!a) {
-				printf("No such variable!\n");
+				printf("No such variable! (%s)\n", o->val->data.s);
 				exit(1);
 			}
 
@@ -274,52 +317,9 @@ static struct value *do_eval(struct ast_entry *o) {
 			return NULL;
 
 		case tokn_fn:
-			{
-			struct ast_entry *a = o->child;
-			struct ast_entry *f = ast_lookup(a->val->data.s);
-			struct ast_entry *b = f->child;
-
 			r = val_alloc(NULL); // return value
-
-			if(!f) {
-				printf("Could not find function\n");
-				exit(1);
-			}
-
-			if(o->children != f->children - 1) {
-				printf("Argument count mismatch!\n");
-				exit(1);
-			}
-
-			a = a->next;
-			b = b->next;
-
-			for (int n = o->children - 1 ; n ; n--) {
-				struct value *v = do_eval(a);
-				struct value *p = val_alloc(b->val->data.s);
-
-				if(!v)
-					v = val_pop();
-
-				p->type = v->type;
-				p->data.i = v->data.i;
-
-				a = a->next;
-				b = b->next;
-			}
-
-			interpret_block(b, r);
-
-			b = f->child->next;
-
-			for (int n = o->children - 1 ; n ; n--) {
-				val_pop();
-				b = b->next;
-			}
-
+			call_proc_or_fn(o, r);
 			return NULL;
-			}
-
 		default:
 
 		printf("Error: unknown operator\n");

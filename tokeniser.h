@@ -38,7 +38,7 @@ union storage {
 };
 
 enum typeid {
-	type_int, type_float, type_string, type_unspec,
+	type_int, type_float, type_string, type_frame, type_unspec,
 };
 
 #define VAL_READONLY (1<<0)

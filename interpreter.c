@@ -11,6 +11,7 @@
 struct ibasic_state {
 	struct value *stack;
 	struct value *stack_p;
+	struct value *global_frame;
 
 	struct ast_entry *next;
 };
@@ -53,12 +54,42 @@ struct value *val_pop(void) {
 	return v;
 }
 
+/* Emit a frame marker */
+void val_alloc_frame(void) {
+	struct value *v = val_alloc(NULL);
+	v->type = type_frame;
+
+	if(!state.global_frame)
+		state.global_frame = v;
+}
+
+void unwind_frame(void) {
+	struct value *v;
+	while(state.stack_p > state.stack) {
+		v = val_pop();
+		if(v->type == type_frame) {
+			if(v == state.global_frame)
+				state.global_frame = NULL;
+			break;
+		}
+	}
+}
+
 /* Descend the stack, looking for a variable with a matching name. */
 /* Caching might help in future */
 
 struct value *lookup_var(char *name) {
 	struct value *var = state.stack_p-1;
 
+	while(var >= state.stack) {
+		if(var->type == type_frame)
+			break;
+		if(var->name && !strcmp(var->name, name))
+			return var;
+		var--;
+	}
+
+	var = state.global_frame;
 	while(var >= state.stack) {
 		if(var->name && !strcmp(var->name, name))
 			return var;
@@ -273,15 +304,15 @@ void interpret(struct ast_entry *e) {
 	state.stack = calloc(IBASIC_STACK_SIZE, sizeof(*state.stack));
 	state.stack_p = state.stack;
 
-	if(e->id == ast_block)
+	if(e->id == ast_block) {
 		interpret_block(e, NULL);
+		unwind_frame();
+	}
+
 	else {
 		printf("invalid AST entry\n");
 		exit(1);
 	}
-
-	while(state.stack_p > state.stack)
-		val_pop();
 
 	free(state.stack);
 
