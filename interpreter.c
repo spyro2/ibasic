@@ -49,11 +49,6 @@ struct value *val_alloc_frame(void) {
 	return v;
 }
 
-//static inline void val_push(struct value *v) {
-//	memcpy(ibasic_stack_p, v, sizeof(*v));
-//	ibasic_stack_p++;
-//}
-
 /* Remove a variable / value from the stack. */
 struct value *val_pop(void) {
 	struct value *v = --state.stack_p;
