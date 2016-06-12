@@ -12,6 +12,7 @@ struct ibasic_state {
 	struct value *stack;
 	struct value *stack_p;
 	struct value *global_frame;
+	struct value *esp;
 
 	struct ast_entry *next;
 };
@@ -37,6 +38,16 @@ struct value *val_alloc(char *name) {
 	return v;
 }
 
+struct value *val_alloc_frame(void) {
+	struct value *v;
+
+	state.esp = state.stack_p;
+	v = val_alloc(NULL);
+	v->type = type_frame;
+
+	return v;
+}
+
 //static inline void val_push(struct value *v) {
 //	memcpy(ibasic_stack_p, v, sizeof(*v));
 //	ibasic_stack_p++;
@@ -55,9 +66,9 @@ struct value *val_pop(void) {
 }
 
 /* Emit a frame marker */
-void val_alloc_frame(void) {
-	struct value *v = val_alloc(NULL);
-	v->type = type_frame;
+void val_set_frame(struct value *v) {
+
+	state.esp = NULL;
 
 	if(!state.global_frame)
 		state.global_frame = v;
@@ -70,16 +81,31 @@ void unwind_frame(void) {
 		if(v->type == type_frame) {
 			if(v == state.global_frame)
 				state.global_frame = NULL;
+			/* Special rules apply when unwinding the stack.
+			 * stack frame entries must have their type reset
+			 * or unwind will break if an entry is reused but not
+			 * initialised in future.
+			 */
+			v->type = 0;
 			break;
 		}
 	}
 }
 
-/* Descend the stack, looking for a variable with a matching name. */
-/* Caching might help in future */
-
+/* Descend the stack, looking for a variable with a matching name.
+ *
+ * If the effective stack pointer is non-NULL, start from that
+ * position in the stack. (used during function call setup to copy variables
+ * from the calling functions stack frame).
+ *
+ * If the variable is not found in the top stack frame, attempt to find it
+ * in the bottom one.
+ *
+ * Caching might help in future
+ */
 struct value *lookup_var(char *name) {
-	struct value *var = state.stack_p-1;
+	struct value *var = (state.esp ? state.esp : state.stack_p) - 1;
+
 
 	while(var >= state.stack) {
 		if(var->type == type_frame)
@@ -291,7 +317,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 						ret->data.i = v->data.i;
 					}
 				}
-				break;
+				return RET_OK;
 			case tokn_break:
 				return RET_BREAK;
 			case tokn_continue:

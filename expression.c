@@ -19,6 +19,7 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 	struct ast_entry *a = o->child;
 	struct ast_entry *f = ast_lookup(a->val->data.s);
 	struct ast_entry *b;
+	struct value *fr;
 
 	if(!f) {
 		printf("Could not find %s%s)\n", o->id == tokn_fn?"function (FN":"procedure (PROC", a->val->data.s);
@@ -35,12 +36,13 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 	a = a->next;
 	b = b->next;
 
-	val_alloc_frame();
+	fr = val_alloc_frame();
 
 	for (int n = o->children - 1 ; n ; n--) {
-		struct value *v = do_eval(a);
 		struct value *p = val_alloc(b->val->data.s);
+		struct value *v;
 
+		v = do_eval(a);
 		if(!v)
 			v = val_pop();
 
@@ -50,6 +52,8 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 		a = a->next;
 		b = b->next;
 	}
+
+	val_set_frame(fr);
 
 	interpret_block(b, r);
 
@@ -321,6 +325,9 @@ static struct value *do_eval(struct ast_entry *o) {
 
 		case tokn_fn:
 			r = val_alloc(NULL); // return value
+			/* Note: be careful, as we have not initialised the
+			 * stack entry allocated.
+			 */
 			call_proc_or_fn(o, r);
 			return NULL;
 		default:
