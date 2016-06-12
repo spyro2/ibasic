@@ -18,7 +18,7 @@ struct ibasic_state {
 
 static struct ibasic_state state;
 
-/* Allocate storage for variables */
+/* Allocate storage on the stack. */
 struct value *val_alloc(char *name) {
 	struct value *v;
 
@@ -29,6 +29,7 @@ struct value *val_alloc(char *name) {
 	}
 
 	v = state.stack_p++;
+
 	if(name) {
 		v->name = malloc(strlen(name)+1);
 		strcpy(v->name, name);
@@ -37,6 +38,7 @@ struct value *val_alloc(char *name) {
 	return v;
 }
 
+/* Emit a stack frame marker */
 struct value *val_alloc_frame(void) {
 	struct value *v;
 
@@ -64,13 +66,14 @@ struct value *val_pop(void) {
 	return v;
 }
 
-/* Emit a frame marker */
+/* Mark the current stack frame as active */
 void val_set_frame(struct value *v) {
 	state.esp = NULL;
 }
 
 void unwind_frame(void) {
 	struct value *v;
+
 	while(state.stack_p > state.stack) {
 		v = val_pop();
 		if(v->type == type_frame) {
@@ -207,7 +210,6 @@ out_true:
 int interpret_block(struct ast_entry *b, struct value *ret) {
 	struct ast_entry *n = b->child;
 	int r = RET_OK;
-
 
 	do {
 		struct ast_entry *e = n->child;
