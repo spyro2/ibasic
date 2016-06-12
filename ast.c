@@ -19,7 +19,7 @@ void ast_index(struct ast_entry *a, char *name) {
 		if(!ast[i])
 			break;
 
-		if(!strcmp(ast[i]->name, name)) {
+		if(!strcmp(ast[i]->name, name) && ast[i]->a->id == a->id) {
 			printf("ast_entry duplicate\n");
 			exit(1);
 		}
@@ -37,13 +37,24 @@ void ast_index(struct ast_entry *a, char *name) {
 	}
 }
 
-struct ast_entry *ast_lookup(char *name){
-	int i;
+struct ast_entry *ast_lookup(struct ast_entry *a){
+	char *name = a->child->val->data.s;
+	int i, id;
+
+	switch (a->id) {
+		case tokn_proc: id = ast_proc; break;
+		case tokn_fn:   id = ast_fn; break;
+		default:
+			printf("Invalid lookup\n");
+			exit(1);
+	}
 
 	for(i = 0 ; i < 10 ; i++) {
-		if(ast[i] && !strcmp(ast[i]->name, name))
+		if(ast[i] && !strcmp(ast[i]->name, name) && ast[i]->a->id == id)
 			return ast[i]->a;
 	}
+
+	printf("Could not find %s%s)\n", a->id == tokn_fn?"function (FN":"procedure (PROC", name);
 
 	return NULL;
 }

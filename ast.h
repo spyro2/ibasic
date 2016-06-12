@@ -13,7 +13,7 @@ struct ast_entry {
 };
 
 void ast_index(struct ast_entry *a, char *b);
-struct ast_entry *ast_lookup(char *name);
+struct ast_entry *ast_lookup(struct ast_entry *a);
 
 struct ast_entry *ast_get_context(void);
 struct ast_entry *ast_new_context(int id);

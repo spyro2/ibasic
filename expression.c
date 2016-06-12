@@ -17,14 +17,12 @@ static struct value *do_eval(struct ast_entry *o);
 
 void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 	struct ast_entry *a = o->child;
-	struct ast_entry *f = ast_lookup(a->val->data.s);
 	struct ast_entry *b;
+	struct ast_entry *f = ast_lookup(o);
 	struct value *fr;
 
-	if(!f) {
-		printf("Could not find %s%s)\n", o->id == tokn_fn?"function (FN":"procedure (PROC", a->val->data.s);
+	if(!f)
 		exit(1);
-	}
 
 	if(o->children != f->children - 1) {
 		printf("Argument count mismatch!\n");
