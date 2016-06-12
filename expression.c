@@ -15,9 +15,15 @@
 
 static struct value *do_eval(struct ast_entry *o);
 
+#define call_do_eval(v, e) \
+        do { \
+        v = do_eval(e); \
+        if(!v) \
+                v = stack_pop(); \
+        } while(0)
+
 void call_proc_or_fn(struct ast_entry *o, struct value *r) {
-	struct ast_entry *a = o->child;
-	struct ast_entry *b;
+	struct ast_entry *a, *b;
 	struct ast_entry *f = ast_lookup(o);
 	struct value *fr;
 
@@ -29,10 +35,8 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 		exit(1);
 	}
 
-	b = f->child;
-
-	a = a->next;
-	b = b->next;
+	b = f->child->next;
+	a = o->child->next;
 
 	fr = stack_alloc_frame();
 
@@ -40,9 +44,7 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 		struct value *p = stack_alloc(b->val->data.s);
 		struct value *v;
 
-		v = do_eval(a);
-		if(!v)
-			v = stack_pop();
+		call_do_eval(v, a);
 
 		p->type = v->type;
 		p->data.i = v->data.i;
@@ -86,10 +88,7 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_uplus:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-
-			if(!a)
-				a = stack_pop();
+			call_do_eval(a, o->child);
 
 			if(!IS_NUM(a)) {
 				printf("Unary + requires a number\n");
@@ -109,9 +108,7 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_uminus:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-			if(!a)
-				a = stack_pop();
+			call_do_eval(a, o->child);
 
 			if(!IS_NUM(a)) {
 				printf("Unary + requires a number\n");
@@ -131,18 +128,13 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_plus:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-			if(!a)
-				a = stack_pop();
-			b = do_eval(o->child->next);
-			if(!b)
-				b = stack_pop();
+			call_do_eval(a, o->child);
+			call_do_eval(b, o->child->next);
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
 				exit(1);
 			}
-
 
 			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
@@ -180,12 +172,8 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_minus:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-			if(!a)
-				a = stack_pop();
-			b = do_eval(o->child->next);
-			if(!b)
-				b = stack_pop();
+			call_do_eval(a, o->child);
+			call_do_eval(b, o->child->next);
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
@@ -228,12 +216,8 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_asterisk:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-			if(!a)
-				a = stack_pop();
-			b = do_eval(o->child->next);
-			if(!b)
-				b = stack_pop();
+			call_do_eval(a, o->child);
+			call_do_eval(b, o->child->next);
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
@@ -276,12 +260,8 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_slash:
 			r = stack_alloc(NULL);
 
-			a = do_eval(o->child);
-			if(!a)
-				a = stack_pop();
-			b = do_eval(o->child->next);
-			if(!b)
-				b = stack_pop();
+			call_do_eval(a, o->child);
+			call_do_eval(b, o->child->next);
 
 			if(!IS_NUM(a) || !IS_NUM(b)) {
 				printf("Wrong type!\n");
