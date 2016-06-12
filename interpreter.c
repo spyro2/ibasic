@@ -19,7 +19,7 @@ struct ibasic_state {
 static struct ibasic_state state;
 
 /* Allocate storage on the stack. */
-struct value *val_alloc(char *name) {
+struct value *stack_alloc(char *name) {
 	struct value *v;
 
 	if(state.stack_p - state.stack == IBASIC_STACK_SIZE) {
@@ -39,18 +39,18 @@ struct value *val_alloc(char *name) {
 }
 
 /* Emit a stack frame marker */
-struct value *val_alloc_frame(void) {
+struct value *stack_alloc_frame(void) {
 	struct value *v;
 
 	state.esp = state.stack_p;
-	v = val_alloc(NULL);
+	v = stack_alloc(NULL);
 	v->type = type_frame;
 
 	return v;
 }
 
 /* Remove a variable / value from the stack. */
-struct value *val_pop(void) {
+struct value *stack_pop(void) {
 	struct value *v = --state.stack_p;
 
 	if(v->name) {
@@ -62,15 +62,15 @@ struct value *val_pop(void) {
 }
 
 /* Mark the current stack frame as active */
-void val_set_frame(struct value *v) {
+void stack_set_frame(struct value *v) {
 	state.esp = NULL;
 }
 
-void unwind_frame(void) {
+void stack_unwind_frame(void) {
 	struct value *v;
 
 	while(state.stack_p > state.stack) {
-		v = val_pop();
+		v = stack_pop();
 		if(v->type == type_frame) {
 			/* Special rules apply when unwinding the stack.
 			 * stack frame entries must have their type reset
@@ -94,7 +94,7 @@ void unwind_frame(void) {
  *
  * Caching might help in future
  */
-struct value *lookup_var(char *name) {
+struct value *stack_lookup_var(char *name) {
 	struct value *var = (state.esp ? state.esp : state.stack_p) - 1;
 
 	while(var >= state.stack && var->type != type_frame) {
@@ -117,7 +117,7 @@ struct value *lookup_var(char *name) {
 	do { \
 	v = eval(e); \
 	if(!v) \
-		v = val_pop(); \
+		v = stack_pop(); \
 	} while(0)
 
 static inline struct value *interpret_assign(struct ast_entry *n) {
@@ -125,11 +125,10 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 	struct value *v;
 	struct value *l;
 
-	/* lookup_var */
-	l = lookup_var(e->val->data.s);
+	l = stack_lookup_var(e->val->data.s);
 
 	if(!l)
-		l = val_alloc(e->val->data.s);
+		l = stack_alloc(e->val->data.s);
 
 	call_eval(v, e->next);
 
@@ -325,7 +324,7 @@ void interpret(struct ast_entry *e) {
 
 	if(e->id == ast_block) {
 		interpret_block(e, NULL);
-		unwind_frame();
+		stack_unwind_frame();
 	}
 
 	else {
