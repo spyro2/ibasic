@@ -11,7 +11,6 @@
 struct ibasic_state {
 	struct value *stack;
 	struct value *stack_p;
-	struct value *global_frame;
 	struct value *esp;
 
 	struct ast_entry *next;
@@ -67,11 +66,7 @@ struct value *val_pop(void) {
 
 /* Emit a frame marker */
 void val_set_frame(struct value *v) {
-
 	state.esp = NULL;
-
-	if(!state.global_frame)
-		state.global_frame = v;
 }
 
 void unwind_frame(void) {
@@ -79,8 +74,6 @@ void unwind_frame(void) {
 	while(state.stack_p > state.stack) {
 		v = val_pop();
 		if(v->type == type_frame) {
-			if(v == state.global_frame)
-				state.global_frame = NULL;
 			/* Special rules apply when unwinding the stack.
 			 * stack frame entries must have their type reset
 			 * or unwind will break if an entry is reused but not
@@ -106,20 +99,16 @@ void unwind_frame(void) {
 struct value *lookup_var(char *name) {
 	struct value *var = (state.esp ? state.esp : state.stack_p) - 1;
 
-
-	while(var >= state.stack) {
-		if(var->type == type_frame)
-			break;
+	while(var >= state.stack && var->type != type_frame) {
 		if(var->name && !strcmp(var->name, name))
 			return var;
 		var--;
 	}
 
-	var = state.global_frame;
-	while(var >= state.stack) {
+	while(var < state.stack_p && var->type != type_frame) {
 		if(var->name && !strcmp(var->name, name))
 			return var;
-		var--;
+		var++;
 	}
 
 	return NULL;
