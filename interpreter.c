@@ -285,6 +285,49 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 					r = RET_OK;
 
 				break;
+			case tokn_case:
+				{
+					struct value *v;
+					int c;
+
+					call_eval(v, e);
+
+					c = v->data.i;
+
+					e = e->next;
+
+					do {
+						int d = 1;
+
+						if(e->id == tokn_when) {
+							struct ast_entry *ec = e->child;
+
+							d = 0;
+
+							do {
+								struct value *w;
+
+								call_eval(w, ec);
+
+								if(c == w->data.i)
+									d = 1;
+
+								ec = ec->next;
+
+							} while(!d && ec->id != ast_block);
+						}
+
+						if(d) {
+							r = interpret_block(e->last_child, NULL);
+							break;
+						}
+
+						e = e->next;
+
+					} while (e && r != RET_END);
+				}
+
+				break;
 			case tokn_fn:
 			case tokn_proc:
 				call_proc_or_fn(n, NULL);
