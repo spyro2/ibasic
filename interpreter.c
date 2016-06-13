@@ -213,7 +213,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 			case tokn_repeat:
 				do {
 					r = interpret_block(e, NULL);
-					if(r == RET_BREAK)
+					if(r == RET_BREAK || r == RET_END)
 						break;
 				} while (!interpret_condition(e->next));
 
@@ -224,7 +224,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 			case tokn_while:
 				while (interpret_condition(e)) {
 					r = interpret_block(e->next, NULL);
-					if(r == RET_BREAK)
+					if(r == RET_BREAK || r == RET_END)
 						break;
 				}
 
@@ -268,14 +268,14 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 					if(s > 0) {
 						for(; l->data.i <= t; l->data.i += s) {
 							r = interpret_block(e, NULL);
-							if(r == RET_BREAK)
+							if(r == RET_BREAK || r == RET_END)
 								break;
 						}
 					}
 					else {
 						for(; l->data.i >= t; l->data.i += s) {
 							r = interpret_block(e, NULL);
-							if(r == RET_BREAK)
+							if(r == RET_BREAK || r == RET_END)
 								break;
 						}
 					}
