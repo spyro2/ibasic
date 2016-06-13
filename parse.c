@@ -549,19 +549,19 @@ static void statement(void) {
 
 			ast_emit_block();
 
-			if(accept(tokn_eol)) {
+			if(accept(tokn_colon))
+				statement_list();
+
+			if(expect(tokn_eol)) {
 				while(!(tok_is(tokn_when) ||
 				        tok_is(tokn_otherwise) ||
 				        tok_is(tokn_endcase))) {
 					line();
 				}
 			}
-			else {
-				expect(tokn_colon);
-				statement_list();
-				expect(tokn_eol);
-			}
+
 			ast_close();
+
 			ast_close();
 		}
 		expect(tokn_endcase);
