@@ -289,8 +289,6 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 			case tokn_proc:
 				call_proc_or_fn(n, NULL);
 				break;
-			case tokn_end:
-				return RET_END;
 			case ast_expression: //FIXME: this is a bit iffy.
 				{
 					struct value *v;
@@ -307,6 +305,8 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				return RET_BREAK;
 			case tokn_continue:
 				return RET_CONTINUE;
+			case tokn_end:
+				return RET_END;
 			default:
 				printf("Unexpected AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
 				exit(1);
