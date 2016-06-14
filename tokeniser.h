@@ -41,9 +41,6 @@ enum typeid {
 	type_int, type_float, type_string, type_frame, type_unspec,
 };
 
-#define VAL_READONLY (1<<0)
-#define VAL_ALLOC    (1<<1)
-
 struct value {
 	enum typeid type;
 	union storage data;
