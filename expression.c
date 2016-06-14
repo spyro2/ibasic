@@ -96,7 +96,6 @@ static struct value *do_eval(struct ast_entry *o) {
 			}
 
 			r->type = a->type;
-			r->flags |= VAL_READONLY;
 
 			if(a->type == type_int)
 				r->data.i = a->data.i;
@@ -116,7 +115,6 @@ static struct value *do_eval(struct ast_entry *o) {
 			}
 
 			r->type = a->type;
-			r->flags |= VAL_READONLY;
 
 			if(a->type == type_int)
 				r->data.i = -a->data.i;
@@ -136,7 +134,6 @@ static struct value *do_eval(struct ast_entry *o) {
 				exit(1);
 			}
 
-			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
 				r->type = type_float;
 			else
@@ -180,7 +177,6 @@ static struct value *do_eval(struct ast_entry *o) {
 				exit(1);
 			}
 
-			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
 				r->type = type_float;
 			else
@@ -224,7 +220,6 @@ static struct value *do_eval(struct ast_entry *o) {
 				exit(1);
 			}
 
-			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
 				r->type = type_float;
 			else
@@ -268,7 +263,6 @@ static struct value *do_eval(struct ast_entry *o) {
 				exit(1);
 			}
 
-			r->flags |= VAL_READONLY;
 			if(IS_FLOAT(a) || IS_FLOAT(b))
 				r->type = type_float;
 			else

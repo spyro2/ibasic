@@ -46,9 +46,7 @@ enum typeid {
 
 struct value {
 	enum typeid type;
-	int flags;
 	union storage data;
-	struct label *next;
 	char *name;
 	int ref;
 };

@@ -57,7 +57,6 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 	memcpy(t->val->data.s, *ps, len);
 	t->val->data.s[len] = 0;
 	t->val->type = type_string;
-	t->val->flags = VAL_READONLY;
 
 	t->sym = &sym_value;
 
@@ -92,7 +91,6 @@ static struct token *tokfn_comment(struct symbol *s, char **ps) {
 	memcpy(t->val->data.s, *ps, len);
 	t->val->data.s[len] = 0;
 	t->val->type = type_string;
-	t->val->flags = VAL_READONLY;
 
 	t->sym = s;
 
@@ -128,7 +126,6 @@ static struct token *extract_label(char **ps) {
 
 		t = tok_alloc(0);
 		t->sym = &sym_value;
-		t->val->flags |= VAL_READONLY;
 
 		if(*sc == '0') {
 			if (n == 'x') { /* hex */
@@ -178,7 +175,6 @@ static struct token *extract_label(char **ps) {
 		case '%': t->val->type = type_int; break;
 		default:
 			t->val->type = type_unspec;
-			t->val->flags |= VAL_READONLY;
 			break;
 	}
 
