@@ -108,6 +108,7 @@ static void expr_list(void);
 static struct symbol sym_uplus  = {tokn_uplus, "u+"};
 static struct symbol sym_uminus = {tokn_uminus, "u-"};
 static struct symbol sym_assign = {tokn_assign, "a="};
+static struct symbol sym_array  = {tokn_array, "<array>"};
 
 static void factor(struct stack *output, struct stack *operator){
 
@@ -134,11 +135,33 @@ static void factor(struct stack *output, struct stack *operator){
 		exit(1);
 	}
 
-	if(tok_is(tokn_label) || tok_is(tokn_value)) {
+	if(tok_is(tokn_value)) {
 		tok_get(tok);
 		push(output, tok);
 
 		next_token();
+	}
+	else if(tok_is(tokn_label)) {
+		struct token *t = tok_get(tok);
+
+		next_token();
+
+		if(tok_is(tokn_osquare)) {
+			t->sym = &sym_array;
+
+			tok_get(tok);
+			push(operator, tok);
+
+			next_token();
+
+			do_expression(output, operator);
+
+			expect(tokn_csquare);
+
+			tok_put(pop(operator)); /* pop the open square bracket */
+		}
+
+		push(output, t);
 	}
 	else if(tok_is(tokn_oparen)) {
 		tok_get(tok);
@@ -222,7 +245,8 @@ static void do_expression(struct stack *output, struct stack *operator) {
 	}
 
 	/* Flush operator stack */
-	while((t = peek(operator)) && tokid(t) != tokn_oparen)
+	while((t = peek(operator)) &&
+	      !(tokid(t) == tokn_oparen || tokid(t) == tokn_osquare))
 		push(output, pop_nocheck(operator));
 
 }
@@ -234,7 +258,7 @@ static void expr_emit_ast(struct stack *o) {
 	if(i == tokn_label || i == tokn_value) {
 		ast_emit_leaf(t);
 	}
-	else if(i == tokn_uplus || i == tokn_uminus) {
+	else if(i == tokn_uplus || i == tokn_uminus || i == tokn_array) {
 		ast_emit(t);
 
 		expr_emit_ast(o);
@@ -327,18 +351,51 @@ static void condition(void) {
 static int assign(void) {
 	struct token *t = tok_get(tok);
 
-	if(accept(tokn_label) && tok_is(tokn_eq)) {
-		tok->sym = &sym_assign;
-		ast_emit(tok);
-		ast_emit_leaf(t);
-		tok_put(t);
+	if(accept(tokn_label)) {
+		if(accept(tokn_osquare)) {
+			struct ast_entry *a;
 
-		next_token();
+			a = expression();
 
-		ast_append(expression());
-		ast_close();
+			expect(tokn_csquare);
 
-		return 1;
+			if(tok_is(tokn_eq)) {
+				tok->sym = &sym_assign;
+				ast_emit(tok);
+
+				t->sym = &sym_array;
+				ast_emit(t);
+				tok_put(t);
+
+				ast_append(a);
+				ast_close();
+
+				next_token();
+
+				ast_append(expression());
+				ast_close();
+			}
+			else {
+				printf("Arrays cannot be here labels\n");
+				exit(1);
+			}
+
+			return 1;
+		}
+		else if(tok_is(tokn_eq)) {
+			tok->sym = &sym_assign;
+			ast_emit(tok);
+
+			ast_emit_leaf(t);
+			tok_put(t);
+
+			next_token();
+
+			ast_append(expression());
+			ast_close();
+
+			return 1;
+		}
 	}
 
 	tok_put(t);
@@ -685,6 +742,27 @@ static void statement(void) {
 			} while(accept(tokn_semicolon) &&
 			        !tok_is(tokn_eol) && !tok_is(tokn_colon));
 		}
+		ast_close();
+	}
+	else if (accept(tokn_dim)) {
+		ast_emit(t);
+		tok_put(t);
+
+		t = tok_get(tok);
+		expect(tokn_label);
+
+		t->sym = &sym_array;
+		ast_emit(t);
+		tok_put(t);
+
+		expect(tokn_osquare);
+
+		ast_append(expression());
+
+		expect(tokn_csquare);
+
+		ast_close();
+
 		ast_close();
 	}
 	else if (accept(tokn_end)) {
