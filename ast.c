@@ -175,6 +175,7 @@ static char *ast_name(enum tokid id) {
 		case ast_proc: return "ast_proc";
 		case ast_fn: return "ast_fn";
 		case ast_expression: return "ast_expression";
+		case tokn_array: return "tokn_array";
 		default: return "ast_unknown";
 	}
 }
