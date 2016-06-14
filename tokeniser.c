@@ -18,10 +18,6 @@ static struct token *tok_alloc(int len) {
 	return t;
 }
 
-static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
-static struct symbol sym_value = {tokn_value, "<value>", NULL, print_value};
-static struct symbol sym_eof = {tokn_eof, "<eof>", NULL, NULL};
-
 /* TODO: Think about ways to return errors, eg. when adding escape parsing,
  * how to handle bad escape sequences
  */
@@ -44,7 +40,7 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 	t->val->data.s[len] = 0;
 	t->val->type = type_string;
 
-	t->sym = &sym_value;
+	t->id = tokn_value;
 
 	*ps = ++r;
 
@@ -73,7 +69,7 @@ static struct token *tokfn_comment(struct symbol *s, char **ps) {
 	t->val->data.s[len] = 0;
 	t->val->type = type_string;
 
-	t->sym = s;
+	t->id = s->id;
 
 	*ps = ++r;
 
@@ -106,7 +102,7 @@ static struct token *extract_label(char **ps) {
 		char n = len>1?sc[1]:0;
 
 		t = tok_alloc(0);
-		t->sym = &sym_value;
+		t->id = tokn_value;
 
 		if(*sc == '0') {
 			if (n == 'x') { /* hex */
@@ -149,7 +145,7 @@ static struct token *extract_label(char **ps) {
 
 	memcpy(t->val->data.s, *ps, len);
 	t->val->data.s[len] = 0;
-	t->sym = &sym_label;
+	t->id = tokn_label;
 
 	switch(t->val->data.s[len-1]) {
 		case '$': t->val->type = type_string; break;
@@ -173,7 +169,7 @@ out:
 static struct token *default_tokfn(struct symbol *s, char **ps) {
 	struct token *t = tok_alloc(0); //FIXME: alloc failure
 
-	t->sym = s;
+	t->id = s->id;
 
 	return t;
 }
@@ -571,6 +567,8 @@ static char *get_one_line(int fd) {
 
 	return NULL;
 }
+
+static struct symbol sym_eof = {tokn_eof, "<eof>", NULL, NULL};
 
 static struct token *get_more_tokens(struct sym_tree_entry *sym_tree, int fd) {
 	char *buf;

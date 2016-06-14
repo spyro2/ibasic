@@ -96,11 +96,10 @@ struct ast_entry *ast_alloc() {
 }
 
 struct ast_entry *ast_emit(struct token *t) {
-	struct symbol *s = t->sym;
 	struct ast_entry *a = ast_alloc();
 	//FIXME: alloc failure
 
-	a->id = s->id;
+	a->id = t->id;
 	if(t->val) {
 		val_get(t->val);
 		a->val = t->val;
@@ -111,11 +110,10 @@ struct ast_entry *ast_emit(struct token *t) {
 }
 
 struct ast_entry *ast_emit_leaf(struct token *t) {
-	struct symbol *s = t->sym;
 	struct ast_entry *a = ast_alloc();
 	//FIXME: alloc failure
 
-	a->id = s->id;
+	a->id = t->id;
 	if(t->val) {
 		val_get(t->val);
 		a->val = t->val;

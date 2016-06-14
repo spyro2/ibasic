@@ -52,7 +52,7 @@ struct value {
 };
 
 struct token {
-        struct symbol *sym;
+	enum tokid id;
         struct token *next;
 	struct value *val;
 	int ref;
@@ -64,7 +64,7 @@ struct symbol {
         struct token *(*tok_func)(struct symbol *s, char **ps);
 };
 
-#define tokid(a) (a)->sym->id
+#define tokid(a) (a)->id
 
 int tokeniser_init (void);
 void tokeniser_exit(void);

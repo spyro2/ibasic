@@ -14,7 +14,7 @@ static struct token *tok = NULL;
 static int fd;
 
 static int tok_is(enum tokid id) {
-	return tok->sym->id == id ? 1 : 0;
+	return tok->id == id ? 1 : 0;
 }
 
 static void next_token(void) {
@@ -46,7 +46,7 @@ static void next_token(void) {
 
 static int accept(enum tokid id) {
 
-	if (tok->sym->id == id) {
+	if (tok->id == id) {
 		next_token();
 		return 1;
 	}
@@ -55,11 +55,16 @@ static int accept(enum tokid id) {
 }
 
 static int expect(enum tokid id) {
+	struct symbol *s;
+
 	if (accept(id))
 		return 1;
 
-	printf("Unexpected token: %s\n", tok->sym->name?tok->sym->name:"Unknown");
-	printf("Expected: %d (%s)\n", id, sym_from_id(id)?sym_from_id(id)->name:"null"); // FIXME: null deref
+	s = sym_from_id(tok->id);
+	printf("Unexpected token: %d (%s)\n", tok->id, s->name?s->name:"Unknown");
+	s = sym_from_id(id);
+	printf("Expected: %d (%s)\n", id, s->name?s->name:"Unknown");
+
 	exit(1);
 
 	return 0;
@@ -101,15 +106,6 @@ static void do_expression(struct stack *output, struct stack *operator);
 static struct ast_entry *expression(void);
 static void expr_list(void);
 
-/* Special case, replacement tokens for unary + and -
- * These are never emitted by the tokeniser, so it does not matter
- * that their names are not valid syntax
- */
-static struct symbol sym_uplus  = {tokn_uplus, "u+"};
-static struct symbol sym_uminus = {tokn_uminus, "u-"};
-static struct symbol sym_assign = {tokn_assign, "a="};
-static struct symbol sym_array  = {tokn_array, "<array>"};
-
 static void factor(struct stack *output, struct stack *operator){
 
 	/* Unary operators */
@@ -118,9 +114,9 @@ static void factor(struct stack *output, struct stack *operator){
 
 		/* Promote token to a unary one */
 		if(tok_is(tokn_plus))
-			tok->sym = &sym_uplus;
+			tok->id = tokn_uplus;
 		else
-			tok->sym = &sym_uminus;
+			tok->id = tokn_uminus;
 
 		if(!preceeds(tok, peek(operator)))
 			push(output, pop(operator));
@@ -147,7 +143,7 @@ static void factor(struct stack *output, struct stack *operator){
 		next_token();
 
 		if(tok_is(tokn_osquare)) {
-			t->sym = &sym_array;
+			t->id = tokn_array;
 
 			tok_get(tok);
 			push(operator, tok);
@@ -360,10 +356,10 @@ static int assign(void) {
 			expect(tokn_csquare);
 
 			if(tok_is(tokn_eq)) {
-				tok->sym = &sym_assign;
+				tok->id = tokn_assign;
 				ast_emit(tok);
 
-				t->sym = &sym_array;
+				t->id = tokn_array;
 				ast_emit(t);
 				tok_put(t);
 
@@ -383,7 +379,7 @@ static int assign(void) {
 			return 1;
 		}
 		else if(tok_is(tokn_eq)) {
-			tok->sym = &sym_assign;
+			tok->id = tokn_assign;
 			ast_emit(tok);
 
 			ast_emit_leaf(t);
@@ -443,16 +439,13 @@ static void input_param_list(void) {
 	}
 }
 
-static struct symbol sym_ast_proc = {ast_proc, "DEFPROC",};
-static struct symbol sym_ast_fn   = {ast_fn,   "DEFFN",};
-
 static void definition(void) {
 	struct ast_entry *a;
 	struct token *t = tok_get(tok);
 
 	if(accept(tokn_proc)) {
 
-		t->sym = &sym_ast_proc;
+		t->id = ast_proc;
 		a = ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
@@ -484,7 +477,7 @@ static void definition(void) {
 	}
 	else if(accept(tokn_fn)) {
 
-		t->sym = &sym_ast_fn;
+		t->id = ast_fn;
 		a = ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
@@ -751,7 +744,7 @@ static void statement(void) {
 		t = tok_get(tok);
 		expect(tokn_label);
 
-		t->sym = &sym_array;
+		t->id = tokn_array;
 		ast_emit(t);
 		tok_put(t);
 
