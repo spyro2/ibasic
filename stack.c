@@ -8,8 +8,8 @@
 
 void push(struct stack *s, struct token *t) {
 #ifdef DEBUG_EXPR_STACK
-	printf("push(%08x) %d: ", s, s->sp);
-	tok_print_one(t);
+	printf("push(%p) %d: ", s, s->sp);
+	printf("<%d: %s>", t->id, sym_from_id(t->id)?sym_from_id(t->id)->name:"Unknown");
 	printf("\n");
 #endif
 
@@ -31,8 +31,8 @@ struct token *pop(struct stack *s) {
 	do {
 	struct token *t;
 	t = s->t[s->sp];
-	printf("pop (%08x) %d: ", s, s->sp);
-	tok_print_one(t);
+	printf("pop (%p) %d: ", s, s->sp);
+	printf("<%d: %s>", t->id, sym_from_id(t->id)?sym_from_id(t->id)->name:"Unknown");
 	printf("\n");
 	} while (0);
 #endif

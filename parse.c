@@ -39,7 +39,7 @@ static void next_token(void) {
 
 #ifdef PRINT_NEXT_TOKEN
 	printf(ANSI_GREEN);
-	tok_print_one(tok);
+	printf("<%d: %s>", tok->id, sym_from_id(tok->id)?sym_from_id(tok->id)->name:"Unknown");
 	printf(ANSI_RESET);
 #endif
 }
