@@ -18,20 +18,6 @@ static struct token *tok_alloc(int len) {
 	return t;
 }
 
-static void print_label(struct token *t) {
-	if(t->val->data.s)
-		printf("%s ", t->val->data.s);
-}
-
-static void print_value(struct token *t) {
-	switch(t->val->type) {
-		case type_int:    printf("%d ", t->val->data.i); break;
-		case type_float:  printf("%f ", t->val->data.d); break;
-		case type_string: printf("%s ", t->val->data.s); break;
-		default: printf(" {unknown type}");
-	}
-}
-
 static struct symbol sym_label = {tokn_label, "<label>", NULL, print_label};
 static struct symbol sym_value = {tokn_value, "<value>", NULL, print_value};
 static struct symbol sym_eof = {tokn_eof, "<eof>", NULL, NULL};
@@ -63,11 +49,6 @@ static struct token *tokfn_string(struct symbol *s, char **ps) {
 	*ps = ++r;
 
 	return t;
-}
-
-static void print_string(struct token *t) {
-	if(t->val->data.s)
-		printf("\"%s\"", t->val->data.s);
 }
 
 /* FIXME: Terrible hack to allow at least single line comments */
@@ -189,10 +170,6 @@ out:
 	return t;
 }
 
-static void print_eol(struct token *t) {
-	printf(" <EOL>");
-}
-
 static struct token *default_tokfn(struct symbol *s, char **ps) {
 	struct token *t = tok_alloc(0); //FIXME: alloc failure
 
@@ -290,13 +267,13 @@ static struct symbol symbol_list[] = {
 	{tokn_library, "LIBRARY",},
 #endif
 	/* Seperators and EOL */
-	{tokn_eol, "\r\n", NULL, print_eol},
-	{tokn_eol, "\n", NULL, print_eol},
+	{tokn_eol, "\r\n",},
+	{tokn_eol, "\n",},
 	{tokn_comma, ",",},
 
 	/* Types */
 	/* strings produce tokn_value when they are evaluated */
-	{tokn_value, "\"", tokfn_string, print_string},
+	{tokn_value, "\"", tokfn_string},
 
 	/* IO statements */
 	{tokn_print, "PRINT",},
@@ -548,24 +525,6 @@ static struct token *tokenise(struct sym_tree_entry *sym_tree, char *string) {
 	}
 
 	return l;
-}
-
-void tok_print_one(struct token *t) {
-
-	if(t->sym->print)
-		t->sym->print(t);
-	else
-		printf("%s ", t->sym->name);
-}
-
-void tok_print_line(struct token *t) {
-
-	while(t) {
-		tok_print_one(t);
-		t = t->next;
-	}
-	printf("\n");
-
 }
 
 #define MAX_LINE_READ (2*1024)

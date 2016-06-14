@@ -62,7 +62,6 @@ struct symbol {
         enum tokid id;
         char *name;
         struct token *(*tok_func)(struct symbol *s, char **ps);
-        void (*print)(struct token *t);
 };
 
 #define tokid(a) (a)->sym->id
