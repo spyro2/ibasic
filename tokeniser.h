@@ -21,11 +21,11 @@ enum tokid {
 /*70*/	tokn_plus, tokn_minus, tokn_lshift, tokn_rshift, tokn_colon,
 	tokn_at, tokn_oparen, tokn_cparen, tokn_obrace, tokn_cbrace,
 /*80*/	tokn_percent, tokn_dollar, tokn_label, tokn_otherwise, tokn_comment,
-	tokn_eof,
+	tokn_osquare, tokn_csquare, tokn_eof,
 	/* These tokens will never be emitted by the tokeniser and are
 	 * for the use of the parser only.
 	 */
-	tokn_uminus, tokn_uplus, tokn_assign,
+	tokn_uminus, tokn_uplus, tokn_assign, tokn_array,
 	/* Special tokens used in the AST */
 	ast_program, ast_block, ast_proc, ast_fn, ast_expression,
 };
