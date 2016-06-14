@@ -13,14 +13,6 @@
 static struct token *tok = NULL;
 static int fd;
 
-#ifdef PRINT_NEXT_TOKEN
-static void print_current_token(char *s) {
-	printf("%s", s);
-        tok_print_one(tok);
-        printf(ANSI_RESET);
-}
-#endif
-
 static int tok_is(enum tokid id) {
 	return tok->sym->id == id ? 1 : 0;
 }
