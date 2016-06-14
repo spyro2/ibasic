@@ -279,8 +279,8 @@ static struct symbol symbol_list[] = {
 
 	/* Memory allocation */
 /*	{tokn_alloc, "ALLOC",}, */
-#if 0
 	{tokn_dim, "DIM",},
+#if 0
 	{tokn_list, "LIST",}, /* Unlike older BASICs - for creating lists! */
 	{tokn_add, "ADD",},
 	{tokn_before, "BEFORE",},
@@ -330,6 +330,9 @@ static struct symbol symbol_list[] = {
 	/* Brackets */
 	{tokn_oparen, "(",},
 	{tokn_cparen, ")",},
+	{tokn_osquare, "[",},
+	{tokn_csquare, "]",},
+	
 #if 0
 	{tokn_obrace, "{",},
 	{tokn_cbrace, "}",},
