@@ -210,6 +210,17 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 //		printf("AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
 
 		switch (n->id) {
+			/* Assignment */
+			case tokn_assign:
+				interpret_assign(n);
+				break;
+
+			/* IO */
+			case tokn_print:
+				interpret_print(n);
+				break;
+
+			/* Loops */
 			case tokn_repeat:
 				do {
 					r = interpret_block(e, NULL);
@@ -231,19 +242,6 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				if(r == RET_BREAK || r == RET_CONTINUE)
 					r = RET_OK;
 
-				break;
-			case tokn_if:
-				if(interpret_condition(e))
-					r = interpret_block(e->next, NULL);
-				else
-					if(e->next->next)
-						r = interpret_block(e->next->next, NULL);
-				break;
-			case tokn_print:
-				interpret_print(n);
-				break;
-			case tokn_assign:
-				interpret_assign(n);
 				break;
 			case tokn_for:
 				{
@@ -284,6 +282,33 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				if(r == RET_BREAK || r == RET_CONTINUE)
 					r = RET_OK;
 
+				break;
+
+			/* Function calling and return */
+			case tokn_fn:
+			case tokn_proc:
+				call_proc_or_fn(n, NULL);
+				break;
+			case ast_expression:
+				{
+					struct value *v;
+
+					call_eval(v, n);
+
+					if(ret) {
+						ret->type = v->type;
+						ret->data.i = v->data.i;
+					}
+				}
+				return RET_OK;
+
+			/* Flow control / conditionals */
+			case tokn_if:
+				if(interpret_condition(e))
+					r = interpret_block(e->next, NULL);
+				else
+					if(e->next->next)
+						r = interpret_block(e->next->next, NULL);
 				break;
 			case tokn_case:
 				{
@@ -328,22 +353,6 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				}
 
 				break;
-			case tokn_fn:
-			case tokn_proc:
-				call_proc_or_fn(n, NULL);
-				break;
-			case ast_expression: //FIXME: this is a bit iffy.
-				{
-					struct value *v;
-
-					call_eval(v, n);
-
-					if(ret) {
-						ret->type = v->type;
-						ret->data.i = v->data.i;
-					}
-				}
-				return RET_OK;
 			case tokn_break:
 				return RET_BREAK;
 			case tokn_continue:
