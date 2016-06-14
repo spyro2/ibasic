@@ -603,18 +603,35 @@ struct token *get_next_token(int fd) {
 	return t;
 }
 
-/* This is not quite a 1:1 mapping- may need FIXME in future */
 
-struct symbol *sym_from_id(enum tokid id) {
+char *sym_from_id(enum tokid id) {
 	struct symbol *s = symbol_list;
+
+	if(id == tokn_eol)
+		return "<eol>";
 
         while(s->name) {
 		if(s->id == id)
-			return s;
+			return s->name;
 		s++;
 	}
 
-	return NULL;
+	switch(id) {
+		case tokn_label:     return "<label>";
+		case tokn_eof:       return "<eof>";
+		case tokn_uminus:    return "u-";
+		case tokn_uplus:     return "u+";
+		case tokn_assign:    return "<assign>";
+		case tokn_array:     return "<array>";
+		case ast_program:    return "<program>";
+		case ast_block:      return "<block>";
+		case ast_proc:       return "<proc>";
+		case ast_fn:         return "<fn>";
+		case ast_expression: return "<expression>";
+		default: ;
+	}
+
+	return "Unknown";
 }
 
 void do_tokeniser_exit(struct sym_tree_entry *s) {

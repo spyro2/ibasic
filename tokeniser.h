@@ -64,8 +64,7 @@ struct symbol {
 int tokeniser_init (void);
 void tokeniser_exit(void);
 struct token *get_next_token(int fd);
-struct symbol *sym_from_id(enum tokid id);
-
+char *sym_from_id(enum tokid id);
 
 static inline struct value *val_get(struct value *v) {
 	v->ref++;

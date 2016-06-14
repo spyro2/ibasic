@@ -207,7 +207,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 
 	do {
 		struct ast_entry *e = n->child;
-//		printf("AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
+//		printf("AST entry %d (%s)\n", n->id, sym_from_id(n->id));
 
 		switch (n->id) {
 			/* Assignment */
@@ -360,7 +360,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 			case tokn_end:
 				return RET_END;
 			default:
-				printf("Unexpected AST entry %d (%s)\n", n->id, sym_from_id(n->id)?sym_from_id(n->id)->name:"");
+				printf("Unexpected AST entry %d (%s)\n", n->id, sym_from_id(n->id));
 				exit(1);
 		}
 

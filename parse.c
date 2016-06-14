@@ -39,7 +39,7 @@ static void next_token(void) {
 
 #ifdef PRINT_NEXT_TOKEN
 	printf(ANSI_GREEN);
-	printf("<%d: %s>", tok->id, sym_from_id(tok->id)?sym_from_id(tok->id)->name:"Unknown");
+	printf("<%d: %s>", tok->id, sym_from_id(tok->id));
 	printf(ANSI_RESET);
 #endif
 }
@@ -55,15 +55,12 @@ static int accept(enum tokid id) {
 }
 
 static int expect(enum tokid id) {
-	struct symbol *s;
 
 	if (accept(id))
 		return 1;
 
-	s = sym_from_id(tok->id);
-	printf("Unexpected token: %d (%s)\n", tok->id, s->name?s->name:"Unknown");
-	s = sym_from_id(id);
-	printf("Expected: %d (%s)\n", id, s->name?s->name:"Unknown");
+	printf("Unexpected token: %d (%s)\n", tok->id, sym_from_id(tok->id));
+	printf("Expected: %d (%s)\n", id, sym_from_id(id));
 
 	exit(1);
 

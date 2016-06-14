@@ -166,21 +166,8 @@ static void ast_print_value(struct value *v) {
 	}
 }
 
-static char *ast_name(enum tokid id) {
-	switch(id) {
-		case ast_program: return "ast_program";
-		case ast_block: return "ast_block";
-		case ast_proc: return "ast_proc";
-		case ast_fn: return "ast_fn";
-		case ast_expression: return "ast_expression";
-		case tokn_array: return "tokn_array";
-		default: return "ast_unknown";
-	}
-}
-
 static void ast_print_one(struct ast_entry *a, int l) {
 	struct ast_entry *c = a->child;
-	struct symbol *s = sym_from_id(a->id);
 	struct value *v = a->val;
 
 	if(!c) {
@@ -189,19 +176,13 @@ static void ast_print_one(struct ast_entry *a, int l) {
 			ast_print_value(v);
 		else if(a->id == tokn_label)
 			printf("<label> %s\n", v->data.s);
-		else if(s && s->name)
-			printf("%s\n", s->name);
 		else
-			printf("%s\n", ast_name(a->id));
+			printf("%s\n", sym_from_id(a->id));
 	}
 	else {
 		a_ind(l);
-		if(a->id == tokn_assign)
-			printf("assign[%d] (\n", a->children);
-		else if(s && s->name)
-			printf("%s[%d] (\n", s->name, a->children);
-		else
-			printf("%s[%d] (\n", ast_name(a->id), a->children);
+
+		printf("%s [%d] (\n", sym_from_id(a->id), a->children);
 
 		while(c) {
 			struct ast_entry *n = c->next;
