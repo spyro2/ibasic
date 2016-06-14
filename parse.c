@@ -75,7 +75,7 @@ static int get_precedence(struct token *a) {
 	if(!a)
 		goto out;
 
-	switch (tokid(a)) {
+	switch (a->id) {
 		case tokn_uminus:
 		case tokn_uplus:
 			return 3;
@@ -242,14 +242,14 @@ static void do_expression(struct stack *output, struct stack *operator) {
 
 	/* Flush operator stack */
 	while((t = peek(operator)) &&
-	      !(tokid(t) == tokn_oparen || tokid(t) == tokn_osquare))
+	      !(t->id == tokn_oparen || t->id == tokn_osquare))
 		push(output, pop_nocheck(operator));
 
 }
 
 static void expr_emit_ast(struct stack *o) {
 	struct token *t = pop(o);
-	int i = tokid(t);
+	int i = t->id;
 
 	if(i == tokn_label || i == tokn_value) {
 		ast_emit_leaf(t);

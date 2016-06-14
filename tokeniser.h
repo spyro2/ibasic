@@ -64,8 +64,6 @@ struct symbol {
         struct token *(*tok_func)(struct symbol *s, char **ps);
 };
 
-#define tokid(a) (a)->id
-
 int tokeniser_init (void);
 void tokeniser_exit(void);
 struct token *get_next_token(int fd);
