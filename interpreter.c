@@ -203,7 +203,7 @@ static inline int interpret_print(struct ast_entry *n) {
 				case type_float:  printf("%f", v->data.d);break;
 				case type_string: printf("%s", v->data.s);break;
 				default:
-					printf("Unknown type!\n");
+					printf("Unhandled type (%d)!\n", v->type);
 					exit(1);
 			}
 
