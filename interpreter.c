@@ -184,6 +184,7 @@ static inline struct value *interpret_dim(struct ast_entry *n) {
 
 	l->type = type_a_int; // FIXME: types!!! v->type;
 	l->data.ip = malloc(v->data.i * sizeof(int));
+	l->size = v->data.i * sizeof(int);
 
 	return l;
 }
