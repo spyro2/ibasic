@@ -424,6 +424,10 @@ static void input_param_list(void) {
 
 		t = tok_get(tok);
 		expect(tokn_label);
+		if(accept(tokn_osquare)) {
+			t->id = tokn_array;
+			expect(tokn_csquare);
+		}
 
 		push(&output, t);
 
