@@ -46,8 +46,23 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 
 		call_do_eval(v, a);
 
-		p->type = v->type;
-		p->data.i = v->data.i;
+		if(b->id == tokn_label) {
+			if(v->type == type_a_int) {
+				printf("Cannot pass array as integer\n");
+				exit(1);
+			}
+			p->type = v->type;
+			p->data.i = v->data.i;
+		}
+		else if(b->id == tokn_array) {
+			if(v->type != type_a_int) {
+				printf("Cannot pass int as array!\n");
+				exit(1);
+			}
+			p->type = v->type;
+			p->data.ip = malloc(v->size * sizeof(int));
+			memcpy(p->data.ip, v->data.ip, v->size);
+		}
 
 		a = a->next;
 		b = b->next;
