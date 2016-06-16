@@ -760,6 +760,22 @@ static void statement(void) {
 
 		ast_close();
 	}
+	else if (accept(tokn_local)) {
+		ast_emit(t);
+		tok_put(t);
+
+		t = tok_get(tok);
+		if(expect(tokn_label)) {
+			if(accept(tokn_osquare)) {
+				t->id = tokn_array;
+				expect(tokn_csquare);
+			}
+			ast_emit_leaf(t);
+		}
+		tok_put(t);
+
+		ast_close();
+	}
 	else if (accept(tokn_end)) {
 		ast_emit_leaf(t);
 		tok_put(t);
