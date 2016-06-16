@@ -103,6 +103,7 @@ struct value *stack_lookup_var(char *name) {
 		var--;
 	}
 
+	var = state.stack;
 	while(var < state.stack_p && var->type != type_frame) {
 		if(var->name && !strcmp(var->name, name))
 			return var;
