@@ -142,15 +142,13 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 
 	call_eval(v, e->next);
 
-	if(!l) {
-		if(e->id == tokn_label) {
-			l = stack_alloc(e->val->data.s);
-			l->type = v->type;
-		}
-		else if (e->id == tokn_array) {
-			printf("Array undimensioned!\n");
-			exit(1);
-		}
+	if(!l && e->id == tokn_label) {
+		l = stack_alloc(e->val->data.s);
+		l->type = v->type;
+	}
+	else if (e->id == tokn_array && (!l || l->size == 0)) {
+		printf("Array undimensioned!\n");
+		exit(1);
 	}
 
 	switch(l->type) {
@@ -167,18 +165,42 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 	return l;
 }
 
+static inline struct value *interpret_local(struct ast_entry *n) {
+	struct ast_entry *e = n->child;
+	struct value *l;
+
+	l = stack_alloc(e->val->data.s);
+
+	if(e->id == tokn_array) {
+		l->size = 0;
+		l->type = type_a_int;
+	}
+	else if(e->id == tokn_label) {
+		; // Do nothing for now
+	}
+
+	return l;
+}
+
 static inline struct value *interpret_dim(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
 	struct value *v, *l;
 
 	l = stack_lookup_var(e->val->data.s);
 
-	if(l) {
-		printf("%s Already exists!\n", e->val->data.s);
+	if(l && l->type != type_a_int) {
+		printf("%s Already exists as a different type!\n", e->val->data.s);
 		exit(1);
 	}
 
-	l = stack_alloc(e->val->data.s);
+	if(!l)
+		l = stack_alloc(e->val->data.s);
+	else {
+		if(l->size != 0) {
+			printf("%s Already dimensioned\n", e->val->data.s);
+			exit(1);
+		}
+	}
 
 	call_eval(v, e->child);
 
@@ -264,6 +286,10 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 			/* Declaration / allocation */
 			case tokn_dim:
 				interpret_dim(n);
+				break;
+
+			case tokn_local:
+				interpret_local(n);
 				break;
 
 			/* Assignment */
