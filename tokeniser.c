@@ -216,6 +216,7 @@ static struct symbol symbol_list[] = {
 /*	{tokn_goto, "GOTO",}, */
 
 	/* Scoping */
+	{tokn_local, "LOCAL",},
 #if 0
 	{tokn_static, "STATIC",},
 	{tokn_global, "GLOBAL",},
