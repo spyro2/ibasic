@@ -126,18 +126,47 @@ struct value *stack_lookup_var(char *name) {
 
 static inline struct value *interpret_assign(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
-	struct value *v;
-	struct value *l;
+	struct value *v, *l;
+	int idx;
 
 	l = stack_lookup_var(e->val->data.s);
 
-	if(!l)
-		l = stack_alloc(e->val->data.s);
+	if(e->id == tokn_array) {
+		call_eval(v, e->child);
+		if(v->type != type_int) {
+			printf("Array index must be an integer!\n");
+			exit(1);
+		}
+		idx = v->data.i;
+	}
 
 	call_eval(v, e->next);
 
-	l->type = v->type;
-	l->data.i = v->data.i;
+	if(!l) {
+		if(e->id == tokn_label) {
+			l = stack_alloc(e->val->data.s);
+			l->type = v->type;
+		}
+		else if (e->id == tokn_array) {
+			printf("Array undimensioned!\n");
+			exit(1);
+		}
+	}
+
+	switch(l->type) {
+		case type_int:
+			l->data.i = v->data.i;
+		break;
+		case type_a_int:
+			l->data.ip[idx] = v->data.i;
+		break;
+		default:
+			printf("Unhandled type\n");
+	}
+
+	return l;
+}
+
 static inline struct value *interpret_dim(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
 	struct value *v, *l;
