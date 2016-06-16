@@ -80,6 +80,9 @@ void stack_unwind_frame(void) {
 			v->type = 0;
 			break;
 		}
+		else if(v->type == type_a_int) {
+			free(v->data.ip);
+		}
 	}
 }
 
@@ -135,6 +138,23 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 
 	l->type = v->type;
 	l->data.i = v->data.i;
+static inline struct value *interpret_dim(struct ast_entry *n) {
+	struct ast_entry *e = n->child;
+	struct value *v, *l;
+
+	l = stack_lookup_var(e->val->data.s);
+
+	if(l) {
+		printf("%s Already exists!\n", e->val->data.s);
+		exit(1);
+	}
+
+	l = stack_alloc(e->val->data.s);
+
+	call_eval(v, e->child);
+
+	l->type = type_a_int; // FIXME: types!!! v->type;
+	l->data.ip = malloc(v->data.i * sizeof(int));
 
 	return l;
 }
