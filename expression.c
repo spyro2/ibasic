@@ -85,6 +85,23 @@ static struct value *do_eval(struct ast_entry *o) {
 		case tokn_value:
 			return o->val;
 
+		case tokn_array:
+			r = stack_alloc(NULL);
+
+			a = stack_lookup_var(o->val->data.s);
+
+			if(!a) {
+				printf("No such array! (%s)\n", o->val->data.s);
+				exit(1);
+			}
+
+			call_do_eval(b, o->child);
+
+			r->type = type_int; //HACK
+			r->data.i = a->data.ip[b->data.i];
+
+			return NULL;
+
 		case tokn_uplus:
 			r = stack_alloc(NULL);
 

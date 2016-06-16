@@ -211,6 +211,11 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 //		printf("AST entry %d (%s)\n", n->id, sym_from_id(n->id));
 
 		switch (n->id) {
+			/* Declaration / allocation */
+			case tokn_dim:
+				interpret_dim(n);
+				break;
+
 			/* Assignment */
 			case tokn_assign:
 				interpret_assign(n);

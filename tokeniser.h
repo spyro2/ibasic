@@ -35,10 +35,12 @@ union storage {
 	char *s;
 	float d;
 	int i;
+	int *ip;
 };
 
 enum typeid {
 	type_int, type_float, type_string, type_frame, type_unspec,
+	type_a_int,
 };
 
 struct value {
