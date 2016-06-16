@@ -146,7 +146,7 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 		l = stack_alloc(e->val->data.s);
 		l->type = v->type;
 	}
-	else if (e->id == tokn_array && (!l || l->size == 0)) {
+	else if (e->id == tokn_array && (!l || l->size == -1)) {
 		printf("Array undimensioned!\n");
 		exit(1);
 	}
@@ -172,7 +172,7 @@ static inline struct value *interpret_local(struct ast_entry *n) {
 	l = stack_alloc(e->val->data.s);
 
 	if(e->id == tokn_array) {
-		l->size = 0;
+		l->size = -1;
 		l->type = type_a_int;
 	}
 	else if(e->id == tokn_label) {
@@ -196,13 +196,15 @@ static inline struct value *interpret_dim(struct ast_entry *n) {
 	if(!l)
 		l = stack_alloc(e->val->data.s);
 	else {
-		if(l->size != 0) {
+		if(l->size != -1) {
 			printf("%s Already dimensioned\n", e->val->data.s);
 			exit(1);
 		}
 	}
 
 	call_eval(v, e->child);
+
+	/* FIXME: bounds checking! */
 
 	l->type = type_a_int; // FIXME: types!!! v->type;
 	l->data.ip = malloc(v->data.i * sizeof(int));
