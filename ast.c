@@ -109,6 +109,37 @@ struct ast_entry *ast_emit(struct token *t) {
 	return a;
 }
 
+struct ast_entry *ast_emit_leaf_after(struct ast_entry *n, struct token *t) {
+	struct ast_entry *p = n->parent;
+	struct ast_entry *a;
+
+	if(!p) {
+		printf("No parent! \n");
+		return NULL;
+	}
+
+	a = calloc(1, sizeof(*a));
+	//FIXME: alloc failure
+
+
+	a->id = t->id;
+	if(t->val) {
+		val_get(t->val);
+		a->val = t->val;
+	}
+
+	a->parent = p;
+	p->children++;
+
+	a->next = n->next;
+	n->next = a;
+
+	if(p->last_child == n)
+		p->last_child = a;
+
+	return a;
+}
+
 struct ast_entry *ast_emit_leaf(struct token *t) {
 	struct ast_entry *a = ast_alloc();
 	//FIXME: alloc failure
@@ -132,6 +163,24 @@ void ast_emit_block(void) {
 
 	a->id = ast_block;
 	ast_this = a;
+}
+
+void ast_append_after(struct ast_entry *n, struct ast_entry *a) {
+	struct ast_entry *p = n->parent;
+
+	if(!p) {
+		printf("No parent! \n");
+		return;
+	}
+
+	a->parent = p;
+	p->children++;
+
+	a->next = n->next;
+	n->next = a;
+
+	if(p->last_child == n)
+		p->last_child = a;
 }
 
 void ast_append(struct ast_entry *a) {
