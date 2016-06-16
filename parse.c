@@ -101,7 +101,7 @@ static int preceeds(struct token *a, struct token *b) {
 
 static void do_expression(struct stack *output, struct stack *operator);
 static struct ast_entry *expression(void);
-static void expr_list(void);
+static void expr_list(struct ast_entry *a);
 
 static void factor(struct stack *output, struct stack *operator){
 
@@ -284,7 +284,6 @@ static void expr_emit_ast(struct stack *o) {
 			n--;
 		}
 
-
 		ast_close();
 	}
 	else {
@@ -408,14 +407,16 @@ static void statement_list(void) {
 	} while((d = accept(tokn_colon)));
 }
 
-static void expr_list(void) {
+static void expr_list(struct ast_entry *a) {
 	do {
-		ast_append(expression());
+		if(a)
+			ast_append_after(a, expression());
+		else
+			ast_append(expression());
 	} while(accept(tokn_comma));
 }
 
-static void input_param_list(void) {
-	struct stack output = {{0}};
+static void input_param_list(struct ast_entry *a) {
 	struct token *t;
 
 	do {
@@ -429,19 +430,15 @@ static void input_param_list(void) {
 			expect(tokn_csquare);
 		}
 
-		push(&output, t);
+		ast_emit_leaf_after(a, t);
+
+		tok_put(t);
 
 	} while(accept(tokn_comma));
-
-	while (peek(&output)) {
-		t = pop(&output);
-		ast_emit_leaf(t);
-		tok_put(t);
-	}
 }
 
 static void definition(void) {
-	struct ast_entry *a;
+	struct ast_entry *a, *b;
 	struct token *t = tok_get(tok);
 
 	if(accept(tokn_proc)) {
@@ -453,12 +450,12 @@ static void definition(void) {
 
 		expect(tokn_label);
 
-		ast_emit_leaf(t);
+		b = ast_emit_leaf(t);
 		ast_index(a, t->val->data.s);
 		tok_put(t);
 
 		if(accept(tokn_oparen)) {
-			input_param_list();
+			input_param_list(b);
 			expect(tokn_cparen);
 		}
 
@@ -485,12 +482,12 @@ static void definition(void) {
 
 		expect(tokn_label);
 
-		ast_emit_leaf(t);
+		b = ast_emit_leaf(t);
 		ast_index(a, t->val->data.s);
 		tok_put(t);
 
 		if(accept(tokn_oparen)) {
-			input_param_list();
+			input_param_list(b);
 			expect(tokn_cparen);
 		}
 
@@ -581,7 +578,7 @@ static void statement(void) {
 			t = tok_get(tok);
 			if(accept(tokn_when)) {
 				ast_emit(t);
-				expr_list();
+				expr_list(NULL);
 			}
 			else {
 				expect(tokn_otherwise);
@@ -611,30 +608,34 @@ static void statement(void) {
 		ast_close();
 	}
 	else if (accept(tokn_proc)) {
+		struct ast_entry *a;
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
 		expect(tokn_label);
-		ast_emit_leaf(t); /* label of PROC to call */
+		a = ast_emit_leaf(t); /* label of PROC to call */
 		tok_put(t);
 		t = tok_get(tok);
 		if(accept(tokn_oparen)) {
-			expr_list();
+/* Thought: Labels used in FN / PROC calls should be stripped of their type info, as this should be determined at run time */
+			expr_list(a);
 			expect(tokn_cparen);
 		}
 		tok_put(t);
 		ast_close();
 	}
 	else if (accept(tokn_fn)) {
+		struct ast_entry *a;
 		ast_emit(t);
 		tok_put(t);
 		t = tok_get(tok);
 		expect(tokn_label);
-		ast_emit_leaf(t); /* label of FN to call */
+		a = ast_emit_leaf(t); /* label of FN to call */
 		tok_put(t);
 		t = tok_get(tok);
 		if(accept(tokn_oparen)) {
-			expr_list();
+/* Thought: Labels used in FN / PROC calls should be stripped of their type info, as this should be determined at run time */
+			expr_list(a);
 			expect(tokn_cparen);
 		}
 		tok_put(t);
