@@ -1,12 +1,12 @@
 void interpret(struct ast_entry *p);
-int interpret_block(struct ast_entry *e, struct value *r);
+int interpret_block(struct ast_entry *e, struct imm_value *r);
 
-struct value *stack_lookup_var(char *name);
+struct imm_value *stack_lookup_var(char *name);
 
-struct value *stack_alloc(char *name);
-struct value *stack_pop(void);
+struct imm_value *stack_alloc(char *name);
+struct imm_value *stack_pop(void);
 
-struct value *stack_alloc_frame(void);
-void stack_set_frame(struct value *v);
+struct imm_value *stack_alloc_frame(void);
+void stack_set_frame(struct imm_value *v);
 void stack_unwind_frame(void);
 

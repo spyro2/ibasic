@@ -7,13 +7,14 @@
 #include "ast.h"
 #include "interpreter.h"
 #include "colours.h"
+#include "types.h"
 
 #define IS_STRING(a) ((a)->type == type_string)
 #define IS_INT(a) ((a)->type == type_int)
 #define IS_FLOAT(a) ((a)->type == type_float)
 #define IS_NUM(a) (IS_INT(a) || IS_FLOAT(a))
 
-static struct value *do_eval(struct ast_entry *o);
+static struct imm_value *do_eval(struct ast_entry *o);
 
 #define call_do_eval(v, e) \
         do { \
@@ -22,10 +23,10 @@ static struct value *do_eval(struct ast_entry *o);
                 v = stack_pop(); \
         } while(0)
 
-void call_proc_or_fn(struct ast_entry *o, struct value *r) {
+void call_proc_or_fn(struct ast_entry *o, struct imm_value *r) {
 	struct ast_entry *a, *b;
 	struct ast_entry *f = ast_lookup(o);
-	struct value *fr;
+	struct imm_value *fr;
 
 	if(!f)
 		exit(1);
@@ -41,8 +42,8 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 	fr = stack_alloc_frame();
 
 	for (int n = o->children - 1 ; n ; n--) {
-		struct value *p = stack_alloc(b->val->data.s);
-		struct value *v;
+		struct imm_value *p = stack_alloc(b->val->data.s);
+		struct imm_value *v;
 
 		call_do_eval(v, a);
 
@@ -75,8 +76,8 @@ void call_proc_or_fn(struct ast_entry *o, struct value *r) {
 	stack_unwind_frame();
 }
 
-static struct value *do_eval(struct ast_entry *o) {
-	struct value *a, *b, *r = NULL; // FIXME: for testing
+static struct imm_value *do_eval(struct ast_entry *o) {
+	struct imm_value *a, *b, *r = NULL; // FIXME: for testing
 
 	if(!o) {
 		printf("NULL element in expression\n");
@@ -341,6 +342,6 @@ static struct value *do_eval(struct ast_entry *o) {
 	}
 }
 
-struct value *eval(struct ast_entry *p) {
+struct imm_value *eval(struct ast_entry *p) {
 	return do_eval(p->child);
 }

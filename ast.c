@@ -206,7 +206,7 @@ static inline void a_ind(int l) {
 		printf("\t");
 }
 
-static void ast_print_value(struct value *v) {
+static void ast_print_value(struct imm_value *v) {
 	switch (v->type) {
 		case type_int: printf("<int> %d\n", v->data.i); break;
 		case type_float: printf("<float> %f\n", v->data.d); break;
@@ -217,7 +217,7 @@ static void ast_print_value(struct value *v) {
 
 static void ast_print_one(struct ast_entry *a, int l) {
 	struct ast_entry *c = a->child;
-	struct value *v = a->val;
+	struct imm_value *v = a->val;
 
 	if(!c) {
 		a_ind(l);

@@ -9,7 +9,7 @@ struct ast_entry {
 	struct ast_entry *parent;
 	int children;
 	enum tokid id;
-	struct value *val;
+	struct imm_value *val;
 };
 
 void ast_index(struct ast_entry *a, char *b);

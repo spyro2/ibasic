@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "types.h"
+
 enum tokid {
 /*0*/	tokn_if, tokn_then, tokn_else, tokn_endif, tokn_case,
 	tokn_of, tokn_when, tokn_endcase, tokn_on, tokn_error,
@@ -30,31 +32,10 @@ enum tokid {
 	ast_program, ast_block, ast_proc, ast_fn, ast_expression,
 };
 
-union storage {
-	void *v;
-	char *s;
-	float d;
-	int i;
-	int *ip;
-};
-
-enum typeid {
-	type_int, type_float, type_string, type_frame, type_unspec,
-	type_a_int,
-};
-
-struct value {
-	enum typeid type;
-	union storage data;
-	int size;
-	char *name;
-	int ref;
-};
-
 struct token {
 	enum tokid id;
         struct token *next;
-	struct value *val;
+	struct imm_value *val;
 	int ref;
 };
 
@@ -67,15 +48,16 @@ struct symbol {
 int tokeniser_init (void);
 void tokeniser_exit(void);
 struct token *get_next_token(int fd);
+
 char *sym_from_id(enum tokid id);
 
-static inline struct value *val_get(struct value *v) {
+static inline struct imm_value *val_get(struct imm_value *v) {
 	v->ref++;
 
 	return v;
 }
 
-static inline void val_put(struct value *v) {
+static inline void val_put(struct imm_value *v) {
 	v->ref--;
 
 	assert(v->ref >= 0);

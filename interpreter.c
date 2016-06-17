@@ -4,14 +4,15 @@
 #include "ast.h"
 #include "expression.h"
 #include "interpreter.h"
+#include "types.h"
 
 
 #define IBASIC_STACK_SIZE 128
 
 struct ibasic_state {
-	struct value *stack;
-	struct value *stack_p;
-	struct value *esp;
+	struct imm_value *stack;
+	struct imm_value *stack_p;
+	struct imm_value *esp;
 
 	struct ast_entry *next;
 };
@@ -19,8 +20,8 @@ struct ibasic_state {
 static struct ibasic_state state;
 
 /* Allocate storage on the stack. */
-struct value *stack_alloc(char *name) {
-	struct value *v;
+struct imm_value *stack_alloc(char *name) {
+	struct imm_value *v;
 
 	if(state.stack_p - state.stack == IBASIC_STACK_SIZE) {
 		printf("Stack overflow!\n");
@@ -39,8 +40,8 @@ struct value *stack_alloc(char *name) {
 }
 
 /* Emit a stack frame marker */
-struct value *stack_alloc_frame(void) {
-	struct value *v;
+struct imm_value *stack_alloc_frame(void) {
+	struct imm_value *v;
 
 	state.esp = state.stack_p;
 	v = stack_alloc(NULL);
@@ -50,8 +51,8 @@ struct value *stack_alloc_frame(void) {
 }
 
 /* Remove a variable / value from the stack. */
-struct value *stack_pop(void) {
-	struct value *v = --state.stack_p;
+struct imm_value *stack_pop(void) {
+	struct imm_value *v = --state.stack_p;
 
 	if(v->name) {
 		free(v->name);
@@ -62,12 +63,12 @@ struct value *stack_pop(void) {
 }
 
 /* Mark the current stack frame as active */
-void stack_set_frame(struct value *v) {
+void stack_set_frame(struct imm_value *v) {
 	state.esp = NULL;
 }
 
 void stack_unwind_frame(void) {
-	struct value *v;
+	struct imm_value *v;
 
 	while(state.stack_p > state.stack) {
 		v = stack_pop();
@@ -97,8 +98,8 @@ void stack_unwind_frame(void) {
  *
  * Caching might help in future
  */
-struct value *stack_lookup_var(char *name) {
-	struct value *var = (state.esp ? state.esp : state.stack_p) - 1;
+struct imm_value *stack_lookup_var(char *name) {
+	struct imm_value *var = (state.esp ? state.esp : state.stack_p) - 1;
 
 	while(var >= state.stack && var->type != type_frame) {
 		if(var->name && !strcmp(var->name, name))
@@ -124,9 +125,9 @@ struct value *stack_lookup_var(char *name) {
 		v = stack_pop(); \
 	} while(0)
 
-static inline struct value *interpret_assign(struct ast_entry *n) {
+static inline struct imm_value *interpret_assign(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
-	struct value *v, *l;
+	struct imm_value *v, *l;
 	int idx;
 
 	l = stack_lookup_var(e->val->data.s);
@@ -165,9 +166,9 @@ static inline struct value *interpret_assign(struct ast_entry *n) {
 	return l;
 }
 
-static inline struct value *interpret_local(struct ast_entry *n) {
+static inline struct imm_value *interpret_local(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
-	struct value *l;
+	struct imm_value *l;
 
 	l = stack_alloc(e->val->data.s);
 
@@ -182,9 +183,9 @@ static inline struct value *interpret_local(struct ast_entry *n) {
 	return l;
 }
 
-static inline struct value *interpret_dim(struct ast_entry *n) {
+static inline struct imm_value *interpret_dim(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
-	struct value *v, *l;
+	struct imm_value *v, *l;
 
 	l = stack_lookup_var(e->val->data.s);
 
@@ -218,7 +219,7 @@ static inline int interpret_print(struct ast_entry *n) {
 
 	do {
 		if(e->id == ast_expression) {
-			struct value *v;
+			struct imm_value *v;
 
 			call_eval(v, e);
 
@@ -242,7 +243,7 @@ static inline int interpret_print(struct ast_entry *n) {
 
 static inline int interpret_condition(struct ast_entry *n) {
 	struct ast_entry *e = n->child;
-	struct value *a, *b;
+	struct imm_value *a, *b;
 
 	call_eval(a, e);
 	call_eval(b, e->next);
@@ -276,7 +277,7 @@ out_true:
 #define RET_CONTINUE 2
 #define RET_END 4
 
-int interpret_block(struct ast_entry *b, struct value *ret) {
+int interpret_block(struct ast_entry *b, struct imm_value *ret) {
 	struct ast_entry *n = b->child;
 	int r = RET_OK;
 
@@ -329,7 +330,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				break;
 			case tokn_for:
 				{
-					struct value *l, *v;
+					struct imm_value *l, *v;
 					int t, s = 1;
 
 					l = interpret_assign(e);
@@ -375,7 +376,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				break;
 			case ast_expression:
 				{
-					struct value *v;
+					struct imm_value *v;
 
 					call_eval(v, n);
 
@@ -396,7 +397,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 				break;
 			case tokn_case:
 				{
-					struct value *v;
+					struct imm_value *v;
 					int c;
 
 					call_eval(v, e);
@@ -414,7 +415,7 @@ int interpret_block(struct ast_entry *b, struct value *ret) {
 							d = 0;
 
 							do {
-								struct value *w;
+								struct imm_value *w;
 
 								call_eval(w, ec);
 
