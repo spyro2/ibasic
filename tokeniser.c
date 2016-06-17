@@ -6,6 +6,11 @@
 
 #include "tokeniser.h"
 
+struct symbol {
+	enum tokid id;
+	char *name;
+	struct token *(*tok_func)(struct symbol *s, char **ps);
+};
 
 static struct token *tok_alloc(int len) {
 	struct token *t = calloc(1, sizeof(*t));
