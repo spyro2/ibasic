@@ -8,8 +8,8 @@
 
 struct token {
 	enum tokid id;
-        struct token *next;
 	struct imm_value *val;
+        struct token *next;
 	int ref;
 };
 
@@ -29,6 +29,10 @@ static inline void val_put(struct imm_value *v) {
 	v->ref--;
 
 	assert(v->ref >= 0);
+
+	// This is not a bug. At present, immediate values emitted by the
+	// tokeniser, which have string values, are allocated in one malloc
+	// so freeing the value also frees the data.
 
 	if(v->ref == 0)
 		free(v);
