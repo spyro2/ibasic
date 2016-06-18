@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tokeniser.h"
+#include "tokid.h"
 #include "stack.h"
 #include "ast.h"
 #include "interpreter.h"
