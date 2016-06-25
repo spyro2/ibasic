@@ -331,7 +331,7 @@ int interpret_block(struct ast_entry *b, struct imm_value *ret) {
 			case tokn_for:
 				{
 					struct imm_value *l, *v;
-					int t, s = 1;
+					int t, s = 1, i, j;
 
 					l = interpret_assign(e);
 
@@ -348,20 +348,21 @@ int interpret_block(struct ast_entry *b, struct imm_value *ret) {
 						e = e->next;
 					}
 
-					if(s > 0) {
-						for(; l->data.i <= t; l->data.i += s) {
-							r = interpret_block(e, NULL);
-							if(r == RET_BREAK || r == RET_END)
-								break;
-						}
-					}
-					else {
-						for(; l->data.i >= t; l->data.i += s) {
-							r = interpret_block(e, NULL);
-							if(r == RET_BREAK || r == RET_END)
-								break;
-						}
-					}
+					if(s < 0)
+						t -= 1;
+
+					do {
+						i = t - l->data.i;
+
+						r = interpret_block(e, NULL);
+						if(r == RET_BREAK || r == RET_END)
+							break;
+
+						l->data.i += s;
+
+						j = t - l->data.i;
+
+					} while (!((i ^ j) >> 31));
 				}
 
 				if(r == RET_BREAK || r == RET_CONTINUE)
