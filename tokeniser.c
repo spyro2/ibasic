@@ -574,7 +574,7 @@ static char *get_one_line(int fd) {
 	return NULL;
 }
 
-static struct symbol sym_eof = {tokn_eof, "<eof>", NULL, NULL};
+static struct symbol sym_eof = {tokn_eof, "<eof>", NULL};
 
 static struct token *get_more_tokens(struct sym_tree_entry *sym_tree, int fd) {
 	char *buf;
