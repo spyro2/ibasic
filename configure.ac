@@ -1,10 +1,13 @@
 AC_PREREQ([2.69])
 AC_INIT([iBASIC], [0.1], [ian@mnementh.co.uk], [ibasic], [https://github.com/spyro2/ibasic])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
+AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([ast.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 # Checks for libraries.
 
